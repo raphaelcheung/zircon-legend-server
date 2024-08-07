@@ -1,0 +1,105 @@
+#OS junk files
+[Tt]humbs.db
+*.DS_Store
+
+#Output Linux Installer
+Installers/Linux/tmp_deb/
+Installers/Linux/tmp_run/
+*.run
+*.deb
+
+#Visual Studio files
+*.pidb
+*.userprefs
+*.[Oo]bj
+*.exe
+*.pdb
+*.user
+*.aps
+*.pch
+*.vspscc
+*.vssscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.[Cc]ache
+*.ilk
+*.log
+*.lib
+*.sbr
+*.sdf
+*.csproj.csdat
+ipch/
+obj/
+[Bb]in
+[Dd]ebug*/
+[Rr]elease*/
+tmp/
+Font/
+.vs/
+Ankh.NoLoad
+.vs/
+project.lock.json
+/MonoGame.Framework/MonoGame.Framework.Net.WindowsUniversal.project.lock.json
+/MonoGame.Framework/MonoGame.Framework.WindowsUniversal.project.lock.json
+artifacts/
+
+# JetBrains Rider
+.idea/
+
+#Tooling
+_ReSharper*/
+*.resharper
+[Tt]est[Rr]esult*
+
+#Visual Studio Rebracer extension, allows the user to automatically change the style configuration by project
+rebracer.xml
+
+#Subversion files
+.svn
+
+# Office Temp Files
+~$*
+
+#monodroid private beta
+monodroid*.msi
+
+#Unix temporary files
+*~
+
+# Output docs
+Documentation/Output/
+
+# Protobuild Generated Files
+MonoGame.Framework.Content.Pipeline/*.csproj
+MonoGame.Framework/*.csproj
+Tools/2MGFX/*.csproj
+Tools/MGCB/*.csproj
+Tools/Pipeline/*.csproj
+Tools/MonoGame.Build.Tasks/MonoGame.Build.Tasks.*.csproj
+ThirdParty/Lidgren.Network/*.csproj
+Test/*.csproj
+!Test/MonoGame.Test.XNA.csproj
+
+*.speccache
+*.ncrunchproject
+*.ncrunchsolution
+
+#Mac Package Files
+*.pkg
+*.mpack
+**/packages
+
+#Nuget Packages
+**/*.nupkg
+
+#Zip files
+*.zip
+
+Installers/MacOS/Scripts/Framework/postinstall
+IDE/MonoDevelop/MonoDevelop.MonoGame/templates/Common/MonoGame.Framework.dll.config
+*.suo
