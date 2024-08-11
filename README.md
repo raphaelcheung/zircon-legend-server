@@ -17,11 +17,12 @@
 
 ## 服务器部署
 
-### 先准备运营数据
+### 下载运营数据
 
-由于包含了地图数据比较大，压缩之后仍然有近 800M，因此只能放在网盘中。
+包含了地图数据比较大，压缩之后仍然有近 800MB，因此只能放在网盘中。
 
-[百度网盘下载](http://)
+[百度网盘下载](链接：https://pan.baidu.com/s/1RflU-PPn5BMoEPL8cOhp1g?pwd=9vqz 
+提取码：9vqz)
 
 内置账号： **zrf@zrf.zrf、raphael@gm.gm** ，密码均为  **123456** ， 可直接登录游玩。
 
@@ -38,14 +39,11 @@ services:
     zircon:
         container_name: zircon
         image: raphzhang/zirconlegend:latest
-        labels:
-            createdBy: Apps
         networks:
             1panel-network:
                 ipv4_address: 172.18.0.82
         ports:
             - 192.168.0.3:17000:7000
-            #- 192.168.0.3:13000:3000
         restart: unless-stopped
         user: "0:0"
         volumes:
@@ -69,4 +67,4 @@ networks:
 ```
 ## 客户端
 
-客户端的获取参考项目 [ZirconLegend-Client](https://gitee.com/raphaelcheung/zircon-legend-client)
+获取客户端去这里看 [ZirconLegend-Client](https://gitee.com/raphaelcheung/zircon-legend-client)
