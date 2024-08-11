@@ -25,7 +25,7 @@
 
 内置账号： **zrf@zrf.zrf、raphael@gm.gm** ，密码均为  **123456** ， 可直接登录游玩。
 
-其中  **raphael@gm.gm**  为管理员账号，管理员密码为  **654321** 。
+其中  **raphael@gm.gm**  为管理员账号，包含了三个管理员角色 **raphael01、raphael02、raphael03** 管理员密码为  **654321** 。
 
 ### 部署游戏服务
 
@@ -64,6 +64,53 @@ networks:
 [Sunday, 11 August 2024 03:30:51]: Web Server Started.
 [Sunday, 11 August 2024 03:30:51]: Loading Time: 2 Seconds
 ```
+
+### GM 管理
+
+登录的时候，账号那里填写游戏角色名字，注意，是填**角色名字**！然后密码使用管理员密码进行登录，才会具备 GM 权限。
+
+以下是 GM 管理员命令：
+
+```
+@TAKECASTLE [城堡指数]
+@FORCEENDWAR [城堡指数] 参数1  结束攻城
+@FORCEWAR [城堡指数]    参数1   开始
+@CLEARBELT
+@MAP [地图名]
+@GLOBALBAN [角色名] [*持续时间]
+@CHATBAN [角色名] [*持续时间]    禁止聊天
+@REFUNDHUNTGOLD [角色] [数量]   狩猎金币
+@REFUNDGAMEGOLD  [角色] [数量]    奖励游戏币
+@TAKEGAMEGOLD  [角色] [数量]      移除游戏币
+@REMOVEGAMEGOLD [角色] [数量]  因为支付失败扣除游戏币
+@GIVEGAMEGOLD  [角色] [数量]   成功购买 游戏币
+@REBOOT   重启
+@GCCOLLECT   gc收集
+@MAKE [物品名称] [数量]
+@SETCOMPANIONVALUE [Level] [Stat] [Value]
+@GIVESKILLS [角色名]   给与全部技能
+@GOTO [角色名]
+@LEVEL [角色名|  Level] [*Level]  调整自身等级
+@ITEMBOT [角色名]
+@GOLDBOT [角色名]
+@GAMEMASTER    
+@OBSERVER      退出 进入隐身模式
+@RECALL [角色名]    召唤到身边
+@LEAVEGUILD
+@ALLOWGUILD
+@BLOCKWHISPER
+@ALLOWTRADE
+@ENABLELEVEL3
+@ENABLELEVEL5
+@ENABLELEVEL7
+@ENABLELEVEL10
+@ENABLELEVEL11
+@ENABLELEVEL13
+@ENABLELEVEL15
+@EXTRACTORLOCK
+@ROLL [Amount]
+```
+
 ## 客户端
 
 获取客户端去这里看 [ZirconLegend-Client](https://gitee.com/raphaelcheung/zircon-legend-client)
