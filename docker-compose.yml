@@ -1,0 +1,20 @@
+services:
+    zircon:
+        container_name: zircon
+        image: raphzhang/zirconlegend:latest
+        labels:
+            createdBy: Apps
+        networks:
+            1panel-network:
+                ipv4_address: 172.18.0.82
+        ports:
+            - 192.168.0.3:17000:7000
+            #- 192.168.0.3:13000:3000
+        restart: unless-stopped
+        user: "0:0"
+        volumes:
+            - ./datas:/zircon/datas
+version: "3"
+networks:
+    1panel-network:
+        external: true
