@@ -1,5 +1,5 @@
 <html>
 <body>
-Failed to buy GameGold. Character Not Found.
+购买游戏币失败，找不到该角色.
 </body>
 </html>

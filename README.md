@@ -27,6 +27,7 @@
 
 其中  **raphael@gm.gm**  为管理员账号，包含了三个管理员角色 **raphael01、raphael02、raphael03** 管理员密码为  **654321** 。
 
+
 ### 部署游戏服务
 
 推荐用 docker-composer 部署。
@@ -114,3 +115,15 @@ networks:
 ## 客户端
 
 获取客户端去这里看 [ZirconLegend-Client](https://gitee.com/raphaelcheung/zircon-legend-client)
+
+## 代码编译
+
+开发环境依赖：
+
+- Microsoft Visual Studio Community 2022
+
+- .Net 8.0
+
+安装这些后拉取全库代码，要注意的是项目包含了子模块，拉取的时候要选中 `Recursive`。
+
+这样才能把子模块一并拉取下来，项目的编译依赖都已预设好，直接编译即可

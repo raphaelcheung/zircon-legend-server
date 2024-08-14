@@ -94,7 +94,7 @@ namespace Server.Envir
                 _userCountListener.BeginAcceptTcpClient(CountConnection, null);
 
                 NetworkStarted = true;
-                if (log) Log("Network Started.");
+                if (log) Log("网络已启动.");
             }
             catch (Exception ex)
             {
@@ -130,7 +130,7 @@ namespace Server.Envir
                 Log(ex.ToString());
             }
 
-            if (log) Log("Network Stopped.");
+            if (log) Log("网络已停止.");
         }
 
         private static void Connection(IAsyncResult result)
@@ -257,7 +257,7 @@ namespace Server.Envir
 
                 WebServerStarted = true;
 
-                if (log) Log("Web Server Started.");
+                if (log) Log("Web 服务已启动.");
             }
             catch (Exception ex)
             {
@@ -296,7 +296,7 @@ namespace Server.Envir
             expiredBuyListener.Stop();
             expiredIPNListener.Stop();
 
-            if (log) Log("Web Server Stopped.");            
+            if (log) Log("Web 服务已停止.");            
         }
 
         private static void WebConnection(IAsyncResult result)
@@ -868,20 +868,20 @@ namespace Server.Envir
                 Map sourceMap = GetMap(movement.SourceRegion.Map);
                 if (sourceMap == null)
                 {
-                    Log(string.Format("[Movement] Bad Source Map, Source: {0}", movement.SourceRegion.ServerDescription));
+                    Log(string.Format("[活动] 源映射错误, Source: {0}", movement.SourceRegion.ServerDescription));
                     continue;
                 }
                 
                 if (movement.DestinationRegion == null)
                 {
-                    Log(string.Format("[Movement] No Destinaton Region, Source: {0}", movement.SourceRegion.ServerDescription));
+                    Log(string.Format("[活动] 目标区域没有找到, Source: {0}", movement.SourceRegion.ServerDescription));
                     continue;
                 }
 
                 Map destMap = GetMap(movement.DestinationRegion.Map);
                 if (destMap == null)
                 {
-                    Log(string.Format("[Movement] Bad Destinatoin Map, Destination: {0}", movement.DestinationRegion.ServerDescription));
+                    Log(string.Format("[活动] 目标映射错误, Source: {0}", movement.DestinationRegion.ServerDescription));
                     continue;
                 }
 
@@ -892,7 +892,7 @@ namespace Server.Envir
 
                     if (source == null)
                     {
-                        Log(string.Format("[Movement] Bad Origin, Source: {0}, X:{1}, Y:{2}", movement.SourceRegion.ServerDescription, sPoint.X, sPoint.Y));
+                        Log(string.Format("[活动] 来源错误, Source: {0}, X:{1}, Y:{2}", movement.SourceRegion.ServerDescription, sPoint.X, sPoint.Y));
                         continue;
                     }
 
@@ -914,7 +914,7 @@ namespace Server.Envir
 
                 if (map == null)
                 {
-                    Log(string.Format("[NPC] Bad Map, NPC: {0}, Map: {1}", info.NPCName, info.Region.ServerDescription));
+                    Log(string.Format("[NPC] 映射错误, NPC: {0}, Map: {1}", info.NPCName, info.Region.ServerDescription));
                     continue;
                 }
 
@@ -924,7 +924,7 @@ namespace Server.Envir
                 };
 
                 if (!ob.Spawn(info.Region))
-                    Log(string.Format("[NPC] Failed to spawn NPC, Region: {0}, NPC: {1}", info.Region.ServerDescription, info.NPCName));
+                    Log(string.Format("[NPC] 无法创建 NPC, Region: {0}, NPC: {1}", info.Region.ServerDescription, info.NPCName));
             }
         }
 
@@ -938,7 +938,7 @@ namespace Server.Envir
 
                 if (map == null)
                 {
-                    Log(string.Format("[Safe Zone] Bad Map, Map: {0}", info.Region.ServerDescription));
+                    Log(string.Format("[安全区] 映射错误, Map: {0}", info.Region.ServerDescription));
                     continue;
                 }
                 
@@ -950,7 +950,7 @@ namespace Server.Envir
 
                     if (cell == null)
                     {
-                        Log(string.Format("[Safe Zone] Bad Location, Region: {0}, X: {1}, Y: {2}.", info.Region.ServerDescription, point.X, point.Y));
+                        Log(string.Format("[安全区] 位置错误, Region: {0}, X: {1}, Y: {2}.", info.Region.ServerDescription, point.X, point.Y));
 
                         continue;
                     }
@@ -991,7 +991,7 @@ namespace Server.Envir
 
                 if (map == null)
                 {
-                    Log(string.Format("[Safe Zone] Bad Bind Map, Map: {0}", info.Region.ServerDescription));
+                    Log(string.Format("[安全区] 绑定映射失败, Map: {0}", info.Region.ServerDescription));
                     continue;
                 }
                 
@@ -1001,7 +1001,7 @@ namespace Server.Envir
 
                     if (cell == null)
                     {
-                        Log(string.Format("[Safe Zone] Bad Location, Region: {0}, X: {1}, Y: {2}.", info.BindRegion.ServerDescription, point.X, point.Y));
+                        Log(string.Format("[安全区] 位置错误, Region: {0}, X: {1}, Y: {2}.", info.BindRegion.ServerDescription, point.X, point.Y));
                         continue;
                     }
 
@@ -1022,7 +1022,7 @@ namespace Server.Envir
 
                 if (map == null)
                 {
-                    Log(string.Format("[Respawn] Bad Map, Map: {0}", info.Region.ServerDescription));
+                    Log(string.Format("[重生] 映射错误, Map: {0}", info.Region.ServerDescription));
                     continue;
                 }
                 
@@ -1099,7 +1099,7 @@ namespace Server.Envir
 
             LastWarTime = Now;
 
-            Log(string.Format("Loading Time: {0}", Functions.ToString(Time.Now - Now, true)));
+            Log(string.Format("加载耗时: {0}", Functions.ToString(Time.Now - Now, true)));
 
             while (Started)
             {
@@ -1436,7 +1436,7 @@ namespace Server.Envir
 
                 if (!message.Verified)
                 {
-                    Log("INVALID PAYPAL TRANSACTION " + message.Message);
+                    Log("无效的 PAYPAL 交易 " + message.Message);
                     continue;
                 }
 
@@ -1472,7 +1472,7 @@ namespace Server.Envir
                     if (GameGoldPaymentList[i].Status != paymentStatus) continue;
 
 
-                    Log(string.Format("[Duplicated Transaction] ID:{0} Status:{1}.", transactionID, paymentStatus));
+                    Log(string.Format("[重复交易] ID:{0} Status:{1}.", transactionID, paymentStatus));
                     message.Duplicate = true;
                     return;
                 }
@@ -1547,7 +1547,7 @@ namespace Server.Envir
 
                 if (character == null || payment.Error)
                 {
-                    Log(string.Format("[Transaction Error] ID:{0} Status:{1}, Amount{2}.", transactionID, paymentStatus, payment.Price));
+                    Log(string.Format("[交易错误] ID:{0} Status:{1}, Amount{2}.", transactionID, paymentStatus, payment.Price));
                     continue;
                 }
 
@@ -1571,7 +1571,7 @@ namespace Server.Envir
                     }
                 }
 
-                Log(string.Format("[Game Gold Purchase] Character: {0}, Amount: {1}.", character.CharacterName, payment.GameGoldAmount));
+                Log(string.Format("[游戏币购买] Character: {0}, Amount: {1}.", character.CharacterName, payment.GameGoldAmount));
             }
         }
 
@@ -2770,13 +2770,13 @@ namespace Server.Envir
 
                 if (account == null || !account.Admin)
                 {
-                    Log(string.Format("[管理员登陆失败，用管理员密码登陆非管理员账号] Character: {0}, IP Address: {1}, Security: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
+                    Log(string.Format("[管理员登陆失败，采用了管理员密码登陆非管理员账号] Character: {0}, IP Address: {1}, Security: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
                     con.Enqueue(new S.Login { Result = LoginResult.WrongPassword });
                     return;
                 }
 
                 admin = true;
-                Log(string.Format("[Admin Attempted] Character: {0}, IP Address: {1}, Security: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
+                Log(string.Format("[尝试管理员] Character: {0}, IP Address: {1}, Security: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
             }
             else
             {
@@ -2834,7 +2834,7 @@ namespace Server.Envir
 
             if (!admin && !PasswordMatch(p.Password, account.Password))
             {
-                Log(string.Format("[Wrong Password] IP Address: {0}, Account: {1}, Security: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
+                Log(string.Format("[密码错误] IP Address: {0}, Account: {1}, Security: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
 
                 if (account.WrongPasswordCount++ >= 5)
                 {
@@ -2864,7 +2864,7 @@ namespace Server.Envir
                     //  account.Connection.SendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUserAdmin });
                 }
 
-                Log(string.Format("[Account in Use] Account: {0}, Current IP: {1}, New IP: {2}, Security: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
+                Log(string.Format("[账号已经登录] Account: {0}, Current IP: {1}, New IP: {2}, Security: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
 
                 if (account.TempAdmin)
                 {
@@ -2923,7 +2923,7 @@ namespace Server.Envir
                 account.LastSum = p.CheckSum;
             }
 
-            Log(string.Format("[Account Logon] Admin: {0}, Account: {1}, IP Address: {2}, Security: {3}", admin, account.EMailAddress, account.LastIP, p.CheckSum));
+            Log(string.Format("[账号登录] Admin: {0}, Account: {1}, IP Address: {2}, Security: {3}", admin, account.EMailAddress, account.LastIP, p.CheckSum));
         }
         public static void NewAccount(C.NewAccount p, SConnection con)
         {
@@ -2995,6 +2995,7 @@ namespace Server.Envir
             account.Referral = refferal;
             account.CreationIP = con.IPAddress;
             account.CreationDate = Now;
+            account.Activated = true;
 
             if (refferal != null)
             {
@@ -3007,13 +3008,11 @@ namespace Server.Envir
                 else if (maxLevel >= 10) account.HuntGold = 50;
             }
 
-
-
-            SendActivationEmail(account);
+            //SendActivationEmail(account);
 
             con.Enqueue(new S.NewAccount { Result = NewAccountResult.Success });
 
-            Log(string.Format("[Account Created] Account: {0}, IP Address: {1}, Security: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
+            Log(string.Format("[账号创建成功] 账号: {0}, IP 地址: {1}, 安全码: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
         }
         public static void ChangePassword(C.ChangePassword p, SConnection con)
         {
@@ -3076,7 +3075,7 @@ namespace Server.Envir
 
             if (!PasswordMatch(p.CurrentPassword, account.Password))
             {
-                Log(string.Format("[Wrong Password] IP Address: {0}, Account: {1}, Security: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
+                Log(string.Format("[密码错误] IP 地址: {0}, 账号: {1}, 安全码: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
 
                 if (account.WrongPasswordCount++ >= 5)
                 {
@@ -3093,10 +3092,10 @@ namespace Server.Envir
             }
             
             account.Password = CreateHash(p.NewPassword);
-            SendChangePasswordEmail(account, con.IPAddress);
+            //SendChangePasswordEmail(account, con.IPAddress);
             con.Enqueue(new S.ChangePassword { Result = ChangePasswordResult.Success });
 
-            Log(string.Format("[Password Changed] Account: {0}, IP Address: {1}, Security: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
+            Log(string.Format("[修改密码] 账号: {0}, IP 地址: {1}, 安全码: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
         }
         public static void RequestPasswordReset(C.RequestPasswordReset p, SConnection con)
         {
@@ -3141,7 +3140,7 @@ namespace Server.Envir
             SendResetPasswordRequestEmail(account, con.IPAddress);
             con.Enqueue(new S.RequestPasswordReset { Result = RequestPasswordResetResult.Success });
 
-            Log(string.Format("[Request Password] Account: {0}, IP Address: {1}, Security: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
+            Log(string.Format("[申请重置密码] Account: {0}, IP Address: {1}, Security: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
         }
         public static void ResetPassword(C.ResetPassword p, SConnection con)
         {
@@ -3184,7 +3183,7 @@ namespace Server.Envir
             SendChangePasswordEmail(account, con.IPAddress);
             con.Enqueue(new S.ResetPassword { Result = ResetPasswordResult.Success });
 
-            Log(string.Format("[Reset Password] Account: {0}, IP Address: {1}, Security: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
+            Log(string.Format("[重置密码] Account: {0}, IP Address: {1}, Security: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
         }
         public static void Activation(C.Activation p, SConnection con)
         {
@@ -3213,7 +3212,7 @@ namespace Server.Envir
             
             con.Enqueue(new S.Activation { Result = ActivationResult.Success });
 
-            Log(string.Format("[Activation] Account: {0}, IP Address: {1}, Security: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
+            Log(string.Format("[激活账号] Account: {0}, IP Address: {1}, Security: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
         }
         public static void RequestActivationKey(C.RequestActivationKey p, SConnection con)
         {
@@ -3256,7 +3255,7 @@ namespace Server.Envir
             }
             ResendActivationEmail(account);
             con.Enqueue(new S.RequestActivationKey { Result = RequestActivationKeyResult.Success });
-            Log(string.Format("[Request Activation] Account: {0}, IP Address: {1}, Security: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
+            Log(string.Format("[申请激活] Account: {0}, IP Address: {1}, Security: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
         }
 
         public static void NewCharacter(C.NewCharacter p, SConnection con)
@@ -3414,7 +3413,7 @@ namespace Server.Envir
                 Character = cInfo.ToSelectInfo(),
             });
 
-            Log(string.Format("[Character Created] Character: {0}, IP Address: {1}, Security: {2}", p.CharacterName, con.IPAddress, p.CheckSum));
+            Log(string.Format("[创建角色] Character: {0}, IP Address: {1}, Security: {2}", p.CharacterName, con.IPAddress, p.CheckSum));
         }
         public static void DeleteCharacter(C.DeleteCharacter p, SConnection con)
         {
@@ -3437,7 +3436,7 @@ namespace Server.Envir
                 character.Deleted = true;
                 con.Enqueue(new S.DeleteCharacter { Result = DeleteCharacterResult.Success, DeletedIndex = character.Index });
 
-                Log(string.Format("[Character Deleted] Character: {0}, IP Address: {1}, Security: {2}", character.CharacterName, con.IPAddress, p.CheckSum));
+                Log(string.Format("[删除角色] Character: {0}, IP Address: {1}, Security: {2}", character.CharacterName, con.IPAddress, p.CheckSum));
                 return;
             }
 
