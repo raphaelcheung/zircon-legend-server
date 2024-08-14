@@ -16,7 +16,7 @@ namespace Server.Envir.Translations
             GameGoldLost = "扣除你 {0} 游戏金。";
             GameGoldRefund = "你的 {0} 游戏金被退款。";
             HuntGoldRefund = "你的 {0} 狩猎金被退款。";
-            Welcome = "欢迎来到 云归传奇三 世界";
+            Welcome = "欢迎来到【云归传奇三】世界，有疑问请联系开源志愿者QQ50181976";
             WelcomeObserver = "你现在是观察者玩家 {0}, 想停止观察的话，需要重新登录游戏。";
             ObserverChangeFail= "只有在安全区才能变更为观察模式。";
             OnlineCount = "在线玩家: {0}, 观察者玩家: {1}";
