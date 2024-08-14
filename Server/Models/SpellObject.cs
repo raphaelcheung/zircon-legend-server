@@ -96,13 +96,13 @@ namespace Zircon.Server.Models
 
                     if (CurrentCell == null)
                     {
-                        SEnvir.Log("[ERROR] {Effect} CurrentCell Null.");
+                        SEnvir.Log("[ERROR] {Effect} CurrentCell 空值.");
                         return;
                     }
 
                     if (CurrentCell.Objects == null)
                     {
-                        SEnvir.Log("[ERROR] {Effect} CurrentCell.Objects Null.");
+                        SEnvir.Log("[ERROR] {Effect} CurrentCell.Objects 空值.");
                         return;
                     }
 
@@ -115,13 +115,13 @@ namespace Zircon.Server.Models
 
                         if (CurrentCell == null)
                         {
-                            SEnvir.Log("[ERROR] {Effect} CurrentCell Null Loop.");
+                            SEnvir.Log("[ERROR] {Effect} CurrentCell 空循环.");
                             return;
                         }
 
                         if (CurrentCell.Objects == null)
                         {
-                            SEnvir.Log("[ERROR] {Effect} CurrentCell.Objects Null Loop.");
+                            SEnvir.Log("[ERROR] {Effect} CurrentCell.Objects 空循环.");
                             return;
                         }
 

@@ -586,7 +586,7 @@ namespace Zircon.Server.Models
         {
             if (!SetBindPoint())
             {
-                SEnvir.Log("[Failed to spawn Character] Index: {Character.Index}, Name: {Character.CharacterName}, Failed to reset bind point.");
+                SEnvir.Log("[创建角色失败] Index: {Character.Index}, Name: {Character.CharacterName}, 无法重置绑定点.");
                 Enqueue(new S.StartGame { Result = StartGameResult.UnableToSpawn });
                 Connection = null;
                 Character = null;
@@ -595,7 +595,7 @@ namespace Zircon.Server.Models
 
             if (!Spawn(Character.CurrentMap, CurrentLocation) && !Spawn(Character.BindPoint.BindRegion))
             {
-                SEnvir.Log("[Failed to spawn Character] Index: {Character.Index}, Name: {Character.CharacterName}");
+                SEnvir.Log("[创建角色失败] Index: {Character.Index}, Name: {Character.CharacterName}");
                 Enqueue(new S.StartGame { Result = StartGameResult.UnableToSpawn });
                 Connection = null;
                 Character = null;
@@ -1496,7 +1496,7 @@ namespace Zircon.Server.Models
                         if (target == null) return;
 
                         target.Account.GoldBot = !target.Account.GoldBot;
-                        Connection.ReceiveChat(string.Format("Gold Bot [{0}] - [{1}]", target.CharacterName, target.Account.GoldBot), MessageType.System);
+                        Connection.ReceiveChat(string.Format("金币机器 [{0}] - [{1}]", target.CharacterName, target.Account.GoldBot), MessageType.System);
                         break;
                     case "ITEMBOT":
                         if (!Character.Account.TempAdmin) return;
@@ -1508,7 +1508,7 @@ namespace Zircon.Server.Models
                         if (target == null) return;
 
                         target.Account.ItemBot = !target.Account.ItemBot;
-                        Connection.ReceiveChat(string.Format("Item Bot [{0}] - [{1}]", target.CharacterName, target.Account.ItemBot), MessageType.System);
+                        Connection.ReceiveChat(string.Format("道具机器 [{0}] - [{1}]", target.CharacterName, target.Account.ItemBot), MessageType.System);
                         break;
                     case "LEVEL":
                         if (!Character.Account.TempAdmin) return;
@@ -1685,7 +1685,7 @@ namespace Zircon.Server.Models
 
                         MarketPlaceCancelSuperior();
 
-                        Connection.ReceiveChat(string.Format("[Reboot Command] {0}ms", (Time.Now - time).Ticks / TimeSpan.TicksPerMillisecond), MessageType.System);
+                        Connection.ReceiveChat(string.Format("[重启命令] {0}ms", (Time.Now - time).Ticks / TimeSpan.TicksPerMillisecond), MessageType.System);
                         break;
                     case "GIVEGAMEGOLD":
                         if (!Character.Account.TempAdmin) return;
@@ -1716,7 +1716,7 @@ namespace Zircon.Server.Models
                             }
                         }
 
-                        Connection.ReceiveChat(string.Format("[GIVE GAME GOLD] {0} Amount: {1}", character.CharacterName, count), MessageType.System);
+                        Connection.ReceiveChat(string.Format("[获取游戏币] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
 
                         break;
                     case "REMOVEGAMEGOLD":
@@ -1749,7 +1749,7 @@ namespace Zircon.Server.Models
                             }
                         }
 
-                        Connection.ReceiveChat(string.Format("[REMOVE GAME GOLD] {0} Amount: {1}", character.CharacterName, count), MessageType.System);
+                        Connection.ReceiveChat(string.Format("[销毁游戏币] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
                         break;
                     case "TAKEGAMEGOLD":
                         if (!Character.Account.TempAdmin) return;
@@ -1767,7 +1767,7 @@ namespace Zircon.Server.Models
                         if (character.Player != null)
                         character.Player.Enqueue(new S.GameGoldChanged { GameGold = character.Account.GameGold });
 
-                        Connection.ReceiveChat(string.Format("[TAKE GAME GOLD] {0} Amount: {1}", character.CharacterName, count), MessageType.System);
+                        Connection.ReceiveChat(string.Format("[赠送游戏币] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
                         break;
                     case "REFUNDGAMEGOLD":
                         if (!Character.Account.TempAdmin) return;
@@ -1785,7 +1785,7 @@ namespace Zircon.Server.Models
                         if (character.Player != null)
                         character.Player.Enqueue(new S.GameGoldChanged { GameGold = character.Account.GameGold });
 
-                        Connection.ReceiveChat(string.Format("[REFUND GAME GOLD] {0} Amount: {1}", character.CharacterName, count), MessageType.System);
+                        Connection.ReceiveChat(string.Format("[退还游戏币] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
                         break;
                     case "REFUNDHUNTGOLD":
                         if (!Character.Account.TempAdmin) return;
@@ -1803,7 +1803,7 @@ namespace Zircon.Server.Models
                         if (character.Player != null)
                         character.Player.Enqueue(new S.HuntGoldChanged { HuntGold = character.Account.HuntGold });
 
-                        Connection.ReceiveChat(string.Format("[REFUND HUNT GOLD] {0} Amount: {1}", character.CharacterName, count), MessageType.System);
+                        Connection.ReceiveChat(string.Format("[退还狩猎金] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
                         break;
                     case "CHATBAN":
                         if (!Character.Account.TempAdmin) return;
@@ -2726,7 +2726,7 @@ namespace Zircon.Server.Models
                     break;
                 default:
                     Character.Account.Banned = true;
-                    Character.Account.BanReason = "Attempted to Exploit hermit.";
+                    Character.Account.BanReason = "尝试添加非法修炼点.";
                     Character.Account.ExpiryDate = SEnvir.Now.AddYears(10);
                     return;
             }
@@ -3198,7 +3198,7 @@ namespace Zircon.Server.Models
         {
             return new S.MarriageInfo
             {
-                Partner = new ClientPlayerInfo { Name = Character.Partner != null ? Character.Partner.CharacterName : "NoName",
+                Partner = new ClientPlayerInfo { Name = Character.Partner != null ? Character.Partner.CharacterName : "无名",
                     ObjectID = Character.Partner != null && Character.Partner.Player != null ? Character.Partner.Player.ObjectID : 0
                 }
             };
@@ -5994,7 +5994,7 @@ namespace Zircon.Server.Models
                         case 18:
                             if (item.Info.Stats[Stat.MapSummoning] > 0 && CurrentMap.HasSafeZone)
                             {
-                                Connection.ReceiveChat(string.Format("You cannot use [{0}] with maps that have a SafeZone.", item.Info.ItemName), MessageType.System);
+                                Connection.ReceiveChat(string.Format("您不能将 [{0}] 用于具有安全区域的地图.", item.Info.ItemName), MessageType.System);
                                 return;
                             }
 
@@ -6019,7 +6019,7 @@ namespace Zircon.Server.Models
 
                                 if (!hasSpace)
                                 {
-                                    Connection.ReceiveChat("You do not have any empty inventory slot", MessageType.System);
+                                    Connection.ReceiveChat("您的背包没有多余空间", MessageType.System);
                                     return;
                                 }
 
@@ -6071,7 +6071,7 @@ namespace Zircon.Server.Models
                                         }
 
 
-                                        string text = string.Format("A [{0}] has been used in {1}", item.Info.ItemName, CurrentMap.Info.Description);
+                                        string text = string.Format("一个 [{0}] 被使用于 {1}", item.Info.ItemName, CurrentMap.Info.Description);
 
                                         foreach (SConnection con in SEnvir.Connections)
                                         {
@@ -6093,35 +6093,35 @@ namespace Zircon.Server.Models
 
                             if (weapon == null)
                             {
-                                Connection.ReceiveChat("You are not holding a weapon.", MessageType.System);
+                                Connection.ReceiveChat("你手上空空如也，并没持有任何武器.", MessageType.System);
                                 return;
                             }
 
 
                             if (!ExtractorLock)
                             {
-                                Connection.ReceiveChat("Extraction functions are locked, please type @ExtractorLock and try again", MessageType.System);
+                                Connection.ReceiveChat("提取功能已被锁定，请输入 @ExtractorLock 并重试", MessageType.System);
 
                                 foreach (SConnection con in Connection.Observers)
-                                    con.ReceiveChat("Extraction functions are locked, please type @ExtractorLock and try again", MessageType.System);
+                                    con.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
                                 return;
                             }
 
                             if (weapon.Info.Effect == ItemEffect.SpiritBlade)
                             {
-                                Connection.ReceiveChat(string.Format("You can not extract a {0}.", weapon.Info.ItemName), MessageType.System);
+                                Connection.ReceiveChat(string.Format("你不能提取 {0}.", weapon.Info.ItemName), MessageType.System);
                                 return;
                             }
 
                             if (weapon.Level != 17)
                             {
-                                Connection.ReceiveChat("Your weapon is not the max level.", MessageType.System);
+                                Connection.ReceiveChat("你的武器不是最高等级.", MessageType.System);
                                 return;
                             }
 
                             if (weapon.AddedStats.Count == 0)
                             {
-                                Connection.ReceiveChat("Your weapon does not have any added stats.", MessageType.System);
+                                Connection.ReceiveChat("你的武器没有任何附加属性.", MessageType.System);
                                 return;
                             }
 
@@ -6137,7 +6137,7 @@ namespace Zircon.Server.Models
 
                             if (!hasSpace)
                             {
-                                Connection.ReceiveChat("You do not have any empty inventory slot", MessageType.System);
+                                Connection.ReceiveChat("你的背包没有任何多余的空间", MessageType.System);
                                 return;
                             }
 
@@ -6166,27 +6166,27 @@ namespace Zircon.Server.Models
 
                             if (weapon == null)
                             {
-                                Connection.ReceiveChat("You are not holding a weapon.", MessageType.System);
+                                Connection.ReceiveChat("你手上空空如也，并没持有任何武器.", MessageType.System);
                                 return;
                             }
                             if (!ExtractorLock)
                             {
-                                Connection.ReceiveChat("Extraction functions are locked, please type @ExtractorLock and try again", MessageType.System);
+                                Connection.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
 
                                 foreach (SConnection con in Connection.Observers)
-                                    con.ReceiveChat("Extraction functions are locked, please type @ExtractorLock and try again", MessageType.System);
+                                    con.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
                                 return;
                             }
 
                             if (weapon.Info.Effect == ItemEffect.SpiritBlade)
                             {
-                                Connection.ReceiveChat(string.Format("You can not apply to a {0}.", weapon.Info.ItemName), MessageType.System);
+                                Connection.ReceiveChat(string.Format("你不能应用于 {0}.", weapon.Info.ItemName), MessageType.System);
                                 return;
                             }
 
                             if (weapon.Level != 17)
                             {
-                                Connection.ReceiveChat("Your weapon is not the max level.", MessageType.System);
+                                Connection.ReceiveChat("你的武器不是最高等级.", MessageType.System);
                                 return;
                             }
                             
@@ -6215,21 +6215,21 @@ namespace Zircon.Server.Models
 
                             if (weapon == null)
                             {
-                                Connection.ReceiveChat("You are not holding a weapon.", MessageType.System);
+                                Connection.ReceiveChat("你并未持有任何武器.", MessageType.System);
                                 return;
                             }
                             if (!ExtractorLock)
                             {
-                                Connection.ReceiveChat("Extraction functions are locked, please type @ExtractorLock and try again", MessageType.System);
+                                Connection.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
 
                                 foreach (SConnection con in Connection.Observers)
-                                    con.ReceiveChat("Extraction functions are locked, please type @ExtractorLock and try again", MessageType.System);
+                                    con.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
                                 return;
                             }
 
                             if (weapon.Level != 17)
                             {
-                                Connection.ReceiveChat("Your weapon is not the max level.", MessageType.System);
+                                Connection.ReceiveChat("你的武器不是最高等级.", MessageType.System);
                                 return;
                             }
 
@@ -6245,7 +6245,7 @@ namespace Zircon.Server.Models
 
                             if (!hasRefine)
                             {
-                                Connection.ReceiveChat("Your weapon does not have any refine stats.", MessageType.System);
+                                Connection.ReceiveChat("你的武器没有任何精炼属性.", MessageType.System);
                                 return;
                             }
 
@@ -6261,7 +6261,7 @@ namespace Zircon.Server.Models
 
                             if (!hasSpace)
                             {
-                                Connection.ReceiveChat("You do not have any empty inventory slot", MessageType.System);
+                                Connection.ReceiveChat("你的背包没有多余空间", MessageType.System);
                                 return;
                             }
 
@@ -6292,21 +6292,21 @@ namespace Zircon.Server.Models
 
                             if (weapon == null)
                             {
-                                Connection.ReceiveChat("You are not holding a weapon.", MessageType.System);
+                                Connection.ReceiveChat("你并没持有任何武器.", MessageType.System);
                                 return;
                             }
                             if (!ExtractorLock)
                             {
-                                Connection.ReceiveChat("Extraction functions are locked, please type @ExtractorLock and try again", MessageType.System);
+                                Connection.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
 
                                 foreach (SConnection con in Connection.Observers)
-                                    con.ReceiveChat("Extraction functions are locked, please type @ExtractorLock and try again", MessageType.System);
+                                    con.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
                                 return;
                             }
 
                             if (weapon.Level != 17)
                             {
-                                Connection.ReceiveChat("Your weapon is not the max level.", MessageType.System);
+                                Connection.ReceiveChat("你的武器不是最高等级.", MessageType.System);
                                 return;
                             }
 
@@ -7218,7 +7218,7 @@ namespace Zircon.Server.Models
                 if (count == 0) return;
             }
 
-            throw new Exception(string.Format("Unable to Take {0}x{1} from {2}", info.ItemName, count, Name));
+            throw new Exception(string.Format("无法从 {2} 获取 {0}x{1}", info.ItemName, count, Name));
         }
 
         public void ItemLock(C.ItemLock p)
@@ -8084,13 +8084,13 @@ namespace Zircon.Server.Models
         {
             if (!Globals.CharacterReg.IsMatch(newName))
             {
-                Connection.ReceiveChat("Unacceptable character name.", MessageType.System);
+                Connection.ReceiveChat("角色名称不符合要求.", MessageType.System);
                 return;
             }
 
             if (newName == Name)
             {
-                Connection.ReceiveChat(string.Format("Your name is already {0}.", newName), MessageType.System);
+                Connection.ReceiveChat(string.Format("和原来的名称相同 {0}.", newName), MessageType.System);
                 return;
             }
 
@@ -8099,7 +8099,7 @@ namespace Zircon.Server.Models
                 {
                     if (SEnvir.CharacterInfoList[i].Account == Character.Account) continue;
 
-                    Connection.ReceiveChat("This name is already in use.", MessageType.System);
+                    Connection.ReceiveChat("名称已被占用.", MessageType.System);
                     return;
                 }
 
@@ -8141,7 +8141,7 @@ namespace Zircon.Server.Models
                 result.Link.Count = 0;
             }
 
-            SEnvir.Log(string.Format("[NAME CHANGED] Old: {0}, New: {1}.", Name, newName), true);
+            SEnvir.Log(string.Format("[修改名称] Old: {0}, New: {1}.", Name, newName), true);
             Name = newName;
 
             SendChangeUpdate();
@@ -9809,7 +9809,7 @@ namespace Zircon.Server.Models
                     break;
                 default:
                     Character.Account.Banned = true;
-                    Character.Account.BanReason = "Attempted to Exploit refine, Accessory Refine Type.";
+                    Character.Account.BanReason = "精炼配饰时尝试使用非法的精炼类型.";
                     Character.Account.ExpiryDate = SEnvir.Now.AddYears(10);
                     return;
             }
@@ -10509,7 +10509,7 @@ namespace Zircon.Server.Models
                     break;
                 default:
                     Character.Account.Banned = true;
-                    Character.Account.BanReason = "Attempted to Exploit refine, Weapon Refine Quality.";
+                    Character.Account.BanReason = "精炼武器时尝试使用非法的精炼品质";
                     Character.Account.ExpiryDate = SEnvir.Now.AddYears(10);
                     return;
             }
@@ -10529,7 +10529,7 @@ namespace Zircon.Server.Models
                     break;
                 default:
                     Character.Account.Banned = true;
-                    Character.Account.BanReason = "Attempted to Exploit refine, Weapon Refine Type.";
+                    Character.Account.BanReason = "精炼武器时尝试使用非法的精炼类型.";
                     Character.Account.ExpiryDate = SEnvir.Now.AddYears(10);
                     return;
             }
@@ -11052,7 +11052,7 @@ namespace Zircon.Server.Models
                     break;
                 default:
                     Character.Account.Banned = true;
-                    Character.Account.BanReason = "Attempted to Exploit Master refine, Weapon Refine Type.";
+                    Character.Account.BanReason = "大师精炼时尝试使用非法的精炼类型.";
                     Character.Account.ExpiryDate = SEnvir.Now.AddYears(10);
                     return;
             }
@@ -11990,7 +11990,7 @@ namespace Zircon.Server.Models
 
                 if (!CanGainItems(false, new ItemCheck(weap, 1, UserItemFlags.None, TimeSpan.Zero)))
                 {
-                    Connection.ReceiveChat("Not enough bag space available.", MessageType.System);
+                    Connection.ReceiveChat("背包空间不足.", MessageType.System);
                     return;
                 }
             }
@@ -14748,7 +14748,7 @@ namespace Zircon.Server.Models
                 #endregion
 
                 default:
-                    Connection.ReceiveChat("Spell Not Implemented", MessageType.System);
+                    Connection.ReceiveChat("施放功能未实现", MessageType.System);
                     break;
             }
 
@@ -16949,7 +16949,7 @@ namespace Zircon.Server.Models
                     }
 
                     //SEnvir.Broadcast(new S.Chat {Text = "{Name} has died and lost {expbonus:##,##0} Experience, {target?.Name ?? "No one"} has won the experience.", Type = MessageType.System});
-                    string tmp = string.Format("{0} has died and lost {1} Experience, {2} has won the experience.", Name, expbonus, target.Name ?? "No one");
+                    string tmp = string.Format("{0} 已经死亡并且失去了 {1} 的经验, {2} 赢得了相应经验.", Name, expbonus, target.Name ?? "No one");
                     SEnvir.Broadcast(new S.Chat {Text = tmp, Type = MessageType.System});
                 }
 

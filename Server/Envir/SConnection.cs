@@ -283,32 +283,29 @@ namespace Server.Envir
         public void Process(C.NewAccount p)
         {
             if (Stage != GameStage.Login) return;
-            Enqueue(new S.NewAccount { Result = NewAccountResult.Disabled });
-            //SEnvir.NewAccount(p, this);
+            SEnvir.NewAccount(p, this);
         }
         public void Process(C.ChangePassword p)
         {
             if (Stage != GameStage.Login) return;
-            Enqueue(new S.ChangePassword { Result = ChangePasswordResult.Disabled });
-            //SEnvir.ChangePassword(p, this);
+            SEnvir.ChangePassword(p, this);
         }
         public void Process(C.RequestPasswordReset p)
         {
             if (Stage != GameStage.Login) return;
-            Enqueue(new S.RequestPasswordReset { Result = RequestPasswordResetResult.Disabled });
+            Enqueue(new S.NewAccount { Result = NewAccountResult.Disabled });
             //SEnvir.RequestPasswordReset(p, this);
         }
         public void Process(C.ResetPassword p)
         {
             if (Stage != GameStage.Login) return;
-            Enqueue(new S.ResetPassword { Result = ResetPasswordResult.Disabled });
+            Enqueue(new S.NewAccount { Result = NewAccountResult.Disabled });
             //SEnvir.ResetPassword(p, this);
         }
         public void Process(C.Activation p)
         {
             if (Stage != GameStage.Login) return;
-            Enqueue(new S.Activation { Result = ActivationResult.Disabled });
-            //SEnvir.Activation(p, this);
+            SEnvir.Activation(p, this);
         }
         public void Process(C.RequestActivationKey p)
         {
