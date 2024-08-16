@@ -12584,6 +12584,7 @@ namespace Zircon.Server.Models
 
                 if (cost <= CurrentMP)
                 {
+                    AttackTime -= TimeSpan.FromMilliseconds(attackDelay / 3);
                     validMagic = MagicType.Thrusting;
                     magics.Add(magic);
                     ChangeMP(-cost);
