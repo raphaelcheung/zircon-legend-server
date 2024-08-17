@@ -10635,8 +10635,10 @@ namespace Zircon.Server.Models
 
                 items += item.Info.RequiredAmount;
 
-                if (item.Info.Rarity != Rarity.Common)
+                if (item.Info.Rarity == Rarity.Superior)
                     quality++;
+                else if (item.Info.Rarity == Rarity.Elite)
+                    quality += 2;
             }
 
             foreach (CellLinkInfo link in p.Specials)
@@ -12584,7 +12586,7 @@ namespace Zircon.Server.Models
 
                 if (cost <= CurrentMP)
                 {
-                    AttackTime -= TimeSpan.FromMilliseconds(attackDelay / 3);
+                    AttackTime -= TimeSpan.FromMilliseconds(attackDelay * magic.Level / 9);
                     validMagic = MagicType.Thrusting;
                     magics.Add(magic);
                     ChangeMP(-cost);
