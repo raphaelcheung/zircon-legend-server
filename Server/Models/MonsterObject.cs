@@ -2710,7 +2710,11 @@ namespace Zircon.Server.Models
             List<UserItem> drops = null;
             foreach (DropInfo drop in MonsterInfo.Drops)
             {
-                if (drop?.Item == null || drop.Chance == 0 || (DropSet & drop.DropSet) != drop.DropSet) continue;
+                if (drop?.Item == null 
+                    || (drop.Item.ItemType == ItemType.Consumable && !Config.DropConsumable) 
+                    || drop.Chance == 0 
+                    || (DropSet & drop.DropSet) != drop.DropSet) 
+                    continue;
 
                 if (drop.Item.RequiredType == RequiredType.Level 
                     && drop.Item.RequiredAmount <= 15

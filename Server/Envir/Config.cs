@@ -203,6 +203,7 @@ namespace Server.Envir
         public static TimeSpan HarvestDuration { get; set; }
         public static int MysteryShipRegionIndex { get; set; }
         public static int LairRegionIndex { get; set; }
+        public static bool DropConsumable { get; set; } = true;
 
         [ConfigSection("Items")]
         public static TimeSpan DropDuration { get; set; }

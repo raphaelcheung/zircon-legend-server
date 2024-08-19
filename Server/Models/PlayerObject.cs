@@ -7554,11 +7554,13 @@ namespace Zircon.Server.Models
             AutoPotions.Add(aLink);
             AutoPotions.Sort((x1, x2) => x1.Slot.CompareTo(x2.Slot));
         }
-        public void PickUp()
+        public void PickUp(PickType type)
         {
             if (Dead) return;
 
             int range = Stats[Stat.PickUpRadius];
+
+            List<ItemObject> listNeedPick = new();
 
             for (int d = 0; d <= range; d++)
             {
@@ -7583,12 +7585,35 @@ namespace Zircon.Server.Models
 
                             ItemObject item = (ItemObject)cellObject;
 
-                            if (item.PickUpItem(this)) return;
+                            switch(type)
+                            {
+                                case PickType.Sequence:
+                                    item.PickUpItem(this);
+                                    return;
+                                case PickType.All:
+                                    listNeedPick.Add(item);
+                                    break;
+                                case PickType.Gold:
+                                    if (item.Item.Info.ItemType == ItemType.Nothing
+                                        && item.Item.Info.Effect == ItemEffect.Gold)
+                                        listNeedPick.Add(item);
+                                    break;
+                                case PickType.Valuable:
+                                    if (item.Item.AddedStats.Count > 0
+                                        || item.Item.Info.Rarity != Rarity.Common)
+                                        listNeedPick.Add(item);
+                                    break;
+                            }
                         }
 
                     }
                 }
             }
+
+            for(int i = 0; i < listNeedPick.Count; i++)
+                listNeedPick[i].PickUpItem(this);
+
+            listNeedPick.Clear();
         }
 
         public bool CanWearItem(UserItem item, EquipmentSlot slot)
@@ -12571,6 +12596,7 @@ namespace Zircon.Server.Models
             {
                 if (CanPowerAttack && attackMagic == MagicType.Slaying)
                 {
+                    AttackTime -= TimeSpan.FromMilliseconds(attackDelay * magic.Level / 18);
                     magics.Add(magic);
                     validMagic = MagicType.Slaying;
                     Enqueue(new S.MagicToggle { Magic = MagicType.Slaying, CanUse = CanPowerAttack = false });
@@ -12621,6 +12647,8 @@ namespace Zircon.Server.Models
 
             if (CanFlamingSword && attackMagic == MagicType.FlamingSword && Magics.TryGetValue(attackMagic, out magic) && Level >= magic.Info.NeedLevel1)
             {
+                AttackTime -= TimeSpan.FromMilliseconds(attackDelay * 3 / 18);
+
                 validMagic = MagicType.FlamingSword;
                 magics.Add(magic);
                 CanFlamingSword = false;

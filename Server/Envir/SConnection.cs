@@ -457,7 +457,9 @@ namespace Server.Envir
         {
             if (Stage != GameStage.Game) return;
 
-            Player.PickUp();
+            int type = (int)p.PickType;
+            if (Enum.IsDefined(typeof(PickType), type))
+                Player.PickUp((PickType)type);
         }
         public void Process(C.GoldDrop p)
         {
