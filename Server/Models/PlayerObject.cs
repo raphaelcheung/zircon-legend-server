@@ -7584,34 +7584,43 @@ namespace Zircon.Server.Models
                             if (cellObject.Race != ObjectType.Item) continue;
 
                             ItemObject item = (ItemObject)cellObject;
-
-                            switch(type)
+                            try
                             {
-                                case PickType.Sequence:
-                                    item.PickUpItem(this);
-                                    return;
-                                case PickType.All:
-                                    listNeedPick.Add(item);
-                                    break;
-                                case PickType.Gold:
-                                    if (item.Item.Info.ItemType == ItemType.Nothing
-                                        && item.Item.Info.Effect == ItemEffect.Gold)
+                                switch (type)
+                                {
+                                    case PickType.Sequence:
+                                        item.PickUpItem(this);
+                                        return;
+                                    case PickType.All:
                                         listNeedPick.Add(item);
-                                    break;
-                                case PickType.Valuable:
-                                    if (item.Item.AddedStats.Count > 0
-                                        || item.Item.Info.Rarity != Rarity.Common)
-                                        listNeedPick.Add(item);
-                                    break;
+                                        break;
+                                    case PickType.Gold:
+                                        if (item.Item.Info.ItemType == ItemType.Nothing
+                                            && item.Item.Info.Effect == ItemEffect.Gold)
+                                            listNeedPick.Add(item);
+                                        break;
+                                    case PickType.Valuable:
+                                        if ((item.Item.Info.ItemType == ItemType.Nothing
+                                            && item.Item.Info.Effect == ItemEffect.Gold)
+                                            || item.Item.AddedStats.Count > 0
+                                            || item.Item.Info.Rarity != Rarity.Common)
+                                            listNeedPick.Add(item);
+                                        break;
+                                }
                             }
+                            catch { }
+ 
                         }
 
                     }
                 }
             }
 
-            for(int i = 0; i < listNeedPick.Count; i++)
-                listNeedPick[i].PickUpItem(this);
+            for (int i = 0; i < listNeedPick.Count; i++)
+            {
+                try { listNeedPick[i].PickUpItem(this); }
+                catch { }
+            }
 
             listNeedPick.Clear();
         }

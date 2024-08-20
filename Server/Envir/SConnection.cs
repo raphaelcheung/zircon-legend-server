@@ -458,6 +458,7 @@ namespace Server.Envir
             if (Stage != GameStage.Game) return;
 
             int type = (int)p.PickType;
+
             if (Enum.IsDefined(typeof(PickType), type))
                 Player.PickUp((PickType)type);
         }
