@@ -71,7 +71,7 @@ namespace Server.Envir.Translations
             LearnBookFailed= "修炼技能失败，书籍没有包含你缺少的页面。";
             LearnBookSuccess= "恭喜，你成功修炼技能 {0}。";
             LearnBook4Failed= "你的技能 {0} 经验有所增加。";
-            LearnBook4Success= "恭喜，你成功修炼了 {1} {0} 级。";
+            LearnBook4Success= "恭喜，你成功将技能 {0} 修炼到了 {1} 级。";
             StorageSafeZone = "只有在安全区才能使用仓库。";
             GuildStoragePermission= "你没有权限拿去公会的仓库物品。";
             GuildStorageSafeZone= "只有在安全区才能使用公会仓库。";

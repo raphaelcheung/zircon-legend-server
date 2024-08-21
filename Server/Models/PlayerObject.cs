@@ -6377,6 +6377,8 @@ namespace Zircon.Server.Models
 
                     MagicInfo info = SEnvir.MagicInfoList.Binding.First(x => x.Index == item.Info.Shape);
 
+                    string msg = "";
+
                     if (Magics.TryGetValue(info.Magic, out magic))
                     {
                         int rate = (magic.Level - 2) * 500;
@@ -6390,19 +6392,23 @@ namespace Zircon.Server.Models
 
                             Enqueue(new S.MagicLeveled { InfoIndex = magic.Info.Index, Level = magic.Level, Experience = magic.Experience });
 
-                            Connection.ReceiveChat(string.Format(Connection.Language.LearnBook4Success, magic.Info.Name, magic.Level), MessageType.System);
+                            msg = string.Format(Connection.Language.LearnBook4Success, magic.Info.Name, magic.Level);
+
+                            Connection.ReceiveChat(msg, MessageType.System);
 
                             foreach (SConnection con in Connection.Observers)
-                                con.ReceiveChat(string.Format(con.Language.LearnBook4Success, magic.Info.Name, magic.Level), MessageType.System);
+                                con.ReceiveChat(msg, MessageType.System);
 
                             RefreshStats();
                         }
                         else
                         {
-                            Connection.ReceiveChat(string.Format(Connection.Language.LearnBook4Failed, magic.Level + 1), MessageType.System);
+                            msg = string.Format(Connection.Language.LearnBook4Failed, magic.Info.Name);
+
+                            Connection.ReceiveChat(msg, MessageType.System);
 
                             foreach (SConnection con in Connection.Observers)
-                                con.ReceiveChat(string.Format(con.Language.LearnBook4Failed, magic.Level + 1), MessageType.System);
+                                con.ReceiveChat(msg, MessageType.System);
 
                             Enqueue(new S.MagicLeveled { InfoIndex = magic.Info.Index, Level = magic.Level, Experience = magic.Experience });
                         }
@@ -6416,10 +6422,12 @@ namespace Zircon.Server.Models
 
                         Enqueue(new S.NewMagic { Magic = magic.ToClientInfo() });
 
-                        Connection.ReceiveChat(string.Format(Connection.Language.LearnBookSuccess, magic.Info.Name), MessageType.System);
+                        msg = string.Format(Connection.Language.LearnBookSuccess, magic.Info.Name);
+
+                        Connection.ReceiveChat(msg, MessageType.System);
 
                         foreach (SConnection con in Connection.Observers)
-                            con.ReceiveChat(string.Format(con.Language.LearnBookSuccess, magic.Info.Name), MessageType.System);
+                            con.ReceiveChat(msg, MessageType.System);
 
                         RefreshStats();
                     }
