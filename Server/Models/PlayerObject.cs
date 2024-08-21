@@ -6375,15 +6375,13 @@ namespace Zircon.Server.Models
                         break;
                     }
 
-
-
                     MagicInfo info = SEnvir.MagicInfoList.Binding.First(x => x.Index == item.Info.Shape);
 
                     if (Magics.TryGetValue(info.Magic, out magic))
                     {
                         int rate = (magic.Level - 2) * 500;
 
-                        magic.Experience += SEnvir.Random.Next(50) + 50;
+                        magic.Experience += item.CurrentDurability + 50;
 
                         if (magic.Experience >= rate || (magic.Level == 3 && SEnvir.Random.Next(rate) == 0))
                         {

@@ -522,6 +522,9 @@ namespace Server.Envir
 
         public static bool ServerBuffChanged;
 
+        public static byte[]? DbSystemFile { get; private set; } = null;
+        public static string DbSystemFileHash { get; private set; } = string.Empty;
+
         #region Database
 
         private static Session Session;
@@ -631,6 +634,11 @@ namespace Server.Envir
 
         private static void LoadDatabase()
         {
+
+            //@"./datas/Database/"
+            DbSystemFile = File.ReadAllBytes(@"./datas/Database/System.db");
+            DbSystemFileHash = Functions.CalcMD5(DbSystemFile);
+
             Random = new Random();
 
             Session = new Session(SessionMode.Users)

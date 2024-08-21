@@ -68,9 +68,9 @@ namespace Server.Envir.Translations
             CannotTownTeleport= "无法在此地图上进行回城传送。";
             CannotRandomTeleport= "无法在此地图上进行随机传送。";
             ConnotResetCompanionSkill= "要使用 {0} 请输入 '@EnableLevel{1}'";
-            LearnBookFailed= "修炼技能失败，书籍页数不够。";
+            LearnBookFailed= "修炼技能失败，书籍没有包含你缺少的页面。";
             LearnBookSuccess= "恭喜，你成功修炼技能 {0}。";
-            LearnBook4Failed= "无法修炼级别要求 {0} 的技能。";
+            LearnBook4Failed= "你的技能 {0} 经验有所增加。";
             LearnBook4Success= "恭喜，你成功修炼了 {1} {0} 级。";
             StorageSafeZone = "只有在安全区才能使用仓库。";
             GuildStoragePermission= "你没有权限拿去公会的仓库物品。";

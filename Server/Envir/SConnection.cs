@@ -475,6 +475,30 @@ namespace Server.Envir
             Player.ItemUse(p.Link);
         }
 
+        public void Process(C.CheckClientDb p)
+        {
+            if (string.IsNullOrEmpty(p.Hash)) return;
+
+            if (p.Hash == SEnvir.DbSystemFileHash)
+                Enqueue(new S.CheckClientDb()
+                {
+                    CurrentIndex = 0,
+                    Datas = [0],
+                    IsUpgrading = false,
+                    TotalCount = 0,
+                });
+            else
+            {
+                Enqueue(new S.CheckClientDb()
+                {
+                    CurrentIndex = 0,
+                    Datas = SEnvir.DbSystemFile,
+                    IsUpgrading = true,
+                    TotalCount = 1,
+                });
+            }
+        }
+
         public void Process(C.BeltLinkChanged p)
         {
             if (Stage != GameStage.Game) return;
