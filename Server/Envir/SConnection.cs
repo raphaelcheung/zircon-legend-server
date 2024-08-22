@@ -54,7 +54,7 @@ namespace Server.Envir
                 SEnvir.Log(e.ToString());
                 SEnvir.Log(e.StackTrace.ToString());
                 
-                File.AppendAllText(@".\Errors.txt", e.StackTrace + Environment.NewLine);
+                File.AppendAllText("./datas/Errors.txt", e.StackTrace + Environment.NewLine);
             };
 
             SEnvir.Log(string.Format("[Connection] IP Address:{0}", IPAddress));
@@ -516,11 +516,20 @@ namespace Server.Envir
         {
             if (p.Text.Length > Globals.MaxChatLength) return;
 
-            if (Stage == GameStage.Game)
-                Player.Chat(p.Text);
+            try
+            {
+                if (Stage == GameStage.Game)
+                    Player.Chat(p.Text);
 
-            if (Stage == GameStage.Observer)
-                Observed.Player.ObserverChat(this, p.Text);
+                if (Stage == GameStage.Observer)
+                    Observed.Player.ObserverChat(this, p.Text);
+            }
+            catch(Exception e)
+            {
+                SEnvir.Log($"发送聊天消息：{p.Text}");
+                OnException(this, e);
+            }
+
         }
         public void Process(C.NPCCall p)
         {

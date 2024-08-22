@@ -1405,7 +1405,7 @@ namespace Server.Envir
                 lines.Add(line);
             }
 
-            File.AppendAllLines(@".\Logs.txt", lines);
+            File.AppendAllLines("./datas/Logs.txt", lines);
 
             lines.Clear();
 
@@ -1416,7 +1416,7 @@ namespace Server.Envir
                 lines.Add(line);
             }
 
-            File.AppendAllLines(@".\Chat Logs.txt", lines);
+            File.AppendAllLines("./datas/Chat Logs.txt", lines);
 
             lines.Clear();
             

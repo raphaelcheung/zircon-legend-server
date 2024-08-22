@@ -1159,7 +1159,7 @@ namespace Zircon.Server.Models
                 text = text.Remove(0, 1);
                 parts = text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                if (parts.Length == 0) return;
+                if (parts.Length < 2) return;
 
                 SConnection con = SEnvir.GetConnectionByCharacter(parts[0]);
 
@@ -1188,7 +1188,7 @@ namespace Zircon.Server.Models
 
                 if (SEnvir.Now < Character.Account.ChatBanExpiry) return;
 
-                con.ReceiveChat(string.Format("{0}=> {text.Remove(0, parts[0].Length)}", Name), Character.Account.TempAdmin ? MessageType.GMWhisperIn : MessageType.WhisperIn);
+                con.ReceiveChat(string.Format("{0} 悄悄对你说：{1}", Name, parts[1]), Character.Account.TempAdmin ? MessageType.GMWhisperIn : MessageType.WhisperIn);
             }
             else if (text.StartsWith("!!"))
             {
