@@ -44,7 +44,7 @@
 
 包含了地图数据比较大，压缩之后仍然有近 800Mb，因此只能放在网盘中。
 
-【[百度网盘分享 2024-8-15 更新](链接：https://pan.baidu.com/s/1sejO4ixYrYTxqtP5in9BIQ?pwd=cq41)】
+【[百度网盘 2024-8-15](链接：https://pan.baidu.com/s/1OMkb834cOtxF8KIrlJMKRQ?pwd=h1bv)】
 
 内置账号： **zrf@zrf.zrf、raphael@gm.gm** ，密码均为  **123456** ， 可直接登录游玩。
 
