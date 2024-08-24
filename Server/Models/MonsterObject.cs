@@ -686,11 +686,11 @@ namespace Zircon.Server.Models
 
             ApplyBonusStats();
 
-            MoveDelay = MonsterInfo.MoveDelay * (20 - SummonLevel) / 20;
-            AttackDelay = MonsterInfo.AttackDelay * (20 - SummonLevel) / 20;
-            if (AttackDelay < 200) AttackDelay = 200;
+            MoveDelay = MonsterInfo.MoveDelay * (48 - SummonLevel) / 48;
+            AttackDelay = MonsterInfo.AttackDelay * (48 - SummonLevel) / 48;
+            if (AttackDelay < 400) AttackDelay = 400;
 
-            int live_rate = MonsterInfo.Undead ? 5 : 10;
+            int live_rate = MonsterInfo.Undead ? 7 : 10;
             int attack_rate = MonsterInfo.Undead ? 8 : 10;
 
             if (SummonLevel > 0)
