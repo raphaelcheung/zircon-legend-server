@@ -63,6 +63,10 @@ namespace Server.Envir
             BeginReceive();
 
             Enqueue(new G.Connected());
+            Enqueue(new S.CheckClientHash()
+            {
+                ClientFileHash = SEnvir.ClientFileHash.ToDictionary()
+            });
         }
 
         public override void Disconnect()
@@ -246,11 +250,11 @@ namespace Server.Envir
         }
         public void Process(G.Connected p)
         {
-            if (Config.CheckVersion)
-            {
-                Enqueue(new G.CheckVersion());
-                return;
-            }
+            //if (Config.CheckVersion)
+            //{
+            //    Enqueue(new G.CheckVersion());
+            //    return;
+            //}
 
             Stage = GameStage.Login;
             Enqueue(new G.GoodVersion());
@@ -259,11 +263,11 @@ namespace Server.Envir
         {
             if (Stage != GameStage.None) return;
 
-            if (!Functions.IsMatch(Config.ClientHash, p.ClientHash))
-            {
-                SendDisconnect(new G.Disconnect { Reason = DisconnectReason.WrongVersion });
-                return;
-            }
+            //if (!Functions.IsMatch(Config.ClientHash, p.ClientHash))
+            //{
+            //    SendDisconnect(new G.Disconnect { Reason = DisconnectReason.WrongVersion });
+            //    return;
+            //}
 
             Stage = GameStage.Login;
             Enqueue(new G.GoodVersion());

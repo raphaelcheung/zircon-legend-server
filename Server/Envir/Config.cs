@@ -17,8 +17,6 @@ namespace Server.Envir
             UserCountPort = 3000;
             MaxPacket = 50;
             PacketBanTime = TimeSpan.FromMinutes(5);
-            CheckVersion = true;
-            VersionPath = "./Zircon.exe";
             DBSaveDelay = TimeSpan.FromMinutes(5);
             MapPath = "./Map/";
             MasterPassword = "REDACTED";
@@ -114,11 +112,8 @@ namespace Server.Envir
 
 
         [ConfigSection("System")]
-        public static bool CheckVersion { get; set; } 
-        public static string VersionPath { get; set; } 
         public static TimeSpan DBSaveDelay { get; set; } 
         public static string MapPath { get; set; } 
-        public static byte[] ClientHash;
         public static string MasterPassword { get; set; } 
         public static string ClientPath { get; set; }
         public static DateTime ReleaseDate { get; set; } 
@@ -126,7 +121,7 @@ namespace Server.Envir
         public static string StarterGuildName { get; set; } 
         public static DateTime EasterEventEnd { get; set; } 
         public static DateTime HalloweenEventEnd { get; set; } 
-        public static DateTime ChristmasEventEnd { get; set; } 
+        public static DateTime ChristmasEventEnd { get; set; }
 
 
         [ConfigSection("Control")]
@@ -226,21 +221,5 @@ namespace Server.Envir
         public static int SkillRate { get; set; }
         public static int CompanionRate { get; set; } 
 
-
-        public static void LoadVersion()
-        {
-            try
-            {
-                if (File.Exists(VersionPath))
-                    using (FileStream stream = File.OpenRead(VersionPath))
-                    using (MD5 md5 = MD5.Create())
-                        ClientHash = md5.ComputeHash(stream);
-                else ClientHash = null;
-            }
-            catch (Exception ex)
-            {
-                SEnvir.Log(ex.ToString());
-            }
-        }
     }
 }

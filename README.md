@@ -50,7 +50,7 @@
 
 其中  **raphael@gm.gm**  为管理员账号，包含了三个管理员角色 **raphael01、raphael02、raphael03** 管理员密码为  **654321** 。
 
-去版本发布页下载最新的服务器配置文件` Server.ini `，根据需要修改服务器 IP 以及端口。
+去版本 [发布页面](https://gitee.com/raphaelcheung/zircon-legend-server/releases) 下载最新的服务器配置文件` Server.ini `，根据需要修改服务器 IP 以及端口。
 
 ### 部署游戏服务
 
@@ -94,7 +94,7 @@ networks:
 
 - #### Windows 10 部署
 
-新建一个英文名服务器根目录，从发布页下载运行包解压到根目录下。
+新建一个英文名服务器根目录，从 [发布页面](https://gitee.com/raphaelcheung/zircon-legend-server/releases) 下载运行包解压到根目录下。
 
 根目录下建立一个子目录` datas `。
 

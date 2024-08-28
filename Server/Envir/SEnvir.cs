@@ -38,7 +38,10 @@ namespace Server.Envir
             Context.Post(method, null);
         }
 
+        public static bool SupportClientUpgrade { get; private set; } = false;
+        public static Dictionary<string, string> ClientFileHash { get; } = new Dictionary<string, string>();
         #endregion
+
 
         #region Logging
 
@@ -631,7 +634,71 @@ namespace Server.Envir
             //EnvirThread.Start();
             EnvirLoop();
         }
+        public static void LoadClientHash()
+        {
+            Config.ClientPath = Config.ClientPath.Trim();
 
+            if (string.IsNullOrEmpty(Config.ClientPath) || !Directory.Exists(Config.ClientPath))
+            {
+                Log($"客户端路径无效，关闭客户端更新机制");
+                return;
+            }
+
+            string hash_file = Path.Combine(Config.ClientPath, @"./clientupgrade.hash");
+            if (File.Exists(hash_file))
+            {
+                using(StreamReader sr = new StreamReader(hash_file))
+                {
+                    string? line;
+                    string[] parts;
+                    while((line = sr.ReadLine()) != null)
+                    {
+                        parts = line.Split('=');
+                        if (parts.Length < 2) continue;
+
+                        ClientFileHash[parts[0]] = parts[1];
+                    }
+                }
+
+                Log($"已读取读取客户端更新列表，共 {ClientFileHash.Count} 个文件");
+            }
+            else
+            {
+                Log($"生成客户端更新列表 ...");
+                DirectoryInfo di = new DirectoryInfo(Config.ClientPath);
+                LoadDirHash(di, @"./");
+                SaveHashFile(hash_file);
+                Log($"客户端更新列表已成功生成 {hash_file}，共 {ClientFileHash.Count} 个文件");
+            }
+        }
+        private static void SaveHashFile(string filename)
+        {
+            using(StreamWriter sw = new StreamWriter(filename, false))
+            {
+                foreach(var item in ClientFileHash)
+                {
+                    sw.WriteLine($"{item.Key}={item.Value}");
+                }
+            }
+        }
+        private static void LoadDirHash(DirectoryInfo di, string keyroot)
+        {
+            FileInfo[] files = di.GetFiles();
+            byte[] datas;
+            string key;
+            foreach(var file in files)
+            {
+                key = Path.Combine(keyroot, file.Name).ToLower();
+                datas = File.ReadAllBytes(file.FullName);
+                ClientFileHash[key] = Functions.CalcMD5(datas);
+            }
+
+            DirectoryInfo[] directories = di.GetDirectories();
+            foreach(var dir in directories)
+            {
+                LoadDirHash(dir, Path.Combine(keyroot, $"{dir.Name}/"));
+            }
+        }
         private static void LoadDatabase()
         {
 
