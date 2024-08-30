@@ -699,6 +699,7 @@ namespace Server.Envir
                 LoadDirHash(dir, Path.Combine(keyroot, $"{dir.Name}/"));
             }
         }
+
         private static void LoadDatabase()
         {
 

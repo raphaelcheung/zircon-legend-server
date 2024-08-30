@@ -19,6 +19,7 @@ namespace Server.Envir
     public sealed class SConnection : BaseConnection
     {
         private static int SessionCount;
+        private bool Upgrading = false;
 
         protected override TimeSpan TimeOutDelay { get { return Config.TimeOut; } }
 
@@ -282,6 +283,78 @@ namespace Server.Envir
 
             Ping = ping;
             Enqueue(new G.PingResponse { Ping = Ping, ObserverPacket = false });
+        }
+        public void Process(C.UpgradeClient p)
+        {
+            if (Upgrading) return;
+
+            if (SEnvir.ClientFileHash.Count <= 0 
+                || !SEnvir.SupportClientUpgrade 
+                || string.IsNullOrEmpty(p.FileKey))
+            {
+                Enqueue(new S.UpgradeClient()
+                {
+                    FileKey = p.FileKey,
+                    TotalSize = 0,
+                    Datas = [0],
+                });
+                return;
+            }
+
+            if (!SEnvir.ClientFileHash.TryGetValue(p.FileKey, out var _))
+            {
+                Enqueue(new S.UpgradeClient()
+                {
+                    FileKey = p.FileKey,
+                    TotalSize = 0,
+                    Datas = [0],
+                });
+                return;
+            }
+
+            string filename = Path.Combine(Config.ClientPath, p.FileKey);
+            if (!File.Exists(filename))
+            {
+                Enqueue(new S.UpgradeClient()
+                {
+                    FileKey = p.FileKey,
+                    TotalSize = 0,
+                    Datas = [0],
+                });
+                return;
+            }
+
+            Upgrading = true;
+            using (FileStream stream = File.OpenRead(filename))
+            {
+                long total = stream.Length;
+                int index = 0;
+                int curSize = 0;
+                byte[] datas;
+
+                while(index < total)
+                {
+                    curSize = 2 * 1024 * 1024;
+                    if ((curSize + index) > total)
+                        curSize = (int)total - index;
+
+                    datas = new byte[curSize];
+                    stream.Read(datas, 0, curSize);
+
+                    Enqueue(new S.UpgradeClient()
+                    {
+                        FileKey = p.FileKey,
+                        TotalSize = (int)total,
+                        StartIndex = index,
+                        Datas = datas,
+                    });
+
+                    index += curSize;
+                    Thread.Sleep(1);
+                }
+            }
+
+            Upgrading = false;
         }
 
         public void Process(C.NewAccount p)
