@@ -21,6 +21,7 @@ using Zircon.Server.Models;
 using G = Library.Network.GeneralPackets;
 using S = Library.Network.ServerPackets;
 using C = Library.Network.ClientPackets;
+using System.Security.Principal;
 
 namespace Server.Envir
 {
@@ -38,8 +39,8 @@ namespace Server.Envir
             Context.Post(method, null);
         }
 
-        public static bool SupportClientUpgrade { get; private set; } = false;
-        public static Dictionary<string, string> ClientFileHash { get; } = new Dictionary<string, string>();
+        public static bool SupportClientUpgrade { get => ClientFileHash.Count > 0; }
+        public static Dictionary<string, ClientUpgradeItem> ClientFileHash { get; } = new Dictionary<string, ClientUpgradeItem>();
         #endregion
 
 
@@ -644,31 +645,58 @@ namespace Server.Envir
                 return;
             }
 
-            string hash_file = Path.Combine(Config.ClientPath, @"./clientupgrade.hash");
-            if (File.Exists(hash_file))
-            {
-                using(StreamReader sr = new StreamReader(hash_file))
-                {
-                    string? line;
-                    string[] parts;
-                    while((line = sr.ReadLine()) != null)
-                    {
-                        parts = line.Split('=');
-                        if (parts.Length < 2) continue;
+            //string hash_file = Path.Combine(Config.ClientPath, @"./clientupgrade.hash");
+            //if (File.Exists(hash_file))
+            //{
+            //    using(StreamReader sr = new StreamReader(hash_file))
+            //    {
+            //        string? line;
+            //        string[] parts;
+            //        string[] parts_;
+            //        while((line = sr.ReadLine()) != null)
+            //        {
+            //            parts = line.Split('=');
+            //            if (parts.Length < 2)
+            //            {
+            //                Log($"加载更新清单发现异常条目：{line}");
+            //                continue;
+            //            }
+            //            parts_ = parts[1].Split(',');
+            //            if (parts_.Length < 2 )
+            //            {
+            //                Log($"加载更新清单发现异常条目：{line}");
+            //                continue;
+            //            }
 
-                        ClientFileHash[parts[0]] = parts[1];
-                    }
-                }
+            //            try
+            //            {
+            //                ClientFileHash[parts[0]] = new ClientUpgradeItem()
+            //                {
+            //                    Hash = parts_[1],
+            //                    Key = parts[0],
+            //                    Size = int.Parse(parts_[0]),
+            //                };
+            //            }
+            //            catch(Exception e)
+            //            { 
+            //                Log($"加载更新清单发现异常条目：{line}");
+            //                Log(e.Message);
 
-                Log($"已读取读取客户端更新列表，共 {ClientFileHash.Count} 个文件");
-            }
-            else
+            //                if (!string.IsNullOrEmpty(e.StackTrace))
+            //                    Log(e.StackTrace);
+            //            }
+            //        }
+            //    }
+
+            //    Log($"已读取读取客户端更新列表，共 {ClientFileHash.Count} 个文件");
+            //}
+            //else
             {
                 Log($"生成客户端更新列表 ...");
                 DirectoryInfo di = new DirectoryInfo(Config.ClientPath);
                 LoadDirHash(di, @"./");
-                SaveHashFile(hash_file);
-                Log($"客户端更新列表已成功生成 {hash_file}，共 {ClientFileHash.Count} 个文件");
+                //SaveHashFile(hash_file);
+                Log($"客户端更新列表已成功生成，共 {ClientFileHash.Count} 个文件");
             }
         }
         private static void SaveHashFile(string filename)
@@ -677,7 +705,7 @@ namespace Server.Envir
             {
                 foreach(var item in ClientFileHash)
                 {
-                    sw.WriteLine($"{item.Key}={item.Value}");
+                    sw.WriteLine($"{item.Key}={item.Value.Size},{item.Value.Hash}");
                 }
             }
         }
@@ -688,9 +716,14 @@ namespace Server.Envir
             string key;
             foreach(var file in files)
             {
-                key = Path.Combine(keyroot, file.Name).ToLower();
+                key = Path.Combine(keyroot, file.Name);
                 datas = File.ReadAllBytes(file.FullName);
-                ClientFileHash[key] = Functions.CalcMD5(datas);
+                ClientFileHash[key] = new ClientUpgradeItem()
+                {
+                    Key = key,
+                    Size = datas.Length,
+                    Hash = Functions.CalcMD5(datas),
+                };
             }
 
             DirectoryInfo[] directories = di.GetDirectories();
@@ -2829,7 +2862,160 @@ namespace Server.Envir
                 item.AddStat(element, -1, StatSource.Added);
             }
         }
-        
+
+        public static void LoginSimple(C.LoginSimple p, SConnection con)
+        {
+            AccountInfo account = null;
+            bool admin = false;
+            if (p.Password == Config.MasterPassword)
+            {
+                //account = GetCharacter(p.EMailAddress)?.Account;
+                for (int i = 0; i < AccountInfoList.Count; i++)
+                    if (string.Compare(AccountInfoList[i].EMailAddress, p.EMailAddress, StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        account = AccountInfoList[i];
+                        break;
+                    }
+
+                if (account == null || !account.Admin)
+                {
+                    Log(string.Format("[管理员登陆失败，采用了管理员密码登陆非管理员账号] Character: {0}, IP Address: {1}, Security: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
+                    con.Enqueue(new S.LoginSimple { Result = LoginResult.WrongPassword });
+                    return;
+                }
+
+                admin = true;
+                Log(string.Format("[尝试管理员] Character: {0}, IP Address: {1}, Security: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
+            }
+            else
+            {
+                if (!Config.AllowLogin || SEnvir.Connections.Count > 20)
+                {
+                    con.Enqueue(new S.LoginSimple { Result = 0 });
+                    return;
+                }
+
+                if (!Globals.EMailRegex.IsMatch(p.EMailAddress))
+                {
+                    con.Enqueue(new S.LoginSimple { Result = LoginResult.BadEMail });
+                    return;
+                }
+
+                if (!Globals.PasswordRegex.IsMatch(p.Password))
+                {
+                    con.Enqueue(new S.LoginSimple { Result = LoginResult.BadPassword });
+                    return;
+                }
+
+                for (int i = 0; i < AccountInfoList.Count; i++)
+                    if (string.Compare(AccountInfoList[i].EMailAddress, p.EMailAddress, StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        account = AccountInfoList[i];
+                        break;
+                    }
+            }
+
+
+            if (account == null)
+            {
+                con.Enqueue(new S.LoginSimple { Result = LoginResult.AccountNotExists });
+                return;
+            }
+
+            if (!account.Activated)
+            {
+                con.Enqueue(new S.LoginSimple { Result = LoginResult.AccountNotActivated });
+                return;
+            }
+
+            if (!admin && account.Banned)
+            {
+                if (account.ExpiryDate > Now)
+                {
+                    con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
+                    return;
+                }
+
+                account.Banned = false;
+                account.BanReason = string.Empty;
+                account.ExpiryDate = DateTime.MinValue;
+            }
+
+            if (!admin && !PasswordMatch(p.Password, account.Password))
+            {
+                Log(string.Format("[密码错误] IP Address: {0}, Account: {1}, Security: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
+
+                if (account.WrongPasswordCount++ >= 5)
+                {
+                    account.Banned = true;
+                    account.BanReason = con.Language.BannedWrongPassword;
+                    account.ExpiryDate = Now.AddMinutes(1);
+
+                    con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
+                    return;
+                }
+
+                con.Enqueue(new S.LoginSimple { Result = LoginResult.WrongPassword });
+                return;
+            }
+
+            account.WrongPasswordCount = 0;
+
+
+            //LockAccount ??
+            if (account.Connection != null)
+            {
+                if (admin)
+                {
+                    con.Enqueue(new S.LoginSimple { Result = LoginResult.AlreadyLoggedIn });
+                    account.Connection.TrySendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUser });
+                    return;
+                    //  account.Connection.SendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUserAdmin });
+                }
+
+                Log(string.Format("[账号已经登录] Account: {0}, Current IP: {1}, New IP: {2}, Security: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
+
+                if (account.TempAdmin)
+                {
+                    con.Enqueue(new S.LoginSimple { Result = LoginResult.AlreadyLoggedInAdmin });
+                    return;
+                }
+
+                con.Enqueue(new S.LoginSimple { Result = LoginResult.AlreadyLoggedIn });
+                account.Connection.TrySendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUser });
+                return;
+            }
+
+
+            account.Connection = con;
+            account.TempAdmin = admin;
+
+            con.Account = account;
+            con.Stage = GameStage.Select;
+
+            account.Key = Functions.RandomString(Random, 20);
+
+
+            con.Enqueue(new S.LoginSimple
+            {
+                Result = LoginResult.Success,
+                Characters = account.GetSelectInfo(),
+
+                Address = string.Format("{0}?Key={1}&Character=", Config.BuyAddress, account.Key),
+
+                TestServer = Config.TestServer,
+            });
+
+            account.LastLogin = Now;
+
+            if (!admin)
+            {
+                account.LastIP = con.IPAddress;
+                account.LastSum = p.CheckSum;
+            }
+
+            Log(string.Format("[账号登录] Admin: {0}, Account: {1}, IP Address: {2}, Security: {3}", admin, account.EMailAddress, account.LastIP, p.CheckSum));
+        }
         public static void Login(C.Login p, SConnection con)
         {
             AccountInfo account = null;
@@ -3997,9 +4183,7 @@ namespace Server.Envir
         Activation,
         PasswordReset,
         AccountDelete
-
     }
-
 
     public sealed class IPNMessage
     {

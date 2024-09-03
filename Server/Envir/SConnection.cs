@@ -13,6 +13,7 @@ using Zircon.Server.Models;
 using G = Library.Network.GeneralPackets;
 using C = Library.Network.ClientPackets;
 using S = Library.Network.ServerPackets;
+using System.Security.Principal;
 
 namespace Server.Envir
 {
@@ -64,10 +65,19 @@ namespace Server.Envir
             BeginReceive();
 
             Enqueue(new G.Connected());
-            Enqueue(new S.CheckClientHash()
+
+
+            var packet = new S.CheckClientHash()
             {
-                ClientFileHash = SEnvir.ClientFileHash.ToDictionary()
-            });
+                ClientFileHash = new List<ClientUpgradeItem>(),
+            };
+
+            foreach(var pair in SEnvir.ClientFileHash)
+            {
+                packet.ClientFileHash.Add(pair.Value);
+            }
+
+            Enqueue(packet);
         }
 
         public override void Disconnect()
@@ -289,9 +299,9 @@ namespace Server.Envir
             if (Upgrading) return;
 
             if (SEnvir.ClientFileHash.Count <= 0 
-                || !SEnvir.SupportClientUpgrade 
                 || string.IsNullOrEmpty(p.FileKey))
             {
+                SEnvir.Log($"服务器没有加载更新清单或请求的文件名为空 ClientFileHash.Count={SEnvir.ClientFileHash.Count} FileKey={p.FileKey}");
                 Enqueue(new S.UpgradeClient()
                 {
                     FileKey = p.FileKey,
@@ -303,6 +313,8 @@ namespace Server.Envir
 
             if (!SEnvir.ClientFileHash.TryGetValue(p.FileKey, out var _))
             {
+                SEnvir.Log($"更新清单中没有找到请求的文件：{p.FileKey}");
+
                 Enqueue(new S.UpgradeClient()
                 {
                     FileKey = p.FileKey,
@@ -315,6 +327,8 @@ namespace Server.Envir
             string filename = Path.Combine(Config.ClientPath, p.FileKey);
             if (!File.Exists(filename))
             {
+                SEnvir.Log($"请求更新的文件找不到对应的实体文件：FileKey={p.FileKey} {filename}");
+
                 Enqueue(new S.UpgradeClient()
                 {
                     FileKey = p.FileKey,
@@ -334,7 +348,7 @@ namespace Server.Envir
 
                 while(index < total)
                 {
-                    curSize = 2 * 1024 * 1024;
+                    curSize = Config.UpgradeChunkSize > 1024 ? Config.UpgradeChunkSize : 512 * 1024;
                     if ((curSize + index) > total)
                         curSize = (int)total - index;
 
@@ -395,6 +409,21 @@ namespace Server.Envir
             if (Stage != GameStage.Login) return;
 
             SEnvir.Login(p, this);
+        }
+        public void Process(C.LoginSimple p)
+        {
+            if (Stage != GameStage.Login) return;
+            SEnvir.LoginSimple(p, this);
+        }
+        public void Process(C.AccountExpand p)
+        {
+            if (Stage != GameStage.Game) return;
+
+            Enqueue(new S.AccountExpand()
+            {
+                BlockList = Account.BlockingList.Select(x => x.ToClientInfo()).ToList(),
+                Items = Account.Items.Select(x => x.ToClientInfo()).ToList(),
+            });
         }
         public void Process(C.Logout p)
         {

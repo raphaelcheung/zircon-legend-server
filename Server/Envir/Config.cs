@@ -114,14 +114,15 @@ namespace Server.Envir
         [ConfigSection("System")]
         public static TimeSpan DBSaveDelay { get; set; } 
         public static string MapPath { get; set; } 
-        public static string MasterPassword { get; set; } 
-        public static string ClientPath { get; set; }
+        public static string MasterPassword { get; set; }
+        public static string ClientPath { get; set; } = "";
         public static DateTime ReleaseDate { get; set; } 
         public static bool TestServer { get; set; } 
         public static string StarterGuildName { get; set; } 
         public static DateTime EasterEventEnd { get; set; } 
         public static DateTime HalloweenEventEnd { get; set; } 
         public static DateTime ChristmasEventEnd { get; set; }
+        public static int UpgradeChunkSize { get; set; } = 512 * 1014;//默认 512KB
 
 
         [ConfigSection("Control")]
