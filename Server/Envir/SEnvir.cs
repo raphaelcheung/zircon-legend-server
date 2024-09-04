@@ -1324,12 +1324,13 @@ namespace Server.Envir
 
                             foreach (SConnection conn in Connections)
                             {
-                                conn.ReceiveChat(string.Format(conn.Language.OnlineCount, Players.Count, Connections.Count(x => x.Stage == GameStage.Observer)), MessageType.Hint);
+                                if (conn.Account.Admin)
+                                    conn.ReceiveChat(string.Format(conn.Language.OnlineCount, Players.Count, Connections.Count(x => x.Stage == GameStage.Observer)), MessageType.Hint);
 
                                 switch (conn.Stage)
                                 {
                                     case GameStage.Game:
-                                        if (conn.Player.Character.Observable)
+                                        if (conn.Player.Character.Observable && conn.Observers.Count > 0)
                                             conn.ReceiveChat(string.Format(conn.Language.ObserverCount, conn.Observers.Count), MessageType.Hint);
                                         break;
                                     case GameStage.Observer:

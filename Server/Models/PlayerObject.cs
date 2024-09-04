@@ -11,6 +11,7 @@ using Server.Envir;
 using Zircon.Server.Models.Monsters;
 using S = Library.Network.ServerPackets;
 using C = Library.Network.ClientPackets;
+using System.Text;
 
 namespace Zircon.Server.Models
 {
@@ -1937,6 +1938,38 @@ namespace Zircon.Server.Models
                         foreach (PlayerObject user in SEnvir.Players)
                             user.ApplyCastleBuff();
 
+                        break;
+                    case "PLAYERONLINE":
+                        if (!Character.Account.TempAdmin) return;
+
+                        Connection.ReceiveChat(string.Format(Connection.Language.OnlineCount, SEnvir.Players.Count, SEnvir.Connections.Count(x => x.Stage == GameStage.Observer)), MessageType.Hint);
+                        break;
+
+                    case "CHARACTERONLINE":
+                        if (!Character.Account.TempAdmin) return;
+
+                        StringBuilder msg = new StringBuilder();
+                        int counter = 0;
+                        foreach(var conn in SEnvir.Connections)
+                        {
+                            if (msg.Length <= 0)
+                                msg.Append(conn.Player.Name);
+                            else
+                                msg.Append($"、{conn.Player.Name}");
+
+                            counter++;
+                            if (counter >= 20)
+                            {
+                                Connection.ReceiveChat($"在线角色太多，只列出 20 个：{msg.ToString()}", MessageType.System);
+                                counter = 0;
+                                break;
+                            }
+                        }
+
+                        if (counter > 0)
+                            Connection.ReceiveChat($"当前在线角色：{msg.ToString()}", MessageType.System);
+
+                        msg.Clear();
                         break;
                 }
 
