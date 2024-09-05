@@ -15,25 +15,28 @@ Console.WriteLine($"地图文件路径：{Config.MapPath}");
 
 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
 
+bool stop = false;
 bool running = true;
 
-Task t = new(ShowLog);
-t.Start();
-SEnvir.LoadClientHash();
-SEnvir.StartServer();
-t.Dispose();
-
-void ShowLog()
+Task.Run(() =>
 {
-    while(running)
+    stop = false;
+    while (running)
     {
-        while(SEnvir.DisplayLogs.TryDequeue(out string? log) && !string.IsNullOrEmpty(log))
+        while (SEnvir.DisplayLogs.TryDequeue(out string? log))
         {
-            Console.WriteLine(log);
+            if (log != null) Console.WriteLine(log);
         }
 
         Thread.Sleep(100);
     }
-}
+
+    stop = true;
+});
+
+SEnvir.LoadClientHash();
+SEnvir.StartServer();
+
+while(!stop) Thread.Sleep(100);
 
 ConfigReader.Save();
