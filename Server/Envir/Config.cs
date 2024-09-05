@@ -108,7 +108,8 @@ namespace Server.Envir
         public static TimeSpan PingDelay { get; set; }
         public static ushort UserCountPort { get; set; } 
         public static int MaxPacket { get; set; } 
-        public static TimeSpan PacketBanTime { get; set; } 
+        public static TimeSpan PacketBanTime { get; set; }
+        public static bool UseProxy { get; set; } = false;
 
 
         [ConfigSection("System")]
@@ -123,7 +124,7 @@ namespace Server.Envir
         public static DateTime HalloweenEventEnd { get; set; } 
         public static DateTime ChristmasEventEnd { get; set; }
         public static int UpgradeChunkSize { get; set; } = 512 * 1014;//默认 512KB
-
+        public static string WelcomeWords { get; set; } = "";
 
         [ConfigSection("Control")]
         public static bool AllowLogin { get; set; } 

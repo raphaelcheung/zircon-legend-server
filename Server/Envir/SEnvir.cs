@@ -22,6 +22,7 @@ using G = Library.Network.GeneralPackets;
 using S = Library.Network.ServerPackets;
 using C = Library.Network.ClientPackets;
 using System.Security.Principal;
+using System.Globalization;
 
 namespace Server.Envir
 {
@@ -50,13 +51,26 @@ namespace Server.Envir
         public static ConcurrentQueue<string> Logs = new ConcurrentQueue<string>();
         public static void Log(string log, bool hardLog = true)
         {
-            log = string.Format("[{0:F}]: {1}", Time.Now, log);
+            DateTime now = Time.Now.ToLocalTime();
 
-            if (DisplayLogs.Count < 100)
+            log = $"[{now.ToString("yyyy-MM-dd HH:mm:ss")}]: {log}";
+
+            if (DisplayLogs.Count < 300)
                 DisplayLogs.Enqueue(log);
 
             if (hardLog && Logs.Count < 1000)
                 Logs.Enqueue(log);
+        }
+
+        public static void Log(Exception ex)
+        {
+            Log(ex.Message);
+
+            if (!string.IsNullOrEmpty(ex.StackTrace))
+                Log(ex.StackTrace);
+
+            if (ex.InnerException != null)
+                Log(ex);
         }
         
         public static ConcurrentQueue<string> DisplayChatLogs = new ConcurrentQueue<string>();
@@ -103,7 +117,7 @@ namespace Server.Envir
             catch (Exception ex)
             {
                 Started = false;
-                Log(ex.ToString());
+                Log(ex);
             }
         }
         private static void StopNetwork(bool log = true)
@@ -131,7 +145,7 @@ namespace Server.Envir
             }
             catch (Exception ex)
             {
-                Log(ex.ToString());
+                Log(ex);
             }
 
             if (log) Log("网络已停止.");
@@ -144,13 +158,47 @@ namespace Server.Envir
                 if (_listener == null || !_listener.Server.IsBound) return;
 
                 TcpClient client = _listener.EndAcceptTcpClient(result);
+                string ipAddress;
 
-                string ipAddress = client.Client.RemoteEndPoint.ToString().Split(':')[0];
+                if (Config.UseProxy)
+                {
+                    NetworkStream stream = client.GetStream();
+
+                    StreamReader reader = new (stream);
+
+                    // 解析Proxy Protocol头
+                    string? line = reader.ReadLine();
+
+                    if (line != null && line.StartsWith("PROXY"))
+                    {
+                        string[] parts = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length == 6 && parts[0] == "PROXY" && !string.IsNullOrEmpty(parts[2]))
+                        {
+                            ipAddress = parts[2]; // 真实的客户端IP地址
+                        }
+                        else
+                        {
+                            Log($"代理模式下错误的代理头信息：{line} {client.Client.RemoteEndPoint.ToString()}");
+                            client.Close();
+                            ContinueListen();
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        Log($"代理模式下错误的代理头信息：{line} {client.Client.RemoteEndPoint.ToString()}");
+                        client.Close();
+                        ContinueListen();
+                        return;
+                    }
+                }
+                else
+                    ipAddress = client.Client.RemoteEndPoint.ToString().Split(':')[0];
 
                 DateTime banDate;
                 if (!IPBlocks.TryGetValue(ipAddress, out banDate) || banDate < Now)
                 {
-                    SConnection Connection = new SConnection(client);
+                    SConnection Connection = new SConnection(client, ipAddress);
 
                     if (Connection.Connected)
                         NewConnections.Enqueue(Connection);
@@ -158,16 +206,21 @@ namespace Server.Envir
             }
             catch (Exception ex)
             {
-                Log(ex.ToString());
+                Log(ex);
             }
             finally
             {
-                while (NewConnections?.Count >= 15)
-                    Thread.Sleep(1);
-
-                if (_listener != null && _listener.Server.IsBound)
-                    _listener.BeginAcceptTcpClient(Connection, null);
+                ContinueListen();
             }
+        }
+
+        private static void ContinueListen()
+        {
+            while (NewConnections?.Count >= 15)
+                Thread.Sleep(1);
+
+            if (_listener != null && _listener.Server.IsBound)
+                _listener.BeginAcceptTcpClient(Connection, null);
         }
 
         private static void CountConnection(IAsyncResult result)
@@ -266,7 +319,7 @@ namespace Server.Envir
             catch (Exception ex)
             {
                 WebServerStarted = false;
-                Log(ex.ToString());
+                Log(ex);
 
                 if (WebListener != null && WebListener.IsListening)
                     WebListener.Stop();
@@ -499,7 +552,7 @@ namespace Server.Envir
             }
             catch (Exception ex)
             {
-                Log(ex.ToString());
+                Log(ex);
             }
             finally
             {
@@ -1286,8 +1339,7 @@ namespace Server.Envir
                             ActiveObjects.Remove(ob);
                             ob.Activated = false;
 
-                            Log(ex.Message);
-                            Log(ex.StackTrace);
+                            Log(ex);
                             File.AppendAllText(@".\Errors.txt", ex.StackTrace + Environment.NewLine);
                         }
                     }
@@ -1419,8 +1471,7 @@ namespace Server.Envir
                 {
                     Session = null;
 
-                    Log(ex.Message);
-                    Log(ex.StackTrace);
+                    Log(ex);
                     File.AppendAllText(@".\Errors.txt", ex.StackTrace + Environment.NewLine);
 
                     Packet p = new G.Disconnect { Reason = DisconnectReason.Crashed };
@@ -3802,8 +3853,7 @@ namespace Server.Envir
                 }
                 catch (Exception ex)
                 {
-                    Log(ex.Message);
-                    Log(ex.StackTrace);
+                    Log(ex);
                 }
             });
         }
@@ -3852,8 +3902,7 @@ namespace Server.Envir
                 }
                 catch (Exception ex)
                 {
-                    Log(ex.Message);
-                    Log(ex.StackTrace);
+                    Log(ex);
                 }
             });
         }
@@ -3898,8 +3947,7 @@ namespace Server.Envir
                 }
                 catch (Exception ex)
                 {
-                    Log(ex.Message);
-                    Log(ex.StackTrace);
+                    Log(ex);
                 }
             });
         }
@@ -3948,8 +3996,7 @@ namespace Server.Envir
                 }
                 catch (Exception ex)
                 {
-                    Log(ex.Message);
-                    Log(ex.StackTrace);
+                    Log(ex);
                 }
             });
         }
@@ -3992,8 +4039,7 @@ namespace Server.Envir
                 }
                 catch (Exception ex)
                 {
-                    Log(ex.Message);
-                    Log(ex.StackTrace);
+                    Log(ex);
                 }
             });
         }

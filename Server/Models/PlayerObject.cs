@@ -686,6 +686,9 @@ namespace Zircon.Server.Models
 
             Connection.ReceiveChat(Connection.Language.Welcome, MessageType.Announcement);
 
+            if (!string.IsNullOrEmpty(Config.WelcomeWords))
+                Connection.ReceiveChat(Config.WelcomeWords, MessageType.Announcement);
+
             SendGuildInfo();
 
             if (Level > 0)

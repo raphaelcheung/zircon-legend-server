@@ -14,6 +14,8 @@ services:
         user: "0:0"
         volumes:
             - ./datas:/zircon/datas
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
 version: "3"
 networks:
     1panel-network:

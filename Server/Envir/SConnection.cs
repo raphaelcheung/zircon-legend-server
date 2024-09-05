@@ -42,9 +42,9 @@ namespace Server.Envir
 
         public StringMessages Language;
 
-        public SConnection(TcpClient client) : base(client)
+        public SConnection(TcpClient client, string realIp) : base(client)
         {
-            IPAddress = client.Client.RemoteEndPoint.ToString().Split(':')[0];
+            IPAddress = realIp;
             SessionID = ++SessionCount;
 
 
@@ -52,14 +52,14 @@ namespace Server.Envir
 
             OnException += (o, e) =>
             {
-                SEnvir.Log(string.Format("Crashed: Account: {0}, Character: {1}.", (Account != null ? Account.EMailAddress : "empty"), Player!=null?Player.Name:"empty"));
+                SEnvir.Log(string.Format("崩溃: Account: {0}, Character: {1}.", (Account != null ? Account.EMailAddress : "empty"), Player!=null?Player.Name:"empty"));
                 SEnvir.Log(e.ToString());
                 SEnvir.Log(e.StackTrace.ToString());
                 
                 File.AppendAllText("./datas/Errors.txt", e.StackTrace + Environment.NewLine);
             };
 
-            SEnvir.Log(string.Format("[Connection] IP Address:{0}", IPAddress));
+            SEnvir.Log(string.Format("[连接] IP Address:{0}", IPAddress));
 
             UpdateTimeOut();
             BeginReceive();
