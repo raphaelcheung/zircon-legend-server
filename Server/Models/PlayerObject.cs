@@ -1242,7 +1242,7 @@ namespace Zircon.Server.Models
                     Character.Account.GlobalTime = SEnvir.Now.AddSeconds(30);
                 }
 
-                text = string.Format("(!@){0}: {1}", Name, text.Remove(0, 2));
+                text = string.Format("{0} 全服喊话: {1}", Name, text.Remove(0, 2));
 
                 foreach (SConnection con in SEnvir.Connections)
                 {
@@ -1275,7 +1275,7 @@ namespace Zircon.Server.Models
                     }
                 }
 
-                text = string.Format("(!){0}: {1}", Name, text.Remove(0, 1));
+                text = string.Format("{0} 喊话: {1}", Name, text.Remove(0, 1));
                 ShoutTime = SEnvir.Now + Config.ShoutDelay;
 
                 foreach (PlayerObject player in CurrentMap.Players)
@@ -1297,7 +1297,7 @@ namespace Zircon.Server.Models
             {
                 if (!Character.Account.TempAdmin) return;
 
-                text = string.Format("{0}: {1}", Name, text.Remove(0, 2));
+                text = string.Format("发布通告: {1}", text.Remove(0, 2));
 
                 foreach (SConnection con in SEnvir.Connections)
                 {
