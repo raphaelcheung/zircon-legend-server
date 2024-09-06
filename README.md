@@ -1,10 +1,12 @@
-# 皓石传奇三  Zircon Mir3
+# 皓石传奇三- 服务器 Zircon Mir3 Server
 
 本开源项目仅供学习游戏技术，禁止商用以及非法用途。
 
 技术交流以及体验公益服请加QQ群：915941142。
 
-## 简介
+觉得本项目对你有帮助的别忘了 **点个星** ，祝你年年发大财！
+
+## 游戏简介
 
 ### 完整的传奇三游戏
 
@@ -125,6 +127,18 @@ ClientPath=./datas/Client
 
 - 如果需要更新启动器` Launcher.exe `，同样放入` Client `目录即可更新。
 
+### 反向代理
+
+如果你设置了` Nginx `反向代理游戏流量从而导致游戏服务器获取不到真实客户端 IP。
+
+你需要在` Nginx `上开启` proxy_protocol `，同时打开服务器的配置项：
+```
+[Network]
+UseProxy=True
+```
+
+这样服务器就能获取到转发流量的真实 IP 地址。
+
 ### GM 管理
 
 登录的时候，账号那里填写管理员账号，密码要使用管理员密码进行登录，才会具备 GM 权限。
@@ -170,6 +184,8 @@ ClientPath=./datas/Client
 @ENABLELEVEL15
 @EXTRACTORLOCK
 @ROLL [Amount]
+@PLAYERONLINE  //查看在线人数
+@CHARACTERONLINE //列举 20 个在线的角色名称
 ```
 
 ## 客户端
@@ -190,7 +206,7 @@ ClientPath=./datas/Client
 
 这样才能把子模块一并拉取下来。
 
-主干一直处于开发状态，尽量拉取发布版本更加稳定。<br/>
+主干处于持续开发状态，推荐拉取发布版本。<br/>
 <img src="Images/代码拉取.jpg" title="拉取代码"><br/>
 
 项目的编译依赖都已预设好，直接编译即可
