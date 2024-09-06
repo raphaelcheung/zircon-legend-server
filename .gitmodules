@@ -1,0 +1,4 @@
+[submodule "Library"]
+	path = Library
+	url = https://gitee.com/raphaelcheung/zircon-legend-library.git
+	branch = main
