@@ -1290,7 +1290,8 @@ namespace Server.Envir
 
                         connection = Connections[i];
 
-                        connection.Process();
+                        try{ connection.Process(); }
+                        catch(Exception ex) { Log(ex); }
                         bytesSent += connection.TotalBytesSent;
                         bytesReceived += connection.TotalBytesReceived;
                     }
@@ -1300,7 +1301,10 @@ namespace Server.Envir
                         conDelay = delay;
 
                     for (int i = Players.Count - 1; i >= 0; i--)
-                        Players[i].StartProcess();
+                    {
+                        try { Players[i].StartProcess(); }
+                        catch(Exception ex) { Log(ex); }
+                    }
 
                     TotalBytesSent = DBytesSent + bytesSent;
                     TotalBytesReceived = DBytesReceived + bytesReceived;
@@ -1308,7 +1312,10 @@ namespace Server.Envir
                     if (ServerBuffChanged)
                     {
                         for (int i = Players.Count - 1; i >= 0; i--)
-                            Players[i].ApplyServerBuff();
+                        {
+                            try { Players[i].ApplyServerBuff(); }
+                            catch (Exception ex) { Log(ex); }
+                        }
 
                         ServerBuffChanged = false;
                     }
@@ -1376,7 +1383,9 @@ namespace Server.Envir
 
                             foreach (SConnection conn in Connections)
                             {
-                                if (conn.Account.Admin)
+                                if (conn == null || !conn.Connected || conn.Disconnecting) continue;
+
+                                if (conn.Account?.Admin ?? false)
                                     conn.ReceiveChat(string.Format(conn.Language.OnlineCount, Players.Count, Connections.Count(x => x.Stage == GameStage.Observer)), MessageType.Hint);
 
                                 switch (conn.Stage)
@@ -1397,18 +1406,28 @@ namespace Server.Envir
                         CheckGuildWars();
 
                         foreach (KeyValuePair<MapInfo, Map> pair in Maps)
-                            pair.Value.Process();
+                        {
+                            try { pair.Value.Process(); }
+                            catch (Exception ex) { Log(ex); }
+
+                        }
 
                         foreach (SpawnInfo spawn in Spawns)
-                            spawn.DoSpawn(false);
+                        {
+                            try { spawn.DoSpawn(false); }
+                            catch (Exception ex) { Log(ex); }
+                        }
 
                         for (int i = ConquestWars.Count - 1; i >= 0; i--)
-                            ConquestWars[i].Process();
+                        {
+                            try { ConquestWars[i].Process(); }
+                            catch (Exception ex) { Log(ex); }
+                        }
 
                         while (!WebCommandQueue.IsEmpty)
                         {
-                            WebCommand webCommand;
-                            if (!WebCommandQueue.TryDequeue(out webCommand)) continue;
+                            WebCommand? webCommand;
+                            if (!WebCommandQueue.TryDequeue(out webCommand) || webCommand == null) continue;
 
                             switch (webCommand.Command)
                             {
@@ -1448,10 +1467,15 @@ namespace Server.Envir
 
                                 foreach (GuildMemberInfo member in guild.Members)
                                 {
-                                    member.DailyContribution = 0;
-                                    if (member.Account.Connection.Player == null) continue;
+                                    try
+                                    {
+                                        member.DailyContribution = 0;
+                                        if (member.Account.Connection.Player == null) continue;
 
-                                    member.Account.Connection.Enqueue(new S.GuildDayReset { ObserverPacket = false });
+                                        member.Account.Connection.Enqueue(new S.GuildDayReset { ObserverPacket = false });
+                                    }
+                                    catch (Exception ex) { Log(ex); }
+
                                 }
                             }
 
@@ -1463,7 +1487,8 @@ namespace Server.Envir
                             if (nextCount.TimeOfDay < info.StartTime) continue;
                             if (Now.TimeOfDay > info.StartTime) continue;
 
-                            StartConquest(info, false);
+                            try { StartConquest(info, false); }
+                            catch (Exception ex) { Log(ex); }
                         }
                     }
                 }

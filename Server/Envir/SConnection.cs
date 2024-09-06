@@ -40,7 +40,7 @@ namespace Server.Envir
         public List<AuctionInfo> MPSearchResults = new List<AuctionInfo>();
         public HashSet<AuctionInfo> VisibleResults = new HashSet<AuctionInfo>();
 
-        public StringMessages Language;
+        public StringMessages Language { get; set; }
 
         public SConnection(TcpClient client, string realIp) : base(client)
         {
