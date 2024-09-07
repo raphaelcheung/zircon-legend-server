@@ -57,8 +57,8 @@ namespace Server.Envir.Translations
             ConquestLost= "{0} 已经失去 {1}.";
             BossSpawn= "邪恶潜伏在 {0}.";
             HarvestRare= "有宝藏埋藏在 {0} 深处.";
-            NetherGateOpen= "通往冥界的大门已经开启, {0}, {1}";
-            NetherGateClosed= "通往冥界的大门已经关闭";
+            NetherGateOpen= "通往异界的大门已经开启, {0}, {1}";
+            NetherGateClosed= "通往异界的大门已经关闭";
             HarvestNothing= "什么都没发现。";
             HarvestCarry= "负重已满";
             HarvestOwner= "你附近没有尸体。";

@@ -98,7 +98,10 @@ namespace Zircon.Server.Models
         public DateTime ShoutTime, UseItemTime, TorchTime, CombatTime, PvPTime, SentCombatTime, AutoPotionTime, AutoPotionCheckTime, ItemTime, FlamingSwordTime, DragonRiseTime, BladeStormTime, RevivalTime, TeleportTime;
         public bool PacketWaiting;
 
-        public bool CanPowerAttack, GameMaster, Observer;
+        public bool CanPowerAttack;
+        public bool Observer { get; set; }
+
+        public bool GameMaster { get; set; } = false;
 
         public override bool Blocking {get{return base.Blocking && !Observer;}}
 
@@ -185,7 +188,7 @@ namespace Zircon.Server.Models
 
             AutoPotions.Sort((x1, x2) => x1.Slot.CompareTo(x2.Slot));
 
-            if (Character.Account.Admin || Character.Account.TempAdmin)
+            if (Character.Account.TempAdmin)
             {
                 GameMaster = true;
                 Observer = true;
@@ -1198,7 +1201,10 @@ namespace Zircon.Server.Models
             {
                 if (GroupMembers == null) return;
 
-                text = string.Format("{0}: {1}", Name, text.Remove(0, 2));
+                text = text.Remove(0, 2).Trim();
+                if (string.IsNullOrEmpty(text)) return;
+
+                text = string.Format("{0}: {1}", Name, text);
 
                 foreach (PlayerObject member in GroupMembers)
                 {
@@ -1213,7 +1219,10 @@ namespace Zircon.Server.Models
             {
                 if (Character.Account.GuildMember == null) return;
 
-                text = string.Format("{0}: {1}", Name, text.Remove(0, 2));
+                text = text.Remove(0, 2).Trim();
+                if (string.IsNullOrEmpty(text)) return;
+
+                text = string.Format("{0}: {1}", Name, text);
 
                 foreach (GuildMemberInfo member in Character.Account.GuildMember.Guild.Members)
                 {
@@ -1226,7 +1235,10 @@ namespace Zircon.Server.Models
             }
             else if (text.StartsWith("!@"))
             {
-                if (!Character.Account.TempAdmin)
+                text = text.Remove(0, 2).Trim();
+                if (string.IsNullOrEmpty(text)) return;
+
+                if (!GameMaster)
                 {
                     if (SEnvir.Now < Character.Account.GlobalTime)
                     {
@@ -1240,9 +1252,11 @@ namespace Zircon.Server.Models
                     }
 
                     Character.Account.GlobalTime = SEnvir.Now.AddSeconds(30);
+                    text = string.Format("{0} 全服喊话: {1}", Name, text);
                 }
+                else
+                    text = string.Format("系统通知: {0}", text);
 
-                text = string.Format("{0} 全服喊话: {1}", Name, text.Remove(0, 2));
 
                 foreach (SConnection con in SEnvir.Connections)
                 {
@@ -1252,7 +1266,7 @@ namespace Zircon.Server.Models
                         case GameStage.Observer:
                             if (SEnvir.IsBlocking(Character.Account, con.Account)) continue;
 
-                            con.ReceiveChat(text, MessageType.Global);
+                            con.ReceiveChat(text, GameMaster ? MessageType.System : MessageType.Global);
                             break;
                         default: continue;
                     }
@@ -1260,6 +1274,9 @@ namespace Zircon.Server.Models
             }
             else if (text.StartsWith("!"))
             {
+                text = text.Remove(0, 1).Trim();
+                if (string.IsNullOrEmpty(text)) return;
+
                 //Shout
                 if (!Character.Account.TempAdmin)
                 {
@@ -1275,7 +1292,7 @@ namespace Zircon.Server.Models
                     }
                 }
 
-                text = string.Format("{0} 喊话: {1}", Name, text.Remove(0, 1));
+                text = string.Format("{0} 喊话: {1}", Name, text);
                 ShoutTime = SEnvir.Now + Config.ShoutDelay;
 
                 foreach (PlayerObject player in CurrentMap.Players)
@@ -1295,9 +1312,12 @@ namespace Zircon.Server.Models
             }
             else if (text.StartsWith("@!"))
             {
-                if (!Character.Account.TempAdmin) return;
+                text = text.Remove(0, 2).Trim();
+                if (string.IsNullOrEmpty(text)) return;
 
-                text = string.Format("发布通告: {1}", text.Remove(0, 2));
+                if (!GameMaster) return;
+
+                text = string.Format("发布通告: {0}", text);
 
                 foreach (SConnection con in SEnvir.Connections)
                 {
@@ -1487,8 +1507,9 @@ namespace Zircon.Server.Models
                         RemoveAllObjects();
                         break;
                     case "GAMEMASTER":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!Character.Account.TempAdmin && !Character.Account.Admin) return;
                         GameMaster = !GameMaster;
+                        Connection.ReceiveChat($"GameMaster: {GameMaster}", MessageType.Hint);
                         break;
                     case "GOLDBOT":
                         if (!Character.Account.TempAdmin) return;
@@ -1538,7 +1559,7 @@ namespace Zircon.Server.Models
                         player.LevelUp();
                         break;
                     case "GOTO":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!Character.Account.Admin) return;
                         if (parts.Length < 2) return;
 
                         player = SEnvir.GetPlayerByCharacter(parts[1]);
@@ -1839,7 +1860,7 @@ namespace Zircon.Server.Models
                         //If Is GM or Teleport Ring
                         break;
                     case "MAP":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!Character.Account.Admin) return;
                         if (parts.Length < 2) return;
 
                         MapInfo info = SEnvir.MapInfoList.Binding.FirstOrDefault(x => string.Compare(x.FileName, parts[1], StringComparison.OrdinalIgnoreCase) == 0);
@@ -1943,13 +1964,13 @@ namespace Zircon.Server.Models
 
                         break;
                     case "PLAYERONLINE":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!Character.Account.Admin) return;
 
                         Connection.ReceiveChat(string.Format(Connection.Language.OnlineCount, SEnvir.Players.Count, SEnvir.Connections.Count(x => x.Stage == GameStage.Observer)), MessageType.Hint);
                         break;
 
                     case "CHARACTERONLINE":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!Character.Account.Admin) return;
 
                         StringBuilder msg = new StringBuilder();
                         int counter = 0;
@@ -9270,21 +9291,25 @@ namespace Zircon.Server.Models
                         return;
                     }
                 }
-                UserItemFlags flags = UserItemFlags.Locked;
+                UserItemFlags flags = UserItemFlags.None;// = UserItemFlags.Locked;
 
-                switch (good.Item.ItemType)
+                if (!Config.StoreItemCanRefine)
                 {
-                    case ItemType.Weapon:
-                    case ItemType.Armour:
-                    case ItemType.Helmet:
-                    case ItemType.Necklace:
-                    case ItemType.Bracelet:
-                    case ItemType.Ring:
-                    case ItemType.Shoes:
-                    case ItemType.Book:
-                        flags |= UserItemFlags.NonRefinable;
-                        break;
+                    switch (good.Item.ItemType)
+                    {
+                        case ItemType.Weapon:
+                        case ItemType.Armour:
+                        case ItemType.Helmet:
+                        case ItemType.Necklace:
+                        case ItemType.Bracelet:
+                        case ItemType.Ring:
+                        case ItemType.Shoes:
+                        case ItemType.Book:
+                            flags |= UserItemFlags.NonRefinable;
+                            break;
+                    }
                 }
+
 
                 ItemCheck check = new ItemCheck(good.Item, p.Amount, flags, TimeSpan.Zero);
 
@@ -9297,8 +9322,24 @@ namespace Zircon.Server.Models
                     return;
                 }
 
-
-                UserItem item = SEnvir.CreateFreshItem(check);
+                UserItem item;
+                switch (check.Info.ItemType)
+                {
+                    case ItemType.Ore:
+                    case ItemType.Weapon:
+                    case ItemType.Bracelet:
+                    case ItemType.Armour:
+                    case ItemType.Helmet:
+                    case ItemType.Necklace:
+                    case ItemType.Ring:
+                    case ItemType.Shoes:
+                    case ItemType.Shield:
+                        item = SEnvir.CreateOldItem(check, good.Rate);
+                        break;
+                    default:
+                        item = SEnvir.CreateFreshItem(check);
+                        break;
+                }
 
                 if (p.GuildFunds)
                 {

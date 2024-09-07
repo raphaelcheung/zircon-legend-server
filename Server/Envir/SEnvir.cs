@@ -635,7 +635,8 @@ namespace Server.Envir
 
         public static GuildInfo StarterGuild;
 
-        public static MapRegion MysteryShipMapRegion, LairMapRegion;
+        public static MapRegion LairMapRegion { get; set; }
+        public static MapRegion MysteryShipMapRegion { get; set; }
 
         public static List<MonsterInfo> BossList = new List<MonsterInfo>();
 
@@ -1470,7 +1471,7 @@ namespace Server.Envir
                                     try
                                     {
                                         member.DailyContribution = 0;
-                                        if (member.Account.Connection.Player == null) continue;
+                                        if (member.Account?.Connection?.Player == null) continue;
 
                                         member.Account.Connection.Enqueue(new S.GuildDayReset { ObserverPacket = false });
                                     }
@@ -1860,6 +1861,54 @@ namespace Server.Envir
             freshItem.StatsChanged();
 
             return freshItem;
+        }
+        public static UserItem CreateOldItem(UserItem item, decimal rate)
+        {
+            UserItem freshItem = UserItemList.CreateNewObject();
+
+            freshItem.Colour = item.Colour;
+
+            freshItem.Info = item.Info;
+            freshItem.CurrentDurability = Random.Next((int)(rate * item.CurrentDurability));
+            freshItem.MaxDurability = item.MaxDurability;
+
+            freshItem.Flags = item.Flags;
+
+            freshItem.ExpireTime = item.ExpireTime;
+
+            foreach (UserItemStat stat in item.AddedStats)
+                freshItem.AddStat(stat.Stat, stat.Amount, stat.StatSource);
+            freshItem.StatsChanged();
+
+            return freshItem;
+        }
+        public static UserItem CreateOldItem(ItemInfo info, decimal rate)
+        {
+            UserItem item = UserItemList.CreateNewObject();
+
+            item.Colour = Color.FromArgb(Random.Next(256), Random.Next(256), Random.Next(256));
+
+            item.Info = info;
+            item.CurrentDurability = Random.Next((int)(rate * info.Durability));
+            item.MaxDurability = info.Durability;
+
+            return item;
+        }
+        public static UserItem CreateOldItem(ItemCheck check, decimal rate)
+        {
+            UserItem item = check.Item != null ? CreateOldItem(check.Item, rate) : CreateOldItem(check.Info, rate);
+
+            item.Flags = check.Flags;
+            item.ExpireTime = check.ExpireTime;
+
+            if (item.Info.Effect == ItemEffect.Gold || item.Info.Effect == ItemEffect.Experience)
+                item.Count = check.Count;
+            else
+                item.Count = Math.Min(check.Info.StackSize, check.Count);
+
+            check.Count -= item.Count;
+
+            return item;
         }
         public static UserItem CreateFreshItem(ItemCheck check)
         {

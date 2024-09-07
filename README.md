@@ -192,7 +192,7 @@ UseProxy=True
 
 获取客户端去这里看 【[ZirconLegend-Client](https://gitee.com/raphaelcheung/zircon-legend-client)】
 
-## 代码编译
+## 服务器 代码编译
 
 开发环境依赖：
 
