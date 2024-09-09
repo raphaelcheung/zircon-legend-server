@@ -6,6 +6,7 @@ using S = Library.Network.ServerPackets;
 using Server.DBModels;
 using Server.Envir;
 using Zircon.Server.Models.Monsters;
+using System.Security.Principal;
 
 namespace Zircon.Server.Models
 {
@@ -17,8 +18,8 @@ namespace Zircon.Server.Models
         public DateTime ExpireTime { get; set; }
 
         public UserItem Item { get; set; }
-        public AccountInfo Account { get; set; } //Use account instead of playerobject incase disconnection
-        
+        public List<CharacterInfo> CharacterList => new();
+
         public bool MonsterDrop { get; set; }
 
         public override void Process()
@@ -45,7 +46,7 @@ namespace Zircon.Server.Models
             }
 
             Item = null;
-            Account = null;
+            CharacterList.Clear();
         }
 
         public override void OnSafeDespawn()
@@ -61,17 +62,21 @@ namespace Zircon.Server.Models
             }
 
             Item = null;
-            Account = null;
+            CharacterList.Clear();
         }
 
         public bool PickUpItem(PlayerObject ob)
         {
-            if (Account != null && Account != ob.Character.Account) return false;
+            if (CharacterList.Count > 0 && !CharacterList.Contains(ob.Character))
+            {
+                ob.Connection.ReceiveChat($"无法捡拾他人掉落的物品 【{Item.Info.ItemName}】", MessageType.System);
+                return false;
+            }
 
             long amount = 0;
 
-            if (Account != null && Item.Info.Effect == ItemEffect.Gold && Account.GuildMember != null && Account.GuildMember.Guild.GuildTax > 0)
-                amount = (long)Math.Ceiling(Item.Count * Account.GuildMember.Guild.GuildTax);
+            if (CharacterList.Count > 0 && Item.Info.Effect == ItemEffect.Gold && ob.Character.Account.GuildMember != null && ob.Character.Account.GuildMember.Guild.GuildTax > 0)
+                amount = (long)Math.Ceiling(Item.Count * ob.Character.Account.GuildMember.Guild.GuildTax);
 
             ItemCheck check = new ItemCheck(Item, Item.Count - amount, Item.Flags, Item.ExpireTime);
 
@@ -81,20 +86,20 @@ namespace Zircon.Server.Models
                 {
                     Item.Count -= amount;
 
-                    Account.GuildMember.Guild.GuildFunds += amount;
-                    Account.GuildMember.Guild.DailyGrowth += amount;
+                    ob.Character.Account.GuildMember.Guild.GuildFunds += amount;
+                    ob.Character.Account.GuildMember.Guild.DailyGrowth += amount;
 
-                    Account.GuildMember.Guild.DailyContribution += amount;
-                    Account.GuildMember.Guild.TotalContribution += amount;
+                    ob.Character.Account.GuildMember.Guild.DailyContribution += amount;
+                    ob.Character.Account.GuildMember.Guild.TotalContribution += amount;
 
-                    Account.GuildMember.DailyContribution += amount;
-                    Account.GuildMember.TotalContribution += amount;
+                    ob.Character.Account.GuildMember.DailyContribution += amount;
+                    ob.Character.Account.GuildMember.TotalContribution += amount;
 
-                    foreach (GuildMemberInfo member in Account.GuildMember.Guild.Members)
+                    foreach (GuildMemberInfo member in ob.Character.Account.GuildMember.Guild.Members)
                     {
                         if (member.Account.Connection.Player == null) continue;
 
-                        member.Account.Connection.Enqueue(new S.GuildMemberContribution { Index = Account.GuildMember.Index, Contribution = amount, ObserverPacket = false });
+                        member.Account.Connection.Enqueue(new S.GuildMemberContribution { Index = ob.Character.Account.GuildMember.Index, Contribution = amount, ObserverPacket = false });
                     }
                 }
 
@@ -113,12 +118,11 @@ namespace Zircon.Server.Models
         }
         public void PickUpItem(Companion ob)
         {
-            if (Account != null && Account != ob.CompanionOwner.Character.Account) return;
-
+            if (CharacterList.Count > 0 && !CharacterList.Contains(ob.CompanionOwner.Character)) return;
             long amount = 0;
 
-            if (Account != null && Item.Info.Effect == ItemEffect.Gold && Account.GuildMember != null && Account.GuildMember.Guild.GuildTax > 0)
-                amount = (long)Math.Ceiling(Item.Count * Account.GuildMember.Guild.GuildTax);
+            if (CharacterList.Count > 0 && Item.Info.Effect == ItemEffect.Gold && ob.CompanionOwner.Character.Account.GuildMember != null && ob.CompanionOwner.Character.Account.GuildMember.Guild.GuildTax > 0)
+                amount = (long)Math.Ceiling(Item.Count * ob.CompanionOwner.Character.Account.GuildMember.Guild.GuildTax);
 
             ItemCheck check = new ItemCheck(Item, Item.Count - amount, Item.Flags, Item.ExpireTime);
 
@@ -128,20 +132,20 @@ namespace Zircon.Server.Models
                 {
                     Item.Count -= amount;
 
-                    Account.GuildMember.Guild.GuildFunds += amount;
-                    Account.GuildMember.Guild.DailyGrowth += amount;
+                    ob.CompanionOwner.Character.Account.GuildMember.Guild.GuildFunds += amount;
+                    ob.CompanionOwner.Character.Account.GuildMember.Guild.DailyGrowth += amount;
 
-                    Account.GuildMember.Guild.DailyContribution += amount;
-                    Account.GuildMember.Guild.TotalContribution += amount;
+                    ob.CompanionOwner.Character.Account.GuildMember.Guild.DailyContribution += amount;
+                    ob.CompanionOwner.Character.Account.GuildMember.Guild.TotalContribution += amount;
 
-                    Account.GuildMember.DailyContribution += amount;
-                    Account.GuildMember.TotalContribution += amount;
+                    ob.CompanionOwner.Character.Account.GuildMember.DailyContribution += amount;
+                    ob.CompanionOwner.Character.Account.GuildMember.TotalContribution += amount;
 
-                    foreach (GuildMemberInfo member in Account.GuildMember.Guild.Members)
+                    foreach (GuildMemberInfo member in ob.CompanionOwner.Character.Account.GuildMember.Guild.Members)
                     {
                         if (member.Account.Connection.Player == null) continue;
 
-                        member.Account.Connection.Enqueue(new S.GuildMemberContribution { Index = Account.GuildMember.Index, Contribution = amount, ObserverPacket = false });
+                        member.Account.Connection.Enqueue(new S.GuildMemberContribution { Index = ob.CompanionOwner.Character.Account.GuildMember.Index, Contribution = amount, ObserverPacket = false });
                     }
                 }
 
@@ -175,8 +179,6 @@ namespace Zircon.Server.Models
 
         public override bool CanBeSeenBy(PlayerObject ob)
         {
-            if (Account != null && ob.Character.Account != Account) return false;
-
             if (Item.UserTask != null && Item.UserTask.Quest.Character != ob.Character) return false;
 
             return base.CanBeSeenBy(ob);

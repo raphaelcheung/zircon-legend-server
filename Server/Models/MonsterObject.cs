@@ -16,22 +16,74 @@ namespace Zircon.Server.Models
 {
     public class MonsterObject : MapObject
     {
-        private int[] m_SummonAttackLevel = 
-        {
-            40,
-            40,
-            50,
-            50,
-            60,  //升到5级
-            60,
-            60,
-            80,
-            100,
-            100, //10级
-            120,
-            130, //12级
+        private static uint[] arraySummonAttackLevel;
 
-        };
+
+        private static void DefaultGrowUp()
+        {
+            arraySummonAttackLevel = [
+                40,
+                40,
+                50,
+                50,
+                60,  //升到5级
+                60,
+                60,
+                80,
+                100,
+                100, //10级
+                120,
+                130, //12级
+            ];
+
+            SEnvir.Log($"召唤怪成长数值使用默认值.");
+        }
+        static MonsterObject()
+        {
+            if (string.IsNullOrEmpty(Config.SummonMonsterGrowUpFile) || !File.Exists(Config.SummonMonsterGrowUpFile))
+            {
+                SEnvir.Log($"召唤怪成长数值文件为空或者无效.");
+                DefaultGrowUp();
+                return;
+            }
+
+            try
+            {
+                using (var stream = File.OpenRead(Config.SummonMonsterGrowUpFile))
+                {
+                    var reader = new StreamReader(stream);
+                    if (reader != null)
+                    {
+                        List<uint> list = new();
+                        string? line;
+                        while ((line = reader.ReadLine()) != null)
+                        {
+                            if (!uint.TryParse(line, out var num))
+                            {
+                                SEnvir.Log($"加载召唤怪成长数据错误，未知的成长值：{line}");
+                                DefaultGrowUp();
+                                return;
+                            }
+
+                            list.Add(num);
+                        }
+
+                        if (list.Count <= 0)
+                        {
+                            SEnvir.Log($"召唤怪成长数据文件为空：{Config.SummonMonsterGrowUpFile}");
+                            DefaultGrowUp();
+                            return;
+                        }
+
+                        arraySummonAttackLevel = list.ToArray();
+                    }
+
+                }
+            }
+            catch(Exception ex) { SEnvir.Log(ex); }
+
+            DefaultGrowUp();
+        }
 
         public override ObjectType Race {get{return ObjectType.Monster;}}
         
@@ -688,7 +740,7 @@ namespace Zircon.Server.Models
 
             MoveDelay = MonsterInfo.MoveDelay * (48 - SummonLevel) / 48;
             AttackDelay = MonsterInfo.AttackDelay * (48 - SummonLevel) / 48;
-            if (AttackDelay < 400) AttackDelay = 400;
+            //if (AttackDelay < 400) AttackDelay = 400;
 
             int live_rate = MonsterInfo.Undead ? 7 : 10;
             int attack_rate = MonsterInfo.Undead ? 8 : 10;
@@ -887,15 +939,15 @@ namespace Zircon.Server.Models
                     break;
             }
 
-            int limit_level = m_SummonAttackLevel.Count() - (4 - SummonMagicLevel) * 2;
-            if (limit_level >= m_SummonAttackLevel.Count()) limit_level = m_SummonAttackLevel.Count();
+            int limit_level = arraySummonAttackLevel.Count() - (4 - SummonMagicLevel) * 2;
+            if (limit_level >= arraySummonAttackLevel.Count()) limit_level = arraySummonAttackLevel.Count();
 
 
             if (PetOwner != null && SummonLevel < limit_level)
             {
                 AttackTicks++;
 
-                if (AttackTicks >= m_SummonAttackLevel[SummonLevel])
+                if (AttackTicks >= arraySummonAttackLevel[SummonLevel])
                 {
                     AttackTicks = 0;
                     SummonLevel++;
@@ -1729,14 +1781,14 @@ namespace Zircon.Server.Models
                 foreach (UserMagic magic in Magics)
                     PetOwner.LevelMagic(magic);
 
-                int limit_level = m_SummonAttackLevel.Count() - (4 - SummonMagicLevel) * 2;
-                if (limit_level >= m_SummonAttackLevel.Count()) limit_level = m_SummonAttackLevel.Count();
+                int limit_level = arraySummonAttackLevel.Count() - (5 - SummonMagicLevel);
+                if (limit_level >= arraySummonAttackLevel.Count()) limit_level = arraySummonAttackLevel.Count();
 
                 if (SummonLevel < limit_level)
                 {
                     AttackTicks++;
 
-                    if (AttackTicks >= m_SummonAttackLevel[SummonLevel])
+                    if (AttackTicks >= arraySummonAttackLevel[SummonLevel])
                     {
                         AttackTicks = 0;
                         SummonLevel++;
@@ -2834,14 +2886,26 @@ namespace Zircon.Server.Models
 
 
                     Cell cell = GetDropLocation(Config.DropDistance, owner) ?? CurrentCell;
-
+                    
 
                     ItemObject ob = new ItemObject
                     {
                         Item = item,
-                        Account = owner.Character.Account,
+                        //Account = owner.Character.Account,
                         MonsterDrop = true,
                     };
+
+                    List<PlayerObject> pList = new();
+
+                    ob.CharacterList.Add(owner.Character);
+                    pList.Add(owner);
+                    if (owner.GroupMembers != null)
+                        foreach (var member in owner.GroupMembers)
+                        {
+                            ob.CharacterList.Add(member.Character);
+                            pList.Add(member);
+                        }
+
 
                     ob.Spawn(CurrentMap.Info, cell.Location);
 
@@ -2849,17 +2913,18 @@ namespace Zircon.Server.Models
                     {
                         long goldAmount = 0;
 
-                        if (ob.Item.Info.Effect == ItemEffect.Gold && ob.Account.GuildMember != null &&
-                            ob.Account.GuildMember.Guild.GuildTax > 0)
-                            goldAmount = (long)Math.Ceiling(ob.Item.Count * ob.Account.GuildMember.Guild.GuildTax);
+                        foreach(var player in pList)
+                        {
+                            if (ob.Item.Info.Effect == ItemEffect.Gold && player.Character.Account.GuildMember != null && player.Character.Account.GuildMember.Guild.GuildTax > 0)
+                                goldAmount = (long)Math.Ceiling(ob.Item.Count * player.Character.Account.GuildMember.Guild.GuildTax);
 
-                        ItemCheck check = new ItemCheck(ob.Item, ob.Item.Count - goldAmount, ob.Item.Flags,
-                            ob.Item.ExpireTime);
+                            ItemCheck check = new ItemCheck(ob.Item, ob.Item.Count - goldAmount, ob.Item.Flags, ob.Item.ExpireTime);
 
-                        if (owner.Companion.CanGainItems(true, check)) ob.PickUpItem(owner.Companion);
-
+                            if (player.Companion.CanGainItems(true, check)) ob.PickUpItem(player.Companion);
+                        }
                     }
 
+                    pList.Clear();
                     continue;
                 }
 
@@ -2896,12 +2961,25 @@ namespace Zircon.Server.Models
                     }
 
                     Cell cell = GetDropLocation(Config.DropDistance, owner) ?? CurrentCell;
+                    List<PlayerObject> pList = new();
+
+
                     ItemObject ob = new ItemObject
                     {
                         Item = item,
-                        Account = owner.Character.Account,
+                        //Account = owner.Character.Account,
                         MonsterDrop = true,
                     };
+
+                    ob.CharacterList.Add(owner.Character);
+                    pList.Add(owner);
+
+                    if (owner.GroupMembers != null)
+                        foreach(var mem in owner.GroupMembers)
+                        {
+                            ob.CharacterList.Add(mem.Character);
+                            pList.Add(mem);
+                        }
 
 
                     ob.Spawn(CurrentMap.Info, cell.Location);
@@ -2910,16 +2988,20 @@ namespace Zircon.Server.Models
                     {
                         long goldAmount = 0;
 
-                        if (ob.Item.Info.Effect == ItemEffect.Gold && ob.Account.GuildMember != null &&
-                            ob.Account.GuildMember.Guild.GuildTax > 0)
-                            goldAmount = (long)Math.Ceiling(ob.Item.Count * ob.Account.GuildMember.Guild.GuildTax);
+                        foreach(var player in pList)
+                        {
+                            if (ob.Item.Info.Effect == ItemEffect.Gold && player.Character.Account.GuildMember != null &&
+                                player.Character.Account.GuildMember.Guild.GuildTax > 0)
+                                goldAmount = (long)Math.Ceiling(ob.Item.Count * player.Character.Account.GuildMember.Guild.GuildTax);
 
-                        ItemCheck check = new ItemCheck(ob.Item, ob.Item.Count - goldAmount, ob.Item.Flags,
-                            ob.Item.ExpireTime);
+                            ItemCheck check = new ItemCheck(ob.Item, ob.Item.Count - goldAmount, ob.Item.Flags,
+                                ob.Item.ExpireTime);
 
-                        if (owner.Companion.CanGainItems(true, check)) ob.PickUpItem(owner.Companion);
-
+                            if (player.Companion.CanGainItems(true, check)) ob.PickUpItem(player.Companion);
+                        }
                     }
+
+                    pList.Clear();
                 }
             }
 
@@ -2987,14 +3069,22 @@ namespace Zircon.Server.Models
 
 
                             Cell cell = GetDropLocation(Config.DropDistance, owner) ?? CurrentCell;
+                            List<PlayerObject> pList = new();
+
                             ItemObject ob = new ItemObject
                             {
                                 Item = item,
-                                Account = owner.Character.Account,
+                                //Account = owner.Character.Account,
                                 MonsterDrop = true,
                             };
 
-
+                            ob.CharacterList.Add(owner.Character);
+                            if (owner.GroupMembers != null)
+                                foreach(var mem in owner.GroupMembers)
+                                {
+                                    ob.CharacterList.Add(mem.Character);
+                                    pList.Add(mem);
+                                }
 
                             ob.Spawn(CurrentMap.Info, cell.Location);
 
@@ -3004,16 +3094,20 @@ namespace Zircon.Server.Models
                             {
                                 long goldAmount = 0;
 
-                                if (ob.Item.Info.Effect == ItemEffect.Gold && ob.Account.GuildMember != null &&
-                                    ob.Account.GuildMember.Guild.GuildTax > 0)
-                                    goldAmount = (long)Math.Ceiling(ob.Item.Count * ob.Account.GuildMember.Guild.GuildTax);
+                                foreach(var player in pList)
+                                {
+                                    if (ob.Item.Info.Effect == ItemEffect.Gold && player.Character.Account.GuildMember != null &&
+                                        player.Character.Account.GuildMember.Guild.GuildTax > 0)
+                                        goldAmount = (long)Math.Ceiling(ob.Item.Count * player.Character.Account.GuildMember.Guild.GuildTax);
 
-                                ItemCheck check = new ItemCheck(ob.Item, ob.Item.Count - goldAmount, ob.Item.Flags,
-                                    ob.Item.ExpireTime);
+                                    ItemCheck check = new ItemCheck(ob.Item, ob.Item.Count - goldAmount, ob.Item.Flags,
+                                        ob.Item.ExpireTime);
 
-                                if (owner.Companion.CanGainItems(true, check)) ob.PickUpItem(owner.Companion);
-
+                                    if (player.Companion.CanGainItems(true, check)) ob.PickUpItem(player.Companion);
+                                }
                             }
+
+                            pList.Clear();
                             break;
                     }
 

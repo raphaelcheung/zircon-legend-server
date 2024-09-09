@@ -640,6 +640,8 @@ namespace Server.Envir
 
         public static List<MonsterInfo> BossList = new List<MonsterInfo>();
 
+        public static List<string> WelcomeList = new();
+
         #endregion
 
         #region Game Variables
@@ -991,6 +993,32 @@ namespace Server.Envir
         {
             LoadDatabase();
 
+            if (string.IsNullOrEmpty(Config.WelcomeWordsFile) || !File.Exists(Config.WelcomeWordsFile))
+                Log($"欢迎语文件配置无效，取消欢迎语.");
+            else
+            {
+                try
+                {
+                    using (FileStream stream = File.OpenRead(Config.WelcomeWordsFile))
+                    {
+                        var reader = new StreamReader(stream);
+                        string? line;
+                        string? tmp;
+                        while((line = reader.ReadLine()) != null)
+                        {
+                            tmp = line.Trim();
+                            if (string.IsNullOrEmpty(tmp)) continue;
+                            
+                            WelcomeList.Add(tmp);
+                        }
+                    }
+                }
+                catch(Exception ex) 
+                { 
+                    Log($"加载欢迎语文件出现异常 {Config.WelcomeWordsFile}"); 
+                }
+            }
+
             #region Load Files
             for (int i = 0; i < MapInfoList.Count; i++)
                 Maps[MapInfoList[i]] = new Map(MapInfoList[i]);
@@ -1261,6 +1289,13 @@ namespace Server.Envir
             logThread.Start();
 
             LastWarTime = Now;
+
+            bool ship = MysteryShipMapRegion != null && MysteryShipMapRegion.PointList.Count > 0;
+
+            if (ship)
+                Log($"幽灵船设置在地图 {MysteryShipMapRegion.Map.FileName}");
+            else
+                Log("幽灵船关闭");
 
             Log(string.Format("加载耗时: {0}", Functions.ToString(Time.Now - Now, true)));
 
@@ -1867,9 +1902,19 @@ namespace Server.Envir
             UserItem freshItem = UserItemList.CreateNewObject();
 
             freshItem.Colour = item.Colour;
-
             freshItem.Info = item.Info;
-            freshItem.CurrentDurability = Random.Next((int)(rate * item.CurrentDurability));
+
+
+            int max_dura = (int)(rate * item.CurrentDurability);
+
+            if (Random.Next(100) <= 70)
+                freshItem.CurrentDurability = max_dura / 2 + Random.Next(max_dura / 2);
+            else
+                freshItem.CurrentDurability = Random.Next(max_dura);
+
+            if (freshItem.CurrentDurability <= 0) freshItem.CurrentDurability = 1;
+
+
             freshItem.MaxDurability = item.MaxDurability;
 
             freshItem.Flags = item.Flags;
@@ -1889,7 +1934,16 @@ namespace Server.Envir
             item.Colour = Color.FromArgb(Random.Next(256), Random.Next(256), Random.Next(256));
 
             item.Info = info;
-            item.CurrentDurability = Random.Next((int)(rate * info.Durability));
+            int max_dura = (int)(rate * item.CurrentDurability);
+
+            if (Random.Next(100) <= 70)
+                item.CurrentDurability = max_dura / 2 + Random.Next(max_dura / 2);
+            else
+                item.CurrentDurability = Random.Next(max_dura);
+
+
+            if (item.CurrentDurability <= 0) item.CurrentDurability = 1;
+
             item.MaxDurability = info.Durability;
 
             return item;
@@ -3362,6 +3416,7 @@ namespace Server.Envir
                         refferal = AccountInfoList[i];
                         break;
                     }
+
                 if (refferal == null)
                 {
                     con.Enqueue(new S.NewAccount { Result = NewAccountResult.ReferralNotFound });

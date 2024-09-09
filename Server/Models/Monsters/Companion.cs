@@ -151,14 +151,15 @@ namespace Zircon.Server.Models.Monsters
 
                 ItemObject item = (ItemObject)ob;
 
-                if (item.Account != CompanionOwner.Character.Account || !item.MonsterDrop) continue;
+                if (!item.CharacterList.Contains(CompanionOwner.Character) || !item.MonsterDrop) continue;
 
                 long amount = 0;
 
-                if (item.Item.Info.Effect == ItemEffect.Gold && item.Account.GuildMember != null && item.Account.GuildMember.Guild.GuildTax > 0)
-                    amount = (long)Math.Ceiling(item.Item.Count * item.Account.GuildMember.Guild.GuildTax);
+                if (item.Item.Info.Effect == ItemEffect.Gold && CompanionOwner.Character.Account.GuildMember != null && CompanionOwner.Character.Account.GuildMember.Guild.GuildTax > 0)
+                    amount = (long)Math.Ceiling(item.Item.Count * CompanionOwner.Character.Account.GuildMember.Guild.GuildTax);
 
                 ItemCheck check = new ItemCheck(item.Item, item.Item.Count - amount, item.Item.Flags, item.Item.ExpireTime);
+                
 
                 if (!CanGainItems(true, check)) continue;
 

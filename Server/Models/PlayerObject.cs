@@ -689,8 +689,10 @@ namespace Zircon.Server.Models
 
             Connection.ReceiveChat(Connection.Language.Welcome, MessageType.Announcement);
 
-            if (!string.IsNullOrEmpty(Config.WelcomeWords))
-                Connection.ReceiveChat(Config.WelcomeWords, MessageType.Announcement);
+            foreach(var word in SEnvir.WelcomeList)
+            {
+                Connection.ReceiveChat(word, MessageType.Announcement);
+            }
 
             SendGuildInfo();
 
@@ -1407,7 +1409,7 @@ namespace Zircon.Server.Models
                         GuildLeave();
                         break;
                     case "RECALL":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!Character.Account.Admin) return;
                         if (parts.Length < 2) return;
 
                         player = SEnvir.GetPlayerByCharacter(parts[1]);
@@ -6440,7 +6442,7 @@ namespace Zircon.Server.Models
                     {
                         int rate = (magic.Level - 2) * 500;
 
-                        magic.Experience += item.CurrentDurability + 50;
+                        magic.Experience += (Config.SkillExp + item.CurrentDurability) * Config.SkillRate;
 
                         if (magic.Experience >= rate || (magic.Level == 3 && SEnvir.Random.Next(rate) == 0))
                         {
@@ -7525,7 +7527,7 @@ namespace Zircon.Server.Models
             };
 
             if ((fromItem.Flags & UserItemFlags.Bound) == UserItemFlags.Bound)
-                ob.Account = Character.Account;
+                ob.CharacterList.Add(Character);
 
             ob.Spawn(CurrentMap.Info, cell.Location);
         }
@@ -9293,7 +9295,7 @@ namespace Zircon.Server.Models
                 }
                 UserItemFlags flags = UserItemFlags.None;// = UserItemFlags.Locked;
 
-                if (!Config.StoreItemCanRefine)
+                if (!Config.StoreItemCanRefine || good.Item.RequiredAmount < 34)
                 {
                     switch (good.Item.ItemType)
                     {
@@ -12688,7 +12690,7 @@ namespace Zircon.Server.Models
             {
                 if (CanPowerAttack && attackMagic == MagicType.Slaying)
                 {
-                    AttackTime -= TimeSpan.FromMilliseconds(attackDelay * magic.Level / 18);
+                    AttackTime -= TimeSpan.FromMilliseconds(attackDelay * magic.Level / 23);
                     magics.Add(magic);
                     validMagic = MagicType.Slaying;
                     Enqueue(new S.MagicToggle { Magic = MagicType.Slaying, CanUse = CanPowerAttack = false });
@@ -12704,7 +12706,7 @@ namespace Zircon.Server.Models
 
                 if (cost <= CurrentMP)
                 {
-                    AttackTime -= TimeSpan.FromMilliseconds(attackDelay * magic.Level / 9);
+                    AttackTime -= TimeSpan.FromMilliseconds(attackDelay * magic.Level / 15);
                     validMagic = MagicType.Thrusting;
                     magics.Add(magic);
                     ChangeMP(-cost);

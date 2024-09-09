@@ -124,7 +124,7 @@ namespace Server.Envir
         public static DateTime HalloweenEventEnd { get; set; } 
         public static DateTime ChristmasEventEnd { get; set; }
         public static int UpgradeChunkSize { get; set; } = 512 * 1014;//默认 512KB
-        public static string WelcomeWords { get; set; } = "";
+        public static string WelcomeWordsFile { get; set; } = "";
 
         [ConfigSection("Control")]
         public static bool AllowLogin { get; set; } 
@@ -201,6 +201,7 @@ namespace Server.Envir
         public static int MysteryShipRegionIndex { get; set; }
         public static int LairRegionIndex { get; set; }
         public static bool DropConsumable { get; set; } = true;
+        public static string SummonMonsterGrowUpFile { get; set; } = "";
 
         [ConfigSection("Items")]
         public static TimeSpan DropDuration { get; set; }
