@@ -216,7 +216,6 @@ namespace Server.Envir
         public static int MaxStrength { get; set; }
         public static int StrengthAddRate { get; set; }
         public static int StrengthLossRate { get; set; }
-        public static bool StoreItemCanRefine { get; set; } = false;
 
         [ConfigSection("Rates")]
         public static int ExperienceRate { get; set; }

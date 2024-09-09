@@ -9295,23 +9295,8 @@ namespace Zircon.Server.Models
                 }
                 UserItemFlags flags = UserItemFlags.None;// = UserItemFlags.Locked;
 
-                if (!Config.StoreItemCanRefine || good.Item.RequiredAmount < 34)
-                {
-                    switch (good.Item.ItemType)
-                    {
-                        case ItemType.Weapon:
-                        case ItemType.Armour:
-                        case ItemType.Helmet:
-                        case ItemType.Necklace:
-                        case ItemType.Bracelet:
-                        case ItemType.Ring:
-                        case ItemType.Shoes:
-                        case ItemType.Book:
-                            flags |= UserItemFlags.NonRefinable;
-                            break;
-                    }
-                }
-
+                if (good.Item.ItemType != ItemType.Weapon)
+                    flags |= UserItemFlags.NonRefinable;
 
                 ItemCheck check = new ItemCheck(good.Item, p.Amount, flags, TimeSpan.Zero);
 
