@@ -940,7 +940,7 @@ namespace Zircon.Server.Models
                     break;
             }
 
-            int limit_level = arraySummonAttackLevel.Count() - (4 - SummonMagicLevel) * 2;
+            int limit_level = arraySummonAttackLevel.Count() - (5 - SummonMagicLevel);
             if (limit_level >= arraySummonAttackLevel.Count()) limit_level = arraySummonAttackLevel.Count();
 
 
