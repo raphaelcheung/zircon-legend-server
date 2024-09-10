@@ -7,6 +7,7 @@ using Server.DBModels;
 using Server.Envir;
 using Zircon.Server.Models.Monsters;
 using System.Security.Principal;
+using System.Text;
 
 namespace Zircon.Server.Models
 {
@@ -18,9 +19,27 @@ namespace Zircon.Server.Models
         public DateTime ExpireTime { get; set; }
 
         public UserItem Item { get; set; }
-        public List<CharacterInfo> CharacterList => new();
+        public List<CharacterInfo> OwnerList { get; } = new List<CharacterInfo>();
+        public DateTime OwnerExpire { get; set; } = DateTime.MaxValue;
 
         public bool MonsterDrop { get; set; }
+
+        public bool CharacterContain(CharacterInfo character)
+        {
+            return OwnerList.Any(c => c.CharacterName == character.CharacterName);
+        }
+
+        public string GetCharacterListString()
+        {
+            StringBuilder sb = new();
+            foreach (CharacterInfo character in OwnerList)
+            {
+                if (sb.Length <= 0) sb.Append(character.CharacterName);
+                else sb.Append($"、{character.CharacterName}");
+            }
+
+            return sb.ToString();
+        }
 
         public override void Process()
         {
@@ -32,6 +51,8 @@ namespace Zircon.Server.Models
                 return;
             }
 
+            if (SEnvir.Now > OwnerExpire)
+                OwnerList.Clear();
         }
 
         public override void OnDespawned()
@@ -46,7 +67,7 @@ namespace Zircon.Server.Models
             }
 
             Item = null;
-            CharacterList.Clear();
+            OwnerList.Clear();
         }
 
         public override void OnSafeDespawn()
@@ -62,12 +83,12 @@ namespace Zircon.Server.Models
             }
 
             Item = null;
-            CharacterList.Clear();
+            OwnerList.Clear();
         }
 
         public bool PickUpItem(PlayerObject ob)
         {
-            if (CharacterList.Count > 0 && !CharacterList.Contains(ob.Character))
+            if (OwnerList.Count > 0 && !OwnerList.Contains(ob.Character))
             {
                 ob.Connection.ReceiveChat($"无法捡拾他人掉落的物品 【{Item.Info.ItemName}】", MessageType.System);
                 return false;
@@ -75,7 +96,7 @@ namespace Zircon.Server.Models
 
             long amount = 0;
 
-            if (CharacterList.Count > 0 && Item.Info.Effect == ItemEffect.Gold && ob.Character.Account.GuildMember != null && ob.Character.Account.GuildMember.Guild.GuildTax > 0)
+            if (OwnerList.Count > 0 && Item.Info.Effect == ItemEffect.Gold && ob.Character.Account.GuildMember != null && ob.Character.Account.GuildMember.Guild.GuildTax > 0)
                 amount = (long)Math.Ceiling(Item.Count * ob.Character.Account.GuildMember.Guild.GuildTax);
 
             ItemCheck check = new ItemCheck(Item, Item.Count - amount, Item.Flags, Item.ExpireTime);
@@ -118,10 +139,12 @@ namespace Zircon.Server.Models
         }
         public void PickUpItem(Companion ob)
         {
-            if (CharacterList.Count > 0 && !CharacterList.Contains(ob.CompanionOwner.Character)) return;
+            //SEnvir.Log($"尝试捡拾道具：{Name} 属主：{GetCharacterListString()} 共{OwnerList.Count}个");
+
+            if (OwnerList.Count > 0 && !OwnerList.Contains(ob.CompanionOwner.Character)) return;
             long amount = 0;
 
-            if (CharacterList.Count > 0 && Item.Info.Effect == ItemEffect.Gold && ob.CompanionOwner.Character.Account.GuildMember != null && ob.CompanionOwner.Character.Account.GuildMember.Guild.GuildTax > 0)
+            if (OwnerList.Count > 0 && Item.Info.Effect == ItemEffect.Gold && ob.CompanionOwner.Character.Account.GuildMember != null && ob.CompanionOwner.Character.Account.GuildMember.Guild.GuildTax > 0)
                 amount = (long)Math.Ceiling(Item.Count * ob.CompanionOwner.Character.Account.GuildMember.Guild.GuildTax);
 
             ItemCheck check = new ItemCheck(Item, Item.Count - amount, Item.Flags, Item.ExpireTime);
@@ -179,6 +202,8 @@ namespace Zircon.Server.Models
 
         public override bool CanBeSeenBy(PlayerObject ob)
         {
+            if (!Config.CanSeeOthersDropped && OwnerList.Count > 0 && !OwnerList.Contains(ob.Character)) return false;
+
             if (Item.UserTask != null && Item.UserTask.Quest.Character != ob.Character) return false;
 
             return base.CanBeSeenBy(ob);

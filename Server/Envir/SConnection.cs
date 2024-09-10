@@ -338,6 +338,8 @@ namespace Server.Envir
                 return;
             }
 
+            SEnvir.Log($"[{IPAddress}] 请求更新 {p.FileKey} ...");
+
             Upgrading = true;
             using (FileStream stream = File.OpenRead(filename))
             {
@@ -369,6 +371,7 @@ namespace Server.Envir
             }
 
             Upgrading = false;
+            SEnvir.Log($"[{IPAddress}] 更新完成 {p.FileKey}");
         }
 
         public void Process(C.NewAccount p)

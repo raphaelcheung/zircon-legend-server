@@ -76,6 +76,7 @@ namespace Zircon.Server.Models
                         }
 
                         arraySummonAttackLevel = list.ToArray();
+                        return;
                     }
 
                 }
@@ -2769,14 +2770,16 @@ namespace Zircon.Server.Models
                     continue;
 
                 if (drop.Item.RequiredType == RequiredType.Level 
-                    && drop.Item.RequiredAmount <= 15
+                    && drop.Item.RequiredAmount <= 25
                     && drop.Item.Rarity == Rarity.Common
-                    && drop.Item.ItemType != ItemType.Book
-                    && drop.Item.ItemType != ItemType.Consumable
-                    && drop.Item.ItemType != ItemType.Nothing
-                    && drop.Item.ItemType != ItemType.Armour
-                    && drop.Item.ItemType != ItemType.Helmet
-                    && drop.Item.ItemType != ItemType.Weapon) continue;
+                    && (drop.Item.ItemType == ItemType.Book 
+                    || drop.Item.ItemType == ItemType.Amulet
+                    || drop.Item.ItemType == ItemType.Shoes
+                    || drop.Item.ItemType == ItemType.Poison
+                    || drop.Item.ItemType == ItemType.Ring
+                    || drop.Item.ItemType == ItemType.Bracelet
+                    || drop.Item.ItemType == ItemType.Necklace
+                    || drop.Item.ItemType == ItemType.Torch)) continue;
 
                 if (drop.Item.ItemType == ItemType.Consumable
                     && drop.Item.Price <= 600) continue;
@@ -2897,14 +2900,23 @@ namespace Zircon.Server.Models
 
                     List<PlayerObject> pList = new();
 
-                    ob.CharacterList.Add(owner.Character);
+                    ob.OwnerList.Add(owner.Character);
                     pList.Add(owner);
-                    if (owner.GroupMembers != null)
-                        foreach (var member in owner.GroupMembers)
-                        {
-                            ob.CharacterList.Add(member.Character);
-                            pList.Add(member);
-                        }
+
+                    if (Config.MonsterDropGroupShare)
+                    {
+                        if (owner.GroupMembers != null)
+                            foreach (var mem in owner.GroupMembers)
+                            {
+                                if (mem.Character == owner.Character) continue;
+
+                                ob.OwnerList.Add(mem.Character);
+                                pList.Add(mem);
+                            }
+                    }
+
+                    if (Config.MonsterDropProtectionDuration > 0)
+                        ob.OwnerExpire = SEnvir.Now.AddSeconds(Config.MonsterDropProtectionDuration);
 
 
                     ob.Spawn(CurrentMap.Info, cell.Location);
@@ -2971,15 +2983,24 @@ namespace Zircon.Server.Models
                         MonsterDrop = true,
                     };
 
-                    ob.CharacterList.Add(owner.Character);
+                    ob.OwnerList.Add(owner.Character);
                     pList.Add(owner);
 
-                    if (owner.GroupMembers != null)
-                        foreach(var mem in owner.GroupMembers)
-                        {
-                            ob.CharacterList.Add(mem.Character);
-                            pList.Add(mem);
-                        }
+                    if (Config.MonsterDropGroupShare)
+                    {
+                        if (owner.GroupMembers != null)
+                            foreach (var mem in owner.GroupMembers)
+                            {
+                                if (mem.Character == owner.Character) continue;
+
+                                ob.OwnerList.Add(mem.Character);
+                                pList.Add(mem);
+                            }
+                    }
+
+
+                    if (Config.MonsterDropProtectionDuration > 0)
+                        ob.OwnerExpire = SEnvir.Now.AddSeconds(Config.MonsterDropProtectionDuration);
 
 
                     ob.Spawn(CurrentMap.Info, cell.Location);
@@ -3078,13 +3099,23 @@ namespace Zircon.Server.Models
                                 MonsterDrop = true,
                             };
 
-                            ob.CharacterList.Add(owner.Character);
-                            if (owner.GroupMembers != null)
-                                foreach(var mem in owner.GroupMembers)
-                                {
-                                    ob.CharacterList.Add(mem.Character);
-                                    pList.Add(mem);
-                                }
+                            ob.OwnerList.Add(owner.Character);
+                            pList.Add(owner);
+
+                            if (Config.MonsterDropGroupShare)
+                            {
+                                if (owner.GroupMembers != null)
+                                    foreach (var mem in owner.GroupMembers)
+                                    {
+                                        if (mem.Character == owner.Character) continue;
+
+                                        ob.OwnerList.Add(mem.Character);
+                                        pList.Add(mem);
+                                    }
+                            }
+
+                            if (Config.MonsterDropProtectionDuration > 0)
+                                ob.OwnerExpire = SEnvir.Now.AddSeconds(Config.MonsterDropProtectionDuration);
 
                             ob.Spawn(CurrentMap.Info, cell.Location);
 

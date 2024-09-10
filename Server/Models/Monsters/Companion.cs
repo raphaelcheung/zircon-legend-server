@@ -151,7 +151,7 @@ namespace Zircon.Server.Models.Monsters
 
                 ItemObject item = (ItemObject)ob;
 
-                if (!item.CharacterList.Contains(CompanionOwner.Character) || !item.MonsterDrop) continue;
+                if (!item.OwnerList.Contains(CompanionOwner.Character) || !item.MonsterDrop) continue;
 
                 long amount = 0;
 

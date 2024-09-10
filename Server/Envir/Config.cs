@@ -216,6 +216,9 @@ namespace Server.Envir
         public static int MaxStrength { get; set; }
         public static int StrengthAddRate { get; set; }
         public static int StrengthLossRate { get; set; }
+        public static bool MonsterDropGroupShare { get; set; } = false;
+        public static bool CanSeeOthersDropped { get; set; } = false;
+        public static int MonsterDropProtectionDuration { get; set; } = 0;
 
         [ConfigSection("Rates")]
         public static int ExperienceRate { get; set; }

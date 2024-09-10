@@ -810,6 +810,7 @@ namespace Zircon.Server.Models
 
 
             Enqueue(new S.FortuneUpdate { Fortunes = Character.Account.Fortunes.Select(x => x.ToClientInfo()).ToList() });
+            SEnvir.Log($"[{Connection.IPAddress}] {Character.Account.EMailAddress} - {Name}({Level}级) 上线了...");
         }
         public void SetUpObserver(SConnection con)
         {
@@ -1089,6 +1090,8 @@ namespace Zircon.Server.Models
             base.OnDespawned();
 
             SEnvir.Players.Remove(this);
+
+            SEnvir.Log($"[{Connection.IPAddress}] 角色 {Name}({Level}级) 已下线");
         }
         public override void OnSafeDespawn()
         {
@@ -7527,7 +7530,7 @@ namespace Zircon.Server.Models
             };
 
             if ((fromItem.Flags & UserItemFlags.Bound) == UserItemFlags.Bound)
-                ob.CharacterList.Add(Character);
+                ob.OwnerList.Add(Character);
 
             ob.Spawn(CurrentMap.Info, cell.Location);
         }
@@ -7649,6 +7652,8 @@ namespace Zircon.Server.Models
                             if (cellObject.Race != ObjectType.Item) continue;
 
                             ItemObject item = (ItemObject)cellObject;
+                            if (!item.CanBeSeenBy(this)) continue;
+
                             try
                             {
                                 switch (type)
@@ -12385,7 +12390,7 @@ namespace Zircon.Server.Models
 
                             MonsterObject ob = (MonsterObject)cellObject;
 
-                            if (ob.Drops == null) continue;
+                            if (ob.Drops.Count <= 0) continue;
 
                             List<UserItem> items;
 
@@ -12423,7 +12428,7 @@ namespace Zircon.Server.Models
                             {
                                 ob.Drops.Remove(Character.Account);
 
-                                if (ob.Drops.Count == 0) ob.Drops = null;
+                                //if (ob.Drops.Count <= 0) ob.Drops = null;
                                 ob.HarvestChanged();
                                 Connection.ReceiveChat(Connection.Language.HarvestNothing, MessageType.System);
 
@@ -12448,7 +12453,7 @@ namespace Zircon.Server.Models
                             {
                                 ob.Drops.Remove(Character.Account);
 
-                                if (ob.Drops.Count == 0) ob.Drops = null;
+                                //if (ob.Drops.Count == 0) ob.Drops = null;
                                 ob.HarvestChanged();
 
                                 continue;
