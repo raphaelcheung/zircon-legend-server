@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using Library;
+﻿using Library;
 using Library.Network;
 using Library.SystemModels;
 using Server.DBModels;
 using Server.Envir;
-using Zircon.Server.Models.Monsters;
-using S = Library.Network.ServerPackets;
-using C = Library.Network.ClientPackets;
+using System.Drawing;
 using System.Text;
+using Zircon.Server.Models.Monsters;
+using C = Library.Network.ClientPackets;
+using S = Library.Network.ServerPackets;
 
 namespace Zircon.Server.Models
 {
@@ -9300,7 +9296,7 @@ namespace Zircon.Server.Models
                 }
                 UserItemFlags flags = UserItemFlags.None;// = UserItemFlags.Locked;
 
-                if (good.Item.ItemType != ItemType.Weapon)
+                if (good.Item.ItemType != ItemType.Weapon && good.Item.ItemType != ItemType.Ore)
                     flags |= UserItemFlags.NonRefinable;
 
                 ItemCheck check = new ItemCheck(good.Item, p.Amount, flags, TimeSpan.Zero);
@@ -10817,6 +10813,8 @@ namespace Zircon.Server.Models
 
             //Special + Max Chance
 
+            SEnvir.Log($"[{Character.CharacterName}] 提交武器精炼：Weapon={weapon.Info.ItemName}  ore={ore}  items={items}  quality={quality}");
+
             chance += ore / 2000;
             chance += items / 6;
             chance += quality * 25;
@@ -10966,7 +10964,14 @@ namespace Zircon.Server.Models
 
             UserItem weapon = info.Weapon;
 
-            if (SEnvir.Random.Next(100) < info.Chance)
+            int result = SEnvir.Random.Next(100);
+
+            if (Character.Account.Admin)
+                Connection.ReceiveChat($"武器精炼结果：Random={result}  Chance={info.Chance}  MaxChance={info.MaxChance}", MessageType.Hint);
+
+            SEnvir.Log($"[{Character.CharacterName}] 武器精炼：Weapon={info.Weapon.Info.ItemName}  Random={result}  Chance={info.Chance}  MaxChance={info.MaxChance}");
+
+            if (result < info.Chance)
             {
                 switch (info.Type)
                 {
@@ -12390,7 +12395,7 @@ namespace Zircon.Server.Models
 
                             MonsterObject ob = (MonsterObject)cellObject;
 
-                            if (ob.Drops.Count <= 0) continue;
+                            if (ob.Drops == null || ob.Drops.Count <= 0) continue;
 
                             List<UserItem> items;
 
@@ -18016,7 +18021,7 @@ namespace Zircon.Server.Models
             ob.Master.MinionList.Remove(ob);
             ob.Master = null;
 
-            ob.TameTime = SEnvir.Now.AddHours(magic.Level * 3 + 1);
+            ob.TameTime = SEnvir.Now.AddHours(magic.Level * 2 + 1);
             ob.Target = null;
             ob.RageTime = DateTime.MinValue;
             ob.ShockTime = DateTime.MinValue;

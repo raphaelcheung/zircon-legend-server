@@ -2,9 +2,11 @@
 
 本开源项目仅供学习游戏技术，禁止商用以及非法用途。
 
-技术交流以及体验公益服请加QQ群：915941142。
-
 觉得本项目对你有帮助的别忘了 **点个星** ，祝你年年发大财！
+
+技术交流以及体验公益服请加 【[QQ群：915941142](https://qm.qq.com/q/JeoJOJ4z4e)】
+
+![扫码加群](Images/QQ%E7%BE%A4.jpg)
 
 ## 游戏简介
 
@@ -50,6 +52,8 @@
 
 【[百度网盘 2024-8-15](https://pan.baidu.com/s/1OMkb834cOtxF8KIrlJMKRQ?pwd=h1bv)】
 
+如果嫌百度网盘太慢，这份运营数据我也保存到了 QQ 群文件中，【[QQ群：915941142](https://qm.qq.com/q/JeoJOJ4z4e)】
+
 内置账号： **zrf@zrf.zrf、raphael@gm.gm** ，密码均为  **123456** ， 可直接登录游玩。
 
 其中  **raphael@gm.gm**  为管理员账号，包含了三个管理员角色 **raphael01、raphael02、raphael03** 管理员密码为  **654321** 。
@@ -59,6 +63,8 @@
 ### 部署游戏服务
 
 - #### 推荐用 docker-composer 部署。
+
+镜像名称：` raphzhang/zirconlegend:latest `，每次发布都会更新到 docker。
 
 注意要将上一步下载来的运营数据解压后映射到容器的` /zircon/datas `目录。
 
@@ -77,7 +83,7 @@ services:
 		restart: unless-stopped
 		user: "0:0"
 		volumes:
-			- ./datas:/zircon/datas
+      - ./datas:/zircon/datas
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 version: "3"

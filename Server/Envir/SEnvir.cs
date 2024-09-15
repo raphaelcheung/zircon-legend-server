@@ -697,63 +697,15 @@ namespace Server.Envir
 
             if (string.IsNullOrEmpty(Config.ClientPath) || !Directory.Exists(Config.ClientPath))
             {
-                Log($"客户端路径无效，关闭客户端更新机制");
+                Log($"客户端更新路径无效，请确保该路径存在并有读取权限：{Config.ClientPath}");
                 return;
             }
 
-            //string hash_file = Path.Combine(Config.ClientPath, @"./clientupgrade.hash");
-            //if (File.Exists(hash_file))
-            //{
-            //    using(StreamReader sr = new StreamReader(hash_file))
-            //    {
-            //        string? line;
-            //        string[] parts;
-            //        string[] parts_;
-            //        while((line = sr.ReadLine()) != null)
-            //        {
-            //            parts = line.Split('=');
-            //            if (parts.Length < 2)
-            //            {
-            //                Log($"加载更新清单发现异常条目：{line}");
-            //                continue;
-            //            }
-            //            parts_ = parts[1].Split(',');
-            //            if (parts_.Length < 2 )
-            //            {
-            //                Log($"加载更新清单发现异常条目：{line}");
-            //                continue;
-            //            }
-
-            //            try
-            //            {
-            //                ClientFileHash[parts[0]] = new ClientUpgradeItem()
-            //                {
-            //                    Hash = parts_[1],
-            //                    Key = parts[0],
-            //                    Size = int.Parse(parts_[0]),
-            //                };
-            //            }
-            //            catch(Exception e)
-            //            { 
-            //                Log($"加载更新清单发现异常条目：{line}");
-            //                Log(e.Message);
-
-            //                if (!string.IsNullOrEmpty(e.StackTrace))
-            //                    Log(e.StackTrace);
-            //            }
-            //        }
-            //    }
-
-            //    Log($"已读取读取客户端更新列表，共 {ClientFileHash.Count} 个文件");
-            //}
-            //else
-            {
-                Log($"生成客户端更新列表 ...");
-                DirectoryInfo di = new DirectoryInfo(Config.ClientPath);
-                LoadDirHash(di, @"./");
-                //SaveHashFile(hash_file);
-                Log($"客户端更新列表已成功生成，共 {ClientFileHash.Count} 个文件");
-            }
+            Log($"生成客户端更新列表 ...");
+            DirectoryInfo di = new DirectoryInfo(Config.ClientPath);
+            LoadDirHash(di, @"./");
+            //SaveHashFile(hash_file);
+            Log($"客户端更新列表已成功生成，共 {ClientFileHash.Count} 个文件");
         }
         private static void SaveHashFile(string filename)
         {
@@ -1907,6 +1859,7 @@ namespace Server.Envir
 
             int max_dura = (int)(rate * item.CurrentDurability);
 
+
             if (Random.Next(100) <= 70)
                 freshItem.CurrentDurability = max_dura / 2 + Random.Next(max_dura / 2);
             else
@@ -1934,13 +1887,12 @@ namespace Server.Envir
             item.Colour = Color.FromArgb(Random.Next(256), Random.Next(256), Random.Next(256));
 
             item.Info = info;
-            int max_dura = (int)(rate * item.CurrentDurability);
+            int max_dura = (int)(rate * info.Durability);
 
             if (Random.Next(100) <= 70)
                 item.CurrentDurability = max_dura / 2 + Random.Next(max_dura / 2);
             else
                 item.CurrentDurability = Random.Next(max_dura);
-
 
             if (item.CurrentDurability <= 0) item.CurrentDurability = 1;
 
@@ -2068,7 +2020,7 @@ namespace Server.Envir
                     item.CurrentDurability = Random.Next(info.Durability * 2) + 2000;
                     break;
                 case ItemType.Ore:
-                    item.CurrentDurability = Random.Next(info.Durability * 3) + 3000;
+                    item.CurrentDurability = Random.Next(info.Durability) + 3000;
                     break;
                 case ItemType.Book:
                     item.CurrentDurability = Random.Next(96) + 5; //0~95 + 5

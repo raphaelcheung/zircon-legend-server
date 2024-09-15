@@ -52,14 +52,14 @@ namespace Server.Envir
 
             OnException += (o, e) =>
             {
-                SEnvir.Log(string.Format("崩溃: Account: {0}, Character: {1}.", (Account != null ? Account.EMailAddress : "empty"), Player!=null?Player.Name:"empty"));
+                SEnvir.Log(string.Format("崩溃: 账号={0}, 角色={1}.", (Account != null ? Account.EMailAddress : "empty"), Player!=null?Player.Name:"empty"));
                 SEnvir.Log(e.ToString());
                 SEnvir.Log(e.StackTrace.ToString());
                 
                 File.AppendAllText("./datas/Errors.txt", e.StackTrace + Environment.NewLine);
             };
 
-            SEnvir.Log(string.Format("[连接] IP Address:{0}", IPAddress));
+            SEnvir.Log(string.Format("[连接] IP:{0}", IPAddress));
 
             UpdateTimeOut();
             BeginReceive();
@@ -198,13 +198,13 @@ namespace Server.Envir
             if (ReceiveList.Count > Config.MaxPacket)
             {
                 TryDisconnect();
-                SEnvir.IPBlocks[IPAddress] = SEnvir.Now.Add(Config.PacketBanTime);
+                //SEnvir.IPBlocks[IPAddress] = SEnvir.Now.Add(Config.PacketBanTime);
 
                 for (int i = SEnvir.Connections.Count - 1; i >= 0; i--)
                     if (SEnvir.Connections[i].IPAddress == IPAddress)
                         SEnvir.Connections[i].TryDisconnect();
 
-                SEnvir.Log("{IPAddress} Disconnected, Large amount of Packets");
+                SEnvir.Log($"{IPAddress} 断开连接, 网络包太多");
                 return;
             }
 
@@ -497,7 +497,17 @@ namespace Server.Envir
 
             if (p.Direction < MirDirection.Up || p.Direction > MirDirection.UpLeft) return;
 
-            Player.Harvest(p.Direction);
+            try { Player.Harvest(p.Direction); }
+            catch(Exception ex) 
+            { 
+                SEnvir.Log($"[{Player.Name}] 发生异常：{ex.Message}"); 
+
+                if (ex.StackTrace != null)
+                    SEnvir.Log(ex.StackTrace);
+
+                if (ex.InnerException != null)
+                    SEnvir.Log(ex.InnerException);
+            }
         }
         public void Process(C.Move p)
         {
