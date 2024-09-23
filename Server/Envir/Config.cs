@@ -201,6 +201,9 @@ namespace Server.Envir
         public static int MysteryShipRegionIndex { get; set; }
         public static int LairRegionIndex { get; set; }
         public static bool DropConsumable { get; set; } = true;
+        public static bool DropNothingTypeCommonItem { get; set; } = true;
+        public static int DropLowestEquipmentsExcludeWeapon { get; set; } = 0;
+        public static int DropLowestWeapon { get; set; } = 0;
         public static string SummonMonsterGrowUpFile { get; set; } = "";
 
         [ConfigSection("Items")]

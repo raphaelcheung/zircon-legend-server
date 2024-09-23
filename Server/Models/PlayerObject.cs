@@ -3364,12 +3364,13 @@ namespace Zircon.Server.Models
             UserCompanion companion = SEnvir.UserCompanionList.CreateNewObject();
 
             companion.Account = Character.Account;
+            companion.Character = Character;
             companion.Info = info;
             companion.Level = 1;
             companion.Hunger = 100;
             companion.Name = p.Name;
 
-            result.UserCompanion = companion.ToClientInfo();
+            result.UserCompanion = companion.ToClientInfo(); 
         }
         public void CompanionRetrieve(int index)
         {
@@ -4276,8 +4277,8 @@ namespace Zircon.Server.Models
             history.Average[0] = info.Price; //Only care about the price per transaction
 
 
-            if (info.Account.Connection != null && info.Account.Connection.Player != null)
-                info.Account.Connection.Enqueue(new S.MarketPlaceConsignChanged { Index = info.Index, Count = info.Item.Count, ObserverPacket = false, });
+            if ((info.Account?.Connection?.Player ?? null) != null)
+                info.Account.Connection.Enqueue(new S.MarketPlaceConsignChanged { Index = info.Index, Count = info.Item?.Count ?? 0, ObserverPacket = false, });
 
             if (info.Item == null)
                 info.Delete();
@@ -4314,7 +4315,8 @@ namespace Zircon.Server.Models
             cost *= price;
 
 
-            UserItemFlags flags = UserItemFlags.Worthless;
+            //UserItemFlags flags = UserItemFlags.Worthless;
+            UserItemFlags flags = UserItemFlags.None;
             TimeSpan duration = TimeSpan.FromSeconds(info.Duration);
 
             if (p.UseHuntGold || Character.Account.HightestLevel() < 40)
@@ -4323,7 +4325,7 @@ namespace Zircon.Server.Models
             if (duration != TimeSpan.Zero)
                 flags |= UserItemFlags.Expirable;
 
-            flags |= UserItemFlags.Locked;
+            //flags |= UserItemFlags.Locked;
 
             ItemCheck check = new ItemCheck(info.Item, p.Count, flags, duration);
 
@@ -4481,7 +4483,7 @@ namespace Zircon.Server.Models
 
             memberInfo.Account = Character.Account;
             memberInfo.Guild = info;
-            memberInfo.Rank = "Guild Leader";
+            memberInfo.Rank = "帮主";
             memberInfo.JoinDate = SEnvir.Now;
             memberInfo.Permission = GuildPermission.Leader;
 
@@ -4763,13 +4765,13 @@ namespace Zircon.Server.Models
 
             if (player.Character.Account.GuildMember != null)
             {
-                Connection.ReceiveChat(Connection.Language.GuildInviteGuild, MessageType.System);
+                Connection.ReceiveChat(string.Format(Connection.Language.GuildInviteGuild, player.Name), MessageType.System);
                 return;
             }
 
             if (player.GuildInvitation != null)
             {
-                Connection.ReceiveChat(Connection.Language.GuildInviteInvited, MessageType.System);
+                Connection.ReceiveChat(string.Format(Connection.Language.GuildInviteInvited, player.Name), MessageType.System);
                 return;
             }
 
@@ -9389,10 +9391,10 @@ namespace Zircon.Server.Models
 
                 if (item == null || link.Count > item.Count || !item.Info.CanSell || (item.Flags & UserItemFlags.Locked) == UserItemFlags.Locked) return;
                 if ((item.Flags & UserItemFlags.Marriage) == UserItemFlags.Marriage) return;
-                if ((item.Flags & UserItemFlags.Worthless) == UserItemFlags.Worthless) return;
+                //if ((item.Flags & UserItemFlags.Worthless) == UserItemFlags.Worthless) return;
 
                 count += link.Count;
-                gold += item.Price(link.Count);
+                gold += (item.Flags & UserItemFlags.Worthless) == UserItemFlags.Worthless ? 0 :item.Price(link.Count);
             }
 
 
@@ -19151,6 +19153,7 @@ namespace Zircon.Server.Models
 
             foreach (AutoPotionLink link in Character.AutoPotionLinks)
                 alinks.Add(link.ToClientInfo());
+
 
             return new StartInformation
             {

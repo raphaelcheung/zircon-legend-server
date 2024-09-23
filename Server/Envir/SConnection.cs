@@ -969,7 +969,7 @@ namespace Server.Envir
 
             AuctionInfo info = MPSearchResults[p.Index];
 
-            if (VisibleResults.Contains(info)) return;
+            if (info == null || VisibleResults.Contains(info)) return;
 
             VisibleResults.Add(info);
 

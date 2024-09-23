@@ -74,7 +74,7 @@ namespace Zircon.Server.Models.Monsters
             if (!CompanionOwner.VisibleObjects.Contains(this))
                 Recall();
 
-            if (TargetItem.Node == null || TargetItem.CurrentMap != CurrentMap || !Functions.InRange(CurrentLocation, TargetItem.CurrentLocation, ViewRange))
+            if (TargetItem != null && (TargetItem.Node == null || TargetItem.CurrentMap != CurrentMap || !Functions.InRange(CurrentLocation, TargetItem.CurrentLocation, ViewRange)))
                 TargetItem = null;
 
             ProcessSearch();

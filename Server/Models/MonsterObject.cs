@@ -2773,38 +2773,34 @@ namespace Zircon.Server.Models
                     || (DropSet & drop.DropSet) != drop.DropSet) 
                     continue;
 
-                if (drop.Item.RequiredType == RequiredType.Level 
-                    && drop.Item.RequiredAmount <= 25
+                if (Config.DropLowestEquipmentsExcludeWeapon > 0
+                    && drop.Item.RequiredType == RequiredType.Level 
+                    && drop.Item.RequiredAmount < Config.DropLowestEquipmentsExcludeWeapon
                     && drop.Item.Rarity == Rarity.Common
-                    && (drop.Item.ItemType == ItemType.Book 
-                    || drop.Item.ItemType == ItemType.Amulet
+                    && (drop.Item.ItemType == ItemType.Armour
+                    || drop.Item.ItemType == ItemType.Helmet
                     || drop.Item.ItemType == ItemType.Shoes
-                    || drop.Item.ItemType == ItemType.Poison
                     || drop.Item.ItemType == ItemType.Ring
                     || drop.Item.ItemType == ItemType.Bracelet
-                    || drop.Item.ItemType == ItemType.Necklace
+                    || drop.Item.ItemType == ItemType.Necklace)) continue;
+
+                if (drop.Item.Rarity == Rarity.Common
+                    && (drop.Item.ItemType == ItemType.Poison
+                    || drop.Item.ItemType == ItemType.Amulet
                     || drop.Item.ItemType == ItemType.Torch)) continue;
 
-                if (drop.Item.ItemType == ItemType.Consumable
-                    && drop.Item.Price <= 600) continue;
-
-                if (drop.Item.ItemType == ItemType.Armour
+                if (Config.DropLowestWeapon > 0
+                    && drop.Item.ItemType == ItemType.Weapon
                     && drop.Item.RequiredType == RequiredType.Level
-                    && drop.Item.RequiredAmount <= 33
-                    && drop.Item.Rarity == Rarity.Common) continue;
-
-                if (drop.Item.ItemType == ItemType.Helmet
-                    && drop.Item.RequiredType == RequiredType.Level
-                    && drop.Item.RequiredAmount < 20
-                    && drop.Item.Rarity == Rarity.Common) continue;
-
-
-                if (drop.Item.ItemType == ItemType.Weapon
-                    && drop.Item.RequiredType == RequiredType.Level
-                    && drop.Item.RequiredAmount < 20
+                    && drop.Item.RequiredAmount < Config.DropLowestWeapon
                     && drop.Item.Rarity == Rarity.Common) continue;
 
                 if (drop.EasterEvent && !EasterEventMob) continue;
+
+                if (!Config.DropNothingTypeCommonItem
+                    && drop.Item.ItemType == ItemType.Nothing
+                    && drop.Item.Rarity == Rarity.Common
+                    && drop.Item.Effect != ItemEffect.None) continue;
 
                 long amount = Math.Max(1, drop.Amount / 2 + SEnvir.Random.Next(drop.Amount));
 
@@ -3043,7 +3039,7 @@ namespace Zircon.Server.Models
                     foreach (QuestTaskMonsterDetails details in task.MonsterDetails)
                     {
                         if (details.Monster != MonsterInfo) continue;
-                        if (details.Map != null && CurrentMap.Info != details.Map) continue;
+                        if (details.Map != null && CurrentMap != null && CurrentMap.Info != details.Map) continue;
 
                         if (SEnvir.Random.Next(details.Chance) > 0) continue;
 

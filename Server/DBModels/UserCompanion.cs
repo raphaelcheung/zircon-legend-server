@@ -245,7 +245,7 @@ namespace Server.DBModels
             return new ClientUserCompanion
             {
                 Index = Index,
-                CharacterName = Character.CharacterName,
+                //CharacterName = Character.CharacterName,
                 CompanionIndex = Info.Index,
                 Name = Name,
                 Level = Level,
@@ -259,7 +259,7 @@ namespace Server.DBModels
                 Level13 = Level13,
                 Level15 = Level15,
 
-                Items = Items.Select(x => x.ToClientInfo()).ToList(),
+                Items = Items?.Select(x => x.ToClientInfo()).ToList() ?? new List<ClientUserItem>(),
             };
         }
 

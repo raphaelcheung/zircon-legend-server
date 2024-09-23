@@ -274,9 +274,9 @@ namespace Server.DBModels
                 
                 Tax = (int)(GuildTax * 100),
 
-                Members = Members.Select(x => x.ToClientInfo()).ToList(),
+                Members = Members?.Select(x => x.ToClientInfo()).ToList() ?? new(),
 
-                Storage = Items.Select(x => x.ToClientInfo()).ToList(),
+                Storage = Items?.Select(x => x.ToClientInfo()).ToList() ?? new(),
             };
         }
         

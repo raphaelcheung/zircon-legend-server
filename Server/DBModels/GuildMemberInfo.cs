@@ -141,7 +141,7 @@ namespace Server.DBModels
                 Permission = Permission,
             };
 
-            if (Account.Connection.Player != null)
+            if ((Account.Connection?.Player ?? null ) != null)
             {
                 info.Online = TimeSpan.MinValue;
                 info.ObjectID = Account.Connection.Player.ObjectID;

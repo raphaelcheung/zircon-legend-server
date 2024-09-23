@@ -172,7 +172,7 @@ namespace Zircon.Server.Models
                     }
                 }
 
-                Item.UserTask.Objects.Remove(this);
+                Item.UserTask?.Objects?.Remove(this);
 
                 ob.GainItem(Item);
                 Despawn();

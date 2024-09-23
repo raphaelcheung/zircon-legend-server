@@ -99,9 +99,9 @@ namespace Server.DBModels
             {
                 Index = Index,
 
-                Item = Item.ToClientInfo(),
+                Item = Item?.ToClientInfo() ?? null,
 
-                Seller = Character.CharacterName,
+                Seller = Character?.CharacterName ?? "-",
 
                 Message = Message,
 
