@@ -598,6 +598,9 @@ namespace Server.DBModels
         [Association("AutoPotionLinks", true)]
         public DBBindingList<AutoPotionLink> AutoPotionLinks { get; set; }
 
+        [Association("AutoFightLinks", true)]
+        public DBBindingList<AutoFightConfig> AutoFightLinks { get; set; }
+
         [Association("Magics", true)]
         public DBBindingList<UserMagic> Magics { get; set; }
 

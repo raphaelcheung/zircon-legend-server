@@ -1,8 +1,10 @@
 ﻿using Library;
 using Library.Network;
+using Library.Network.ServerPackets;
 using Library.SystemModels;
 using Server.DBModels;
 using Server.Envir;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Text;
 using Zircon.Server.Models.Monsters;
@@ -36,6 +38,12 @@ namespace Zircon.Server.Models
 
         public MirGender Gender {get{return Character.Gender;}}
         public MirClass Class {get{return Character.Class;}}
+
+        public DateTime AutoTime { get; private set; }
+        public bool[] setConfArr = new bool[60];
+        public List<AutoFightConfig> AutoFights { get; private set; } = new List<AutoFightConfig>();
+
+
 
         public override int CurrentHP
         {
@@ -256,6 +264,10 @@ namespace Zircon.Server.Models
             ProcessAutoPotion();
 
             ProcessItemExpire();
+
+            ProcessSkill();
+
+            ProcessDetectionMonth();
         }
         public override void ProcessAction(DelayedAction action)
         {
@@ -761,6 +773,8 @@ namespace Zircon.Server.Models
 
             Enqueue(new S.HuntGoldChanged { HuntGold = Character.Account.HuntGold });
 
+            Enqueue(new S.AutoTimeChanged { AutoTime = Character.Account.AutoTime });
+
             Map map = SEnvir.GetMap(CurrentMap.Info.ReconnectMap);
 
             if (map != null && !InSafeZone)
@@ -795,7 +809,7 @@ namespace Zircon.Server.Models
             //Send War Date to guild.
             foreach (CastleInfo castle in SEnvir.CastleInfoList.Binding)
             {
-                GuildInfo ownerGuild = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => x.Castle == castle);
+                var ownerGuild = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => x.Castle == castle);
 
                 Enqueue(new S.GuildCastleInfo { Index = castle.Index, 
                     Owner = ownerGuild != null ? ownerGuild.GuildName : String.Empty, ObserverPacket = false });
@@ -806,7 +820,7 @@ namespace Zircon.Server.Models
 
 
             Enqueue(new S.FortuneUpdate { Fortunes = Character.Account.Fortunes.Select(x => x.ToClientInfo()).ToList() });
-            SEnvir.Log($"[{Connection.IPAddress}] {Character.Account.EMailAddress} - {Name}({Level}级) 上线了...");
+            SEnvir.Log($"[{Connection.IPAddress}] {Character.Account.EMailAddress}-{Name}({Level}级) 上线了...（当前在线 {SEnvir.Players?.Count ?? 0} 人）");
         }
         public void SetUpObserver(SConnection con)
         {
@@ -844,6 +858,8 @@ namespace Zircon.Server.Models
             con.Enqueue(new S.WeightUpdate { BagWeight = BagWeight, WearWeight = WearWeight, HandWeight = HandWeight });
 
             Enqueue(new S.HuntGoldChanged { HuntGold = Character.Account.HuntGold });
+
+            Enqueue(new S.AutoTimeChanged { AutoTime = Character.Account.AutoTime });
 
             if (TradePartner != null)
             {
@@ -906,7 +922,7 @@ namespace Zircon.Server.Models
 
             foreach (CastleInfo castle in SEnvir.CastleInfoList.Binding)
             {
-                GuildInfo ownerGuild = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => x.Castle == castle);
+                var ownerGuild = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => x.Castle == castle);
 
                 con.Enqueue(new S.GuildCastleInfo { Index = castle.Index, Owner = ownerGuild != null ? ownerGuild.GuildName : String.Empty });
             }
@@ -1087,7 +1103,8 @@ namespace Zircon.Server.Models
 
             SEnvir.Players.Remove(this);
 
-            SEnvir.Log($"[{Connection.IPAddress}] 角色 {Name}({Level}级) 已下线");
+            SEnvir.Log($"[{Connection.IPAddress}] {Character.Account.EMailAddress}-{Name}({Level}级) 已下线.（剩余在线 {SEnvir.Players?.Count ?? 0} 人）");
+
         }
         public override void OnSafeDespawn()
         {
@@ -1142,6 +1159,9 @@ namespace Zircon.Server.Models
 
             if (AutoPotions != null)
             AutoPotions.Clear();
+
+            AutoFights?.Clear();
+
         }
 
         public void RemoveMount()
@@ -1918,7 +1938,7 @@ namespace Zircon.Server.Models
 
                         if (Character.Account.GuildMember == null || Character.Account.GuildMember.Guild == null)
                         {
-                            GuildInfo ownerGuild = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => x.Castle == castle);
+                            var ownerGuild = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => x.Castle == castle);
 
                             if (ownerGuild == null) return;
 
@@ -1975,24 +1995,36 @@ namespace Zircon.Server.Models
 
                         StringBuilder msg = new StringBuilder();
                         int counter = 0;
+                        int total = 0;
+                        int index = 0;
+
+                        foreach (var conn in SEnvir.Connections)
+                            if (conn.Player != null) total++;
+
+
                         foreach(var conn in SEnvir.Connections)
                         {
+                            if (conn.Player == null) continue;
+
                             if (msg.Length <= 0)
                                 msg.Append(conn.Player.Name);
                             else
                                 msg.Append($"、{conn.Player.Name}");
 
                             counter++;
-                            if (counter >= 20)
+                            if (counter >= 50)
                             {
-                                Connection.ReceiveChat($"在线角色太多，只列出 20 个：{msg.ToString()}", MessageType.System);
+                                Connection.ReceiveChat($"在线角色[{index}-{index+50}/{total}]：{msg.ToString()}", MessageType.System);
                                 counter = 0;
-                                break;
+                                index += 50;
                             }
                         }
 
                         if (counter > 0)
-                            Connection.ReceiveChat($"当前在线角色：{msg.ToString()}", MessageType.System);
+                            if (index > 0)
+                                Connection.ReceiveChat($"在线角色[{index}-{index + counter}/{total}]：{msg.ToString()}", MessageType.System);
+                            else
+                                Connection.ReceiveChat($"当前在线角色：{msg.ToString()}", MessageType.System);
 
                         msg.Clear();
                         break;
@@ -4463,7 +4495,7 @@ namespace Zircon.Server.Models
             }
 
 
-            GuildInfo info = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => string.Compare(x.GuildName, p.Name, StringComparison.OrdinalIgnoreCase) == 0);
+            var info = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => string.Compare(x.GuildName, p.Name, StringComparison.OrdinalIgnoreCase) == 0);
 
             if (info != null)
             {
@@ -4615,7 +4647,7 @@ namespace Zircon.Server.Models
                 return;
             }
 
-            GuildInfo guild = info.Guild;
+            var guild = info.Guild;
             PlayerObject player = info.Account.Connection != null ? info.Account.Connection.Player : null;
             string memberName = info.Account.LastCharacter.CharacterName;
 
@@ -4677,7 +4709,7 @@ namespace Zircon.Server.Models
 
             if (Character.Account.GuildMember == null) return;
 
-            GuildInfo guild = Character.Account.GuildMember.Guild;
+            var guild = Character.Account.GuildMember.Guild;
 
             if ((Character.Account.GuildMember.Permission & GuildPermission.Leader) != GuildPermission.Leader)
             {
@@ -4720,7 +4752,7 @@ namespace Zircon.Server.Models
                 return;
             }
 
-            GuildInfo guild = Character.Account.GuildMember.Guild;
+            var guild = Character.Account.GuildMember.Guild;
             if (guild.StorageSize >= 500)
             {
                 Connection.ReceiveChat(Connection.Language.GuildStorageLimit, MessageType.System);
@@ -4814,7 +4846,7 @@ namespace Zircon.Server.Models
                 return;
             }
 
-            GuildInfo guild = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => string.Compare(x.GuildName, guildName, StringComparison.OrdinalIgnoreCase) == 0);
+            var guild = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => string.Compare(x.GuildName, guildName, StringComparison.OrdinalIgnoreCase) == 0);
 
             if (guild == null)
             {
@@ -4932,7 +4964,7 @@ namespace Zircon.Server.Models
             conquest.Castle = castle;
             conquest.WarDate = date;
 
-            GuildInfo ownerGuild = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => x.Castle == castle);
+            var ownerGuild = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => x.Castle == castle);
 
             if (ownerGuild != null)
             {
@@ -5037,7 +5069,7 @@ namespace Zircon.Server.Models
                 return;
             }
 
-            GuildInfo guild = info.Guild;
+            var guild = info.Guild;
             int index = info.Index;
 
             info.Guild = null;
@@ -19140,6 +19172,7 @@ namespace Zircon.Server.Models
         private StartInformation GetStartInformation()
         {
             List<ClientBeltLink> blinks = new List<ClientBeltLink>();
+            List<ClientAutoFightLink> clientAutoFightLinkList = new List<ClientAutoFightLink>();
 
             foreach (CharacterBeltLink link in Character.BeltLinks)
             {
@@ -19154,6 +19187,11 @@ namespace Zircon.Server.Models
             foreach (AutoPotionLink link in Character.AutoPotionLinks)
                 alinks.Add(link.ToClientInfo());
 
+            foreach (AutoFightConfig autoFightLink in (Collection<AutoFightConfig>)Character.AutoFightLinks)
+            {
+                clientAutoFightLinkList.Add(autoFightLink.ToClientInfo());
+                setConfArr[(int)autoFightLink.Slot] = autoFightLink.Enabled;
+            }
 
             return new StartInformation
             {
@@ -19228,6 +19266,7 @@ namespace Zircon.Server.Models
                 Companion = Character.Companion != null ? Character.Companion.Index : 0,
 
                 StorageSize = Character.Account.StorageSize,
+                AutoFightLinks = clientAutoFightLinkList,
             };
         }
 
@@ -19339,6 +19378,395 @@ namespace Zircon.Server.Models
         }
 
 
+
+        public void ProcessDetectionMonth()
+        {
+            if (Character.Account.FlashTime == DateTime.MaxValue)
+            {
+                Character.Account.FlashTime = DateTime.Now;
+            }
+
+            if (!(Character.Account.FlashTime.Month != SEnvir.Now.Month)) return;
+            Character.Account.AutoTime = 0;
+            AutoTime = SEnvir.Now.AddSeconds(Character.Account.AutoTime);
+            Character.Account.FlashTime = SEnvir.Now;
+            Enqueue(new S.AutoTimeChanged()
+            {
+                AutoTime = Character.Account.AutoTime
+            });
+        }
+        public void ProcessSkill()
+        {
+            if (setConfArr[16] == false) return;
+
+            if (Horse != HorseType.None || Dead || Buffs.Any((x =>
+            {
+                if (x.Type != BuffType.DragonRepulse)
+                    return x.Type == BuffType.FrostBite;
+                return true;
+            })) || (Poison & PoisonType.Paralysis) == PoisonType.Paralysis || (Poison & PoisonType.Silenced) == PoisonType.Silenced)
+                return;
+
+            if (AutoTime > SEnvir.Now)
+            {
+                long autoTime = Character.Account.AutoTime;
+                Character.Account.AutoTime = (int)(AutoTime - SEnvir.Now).TotalSeconds;
+                if (Character.Account.AutoTime == autoTime)
+                    return;
+                Enqueue(new AutoTimeChanged()
+                {
+                    AutoTime = Character.Account.AutoTime
+                });
+            }
+            else
+            {
+                Character.Account.AutoTime = 0L;
+                setConfArr[16] = false;
+                Enqueue(new AutoTimeChanged()
+                {
+                    AutoTime = Character.Account.AutoTime
+                });
+            }
+        }
+        public void AutoFightConfChanged(C.AutoFightConfChanged p)
+        {
+            UserMagic userMagic;
+
+            if (p.Slot >= AutoSetConf.SetMaxConf || (p.Slot == AutoSetConf.SetMagicskillsBox || p.Slot == AutoSetConf.SetMagicskills1Box || p.Slot == AutoSetConf.SetSingleHookSkillsBox) && !Magics.TryGetValue(p.MagicIndex, out userMagic))
+                return;
+
+            if (p.Slot == AutoSetConf.SetAutoOnHookBox)
+            {
+                if (p.Enabled)
+                    AutoTime = SEnvir.Now.AddSeconds(Character.Account.AutoTime);
+                setConfArr[(int)p.Slot] = p.Enabled;
+            }
+            else
+            {
+                foreach (AutoFightConfig autoFightLink in Character.AutoFightLinks)
+                {
+                    if (autoFightLink.Slot == p.Slot)
+                    {
+                        autoFightLink.Slot = p.Slot;
+                        autoFightLink.MagicIndex = p.MagicIndex;
+                        autoFightLink.TimeCount = p.TimeCount;
+                        autoFightLink.Enabled = p.Enabled;
+                        setConfArr[(int)p.Slot] = p.Enabled;
+                        return;
+                    }
+                }
+                AutoFightConfig newObject = SEnvir.AutoFightConfList.CreateNewObject();
+                newObject.Character = Character;
+                newObject.Slot = p.Slot;
+                newObject.MagicIndex = p.MagicIndex;
+                newObject.Enabled = p.Enabled;
+                newObject.TimeCount = p.TimeCount;
+                AutoFights.Add(newObject);
+                setConfArr[(int)p.Slot] = p.Enabled;
+            }
+        }
+
+        public void SortBagItem()
+        {
+            int ItemCount = 0;
+            SortedDictionary<int, List<UserItem>> ItemSortList = new SortedDictionary<int, List<UserItem>>();
+
+            for (int i = 0; i <= 31; i++)
+            {
+                ItemSortList[i] = new List<UserItem>();
+            }
+            for (int i = 0; i < Globals.InventorySize; i++)
+            {
+                UserItem Item = Inventory[i];
+                if (Item != null)
+                {
+                    switch (Item.Info.ItemType)
+                    {
+                        case ItemType.Nothing:
+                            ItemSortList[0].Add(Item);
+                            break;
+                        case ItemType.Consumable:
+                            ItemSortList[1].Add(Item);
+                            break;
+                        case ItemType.Weapon: ItemSortList[2].Add(Item); break;
+                        case ItemType.Armour: ItemSortList[3].Add(Item); break;
+                        case ItemType.Torch: ItemSortList[4].Add(Item); break;
+                        case ItemType.Helmet: ItemSortList[5].Add(Item); break;
+                        case ItemType.Necklace: ItemSortList[6].Add(Item); break;
+                        case ItemType.Bracelet: ItemSortList[7].Add(Item); break;
+                        case ItemType.Ring: ItemSortList[8].Add(Item); break;
+                        case ItemType.Shoes: ItemSortList[9].Add(Item); break;
+                        case ItemType.Poison: ItemSortList[10].Add(Item); break;
+                        case ItemType.Amulet: ItemSortList[11].Add(Item); break;
+                        case ItemType.Meat: ItemSortList[12].Add(Item); break;
+                        case ItemType.Ore: ItemSortList[13].Add(Item); break;
+                        case ItemType.Book: ItemSortList[14].Add(Item); break;
+                        case ItemType.Scroll: ItemSortList[15].Add(Item); break;
+                        case ItemType.DarkStone: ItemSortList[16].Add(Item); break;
+                        case ItemType.RefineSpecial: ItemSortList[17].Add(Item); break;
+                        case ItemType.HorseArmour: ItemSortList[18].Add(Item); break;
+                        case ItemType.Flower: ItemSortList[19].Add(Item); break;
+                        case ItemType.CompanionFood: ItemSortList[20].Add(Item); break;
+                        case ItemType.CompanionBag: ItemSortList[21].Add(Item); break;
+                        case ItemType.CompanionHead: ItemSortList[22].Add(Item); break;
+                        case ItemType.CompanionBack: ItemSortList[23].Add(Item); break;
+                        case ItemType.System: ItemSortList[24].Add(Item); break;
+                        case ItemType.ItemPart: ItemSortList[25].Add(Item); break;
+                        case ItemType.Emblem: ItemSortList[26].Add(Item); break;
+                        case ItemType.Shield: ItemSortList[27].Add(Item); break;
+                        //case ItemType.Baoshi: ItemSortList[28].Add(Item); break;
+                        //case ItemType.SwChenghao: ItemSortList[29].Add(Item); break;
+                        //case ItemType.Shizhuang: ItemSortList[30].Add(Item); break;
+                        //case ItemType.Fabao: ItemSortList[31].Add(Item); break;
+                        default:
+                            ItemSortList[31].Add(Item);
+                            break;
+                    }
+                    Inventory[i] = null;
+                }
+            }
+            List<UserItem> TY = new List<UserItem>();
+            for (int i = 0; i <= 31; i++)
+            {
+                TY = ItemSortList[i];
+                foreach (UserItem item in TY)
+                {
+                    item.Slot = ItemCount;
+                    item.Character = Character;
+                    Inventory[ItemCount] = item;
+                    ++ItemCount;
+                }
+                ItemSortList[i].Clear();
+            }
+            TY.Clear();
+            TY = null;
+            ItemSortList = null;
+            Enqueue(new S.SortBagItem { Items = Character.Items.Where(x => x.Slot < Globals.InventorySize).Select(x => x.ToClientInfo()).ToList() });
+        }
+
+        public void PickUp()
+        {
+            if (Dead) return;
+
+            int range = Stats[Stat.PickUpRadius];
+
+            for (int d = 0; d <= range; d++)
+            {
+                for (int y = CurrentLocation.Y - d; y <= CurrentLocation.Y + d; y++)
+                {
+                    if (y < 0) continue;
+                    if (y >= CurrentMap.Height) break;
+
+                    for (int x = CurrentLocation.X - d; x <= CurrentLocation.X + d; x += Math.Abs(y - CurrentLocation.Y) == d ? 1 : d * 2)
+                    {
+                        if (x < 0) continue;
+                        if (x >= CurrentMap.Width) break;
+
+                        Cell cell = CurrentMap.Cells[x, y];
+
+                        if (cell?.Objects == null) continue;
+
+                        foreach (MapObject cellObject in cell.Objects)
+                        {
+                            if (cellObject.Race != ObjectType.Item) continue;
+
+                            ItemObject item = (ItemObject)cellObject;
+
+                            if (item.PickUpItem(this)) return;
+                        }
+
+                    }
+                }
+            }
+        }
+        public void PickUpC(int x, int y, int itemIdx)
+        {
+            if (Dead || Companion == null)
+                return;
+
+            if (x == 0 && y == 0 && itemIdx == 0)
+            {
+                PickUp();
+                return;
+            }
+
+            if (x < 0)
+                return;
+            if (x >= CurrentMap.Width)
+                return;
+
+            int distance = Functions.Distance(new Point(x, y), CurrentLocation);
+
+
+            if (distance > Stats[Stat.PickUpRadius])
+                return;
+
+            Cell cell = CurrentMap.Cells[x, y];
+
+            if (cell?.Objects == null)
+                return;
+
+            foreach (MapObject cellObject in cell.Objects)
+            {
+                if (cellObject.Race != ObjectType.Item)
+                    continue;
+
+                ItemObject item = (ItemObject)cellObject;
+
+                if (itemIdx != -1)
+                {
+                    if (item.Item.Info.Index == itemIdx)
+                    {
+                        item.PickUpItem(Companion);
+
+                        if (setConfArr[34])
+                        {
+                            if (Gold < 500000000) return;
+                            if (Gold >= 500000000 && Gold < 1000000000)
+                            {
+                                ItemInfo jinpiao = SEnvir.GetItemInfo("金票");
+                                UserItemFlags flags = UserItemFlags.Locked;
+                                ItemCheck checkem = new ItemCheck(jinpiao, 1, flags, TimeSpan.Zero);
+
+                                if (!CanGainItems(true, checkem))
+                                {
+                                    Connection.ReceiveChat("背包空间不足", MessageType.System);
+                                    foreach (SConnection con4 in Connection.Observers)
+                                    {
+                                        con4.ReceiveChat("背包空间不足", MessageType.System);
+                                    }
+                                    return;
+                                }
+                                Character.Account.Gold -= 500000000;
+                                GainItem(SEnvir.CreateFreshItem(checkem));
+                                GoldChanged();
+                            }
+                            else if (Gold >= 1000000000)
+                            {
+                                ItemInfo jinpiao = SEnvir.GetItemInfo("金票");
+                                UserItemFlags flags = UserItemFlags.Locked;
+                                ItemCheck checkemm = new ItemCheck(jinpiao, 2, flags, TimeSpan.Zero);
+
+                                if (!CanGainItems(true, checkemm))
+                                {
+                                    Connection.ReceiveChat("背包空间不足", MessageType.System);
+                                    foreach (SConnection con4 in Connection.Observers)
+                                    {
+                                        con4.ReceiveChat("背包空间不足", MessageType.System);
+                                    }
+                                    return;
+                                }
+                                Character.Account.Gold -= 1000000000;
+                                GainItem(SEnvir.CreateFreshItem(checkemm));
+                                GoldChanged();
+                            }
+                        }
+                        return;
+                    }
+                }
+                else
+                {
+                    item.PickUpItem(Companion);
+                    return;
+                }
+
+            }
+        }
+
+        public void PickUp(int x, int y, int itemIdx)
+        {
+            if (Dead)
+                return;
+
+            if (x == 0 && y == 0 && itemIdx == 0)
+            {
+                PickUp();
+                return;
+            }
+
+            if (x < 0)
+                return;
+            if (x >= CurrentMap.Width)
+                return;
+
+            int distance = Functions.Distance(new Point(x, y), CurrentLocation);
+
+
+            if (distance > Stats[Stat.PickUpRadius])
+                return;
+
+            Cell cell = CurrentMap.Cells[x, y];
+
+            if (cell?.Objects == null)
+                return;
+
+            foreach (MapObject cellObject in cell.Objects)
+            {
+                if (cellObject.Race != ObjectType.Item)
+                    continue;
+
+                ItemObject item = (ItemObject)cellObject;
+
+                if (itemIdx != -1)
+                {
+                    if (item.Item.Info.Index == itemIdx)
+                    {
+                        item.PickUpItem(this);
+
+                        if (setConfArr[34])
+                        {
+                            if (Gold < 500000000) return;
+                            if (Gold >= 500000000 && Gold < 1000000000)
+                            {
+                                ItemInfo jinpiao = SEnvir.GetItemInfo("金票");
+                                UserItemFlags flags = UserItemFlags.Locked;
+                                ItemCheck checkem = new ItemCheck(jinpiao, 1, flags, TimeSpan.Zero);
+
+                                if (!CanGainItems(true, checkem))
+                                {
+                                    Connection.ReceiveChat("背包空间不足", MessageType.System);
+                                    foreach (SConnection con4 in Connection.Observers)
+                                    {
+                                        con4.ReceiveChat("背包空间不足", MessageType.System);
+                                    }
+                                    return;
+                                }
+                                Character.Account.Gold -= 500000000;
+                                GainItem(SEnvir.CreateFreshItem(checkem));
+                                GoldChanged();
+                            }
+                            else if (Gold >= 1000000000)
+                            {
+                                ItemInfo jinpiao = SEnvir.GetItemInfo("金票");
+                                UserItemFlags flags = UserItemFlags.Locked;
+                                ItemCheck checkemm = new ItemCheck(jinpiao, 2, flags, TimeSpan.Zero);
+
+                                if (!CanGainItems(true, checkemm))
+                                {
+                                    Connection.ReceiveChat("背包空间不足", MessageType.System);
+                                    foreach (SConnection con4 in Connection.Observers)
+                                    {
+                                        con4.ReceiveChat("背包空间不足", MessageType.System);
+                                    }
+                                    return;
+                                }
+                                Character.Account.Gold -= 1000000000;
+                                GainItem(SEnvir.CreateFreshItem(checkemm));
+                                GoldChanged();
+                            }
+                        }
+
+                        return;
+                    }
+                }
+                else
+                {
+                    item.PickUpItem(this);
+                    return;
+                }
+
+            }
+        }
     }
 
 }

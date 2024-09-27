@@ -2752,6 +2752,33 @@ namespace Zircon.Server.Models
 
         }
 
+        private bool CheckDrop(ItemInfo item)
+        {
+            switch(item.ItemType)
+            {
+                case ItemType.Armour:
+                case ItemType.Helmet:
+                case ItemType.Shoes:
+                case ItemType.Ring:
+                case ItemType.Bracelet:
+                case ItemType.Necklace:
+                    if (Config.DropLowestEquipmentsExcludeWeapon > 0
+                        && item.RequiredType == RequiredType.Level 
+                        && item.RequiredAmount < Config.DropLowestEquipmentsExcludeWeapon
+                        && item.Rarity == Rarity.Common) return false;
+                    break;
+
+                case ItemType.Weapon:
+                    if (Config.DropLowestWeapon > 0
+                        && item.RequiredType == RequiredType.Level
+                        && item.RequiredAmount < Config.DropLowestWeapon
+                        && item.Rarity == Rarity.Common) return false;
+                    break;
+            }
+
+            return true;
+        }
+
         public virtual void Drop(PlayerObject owner, int players, decimal rate)
         {
             rate *= 1M + owner.Stats[Stat.DropRate] / 100M;
@@ -2761,46 +2788,32 @@ namespace Zircon.Server.Models
             if (PetOwner == null && CurrentMap != null)
                 rate *= 1 + MapDropRate / 100M;
 
-
             bool result = false;
 
             List<UserItem> drops = null;
             foreach (DropInfo drop in MonsterInfo.Drops)
             {
                 if (drop?.Item == null 
-                    || (drop.Item.ItemType == ItemType.Consumable && !Config.DropConsumable) 
                     || drop.Chance == 0 
                     || (DropSet & drop.DropSet) != drop.DropSet) 
                     continue;
 
-                if (Config.DropLowestEquipmentsExcludeWeapon > 0
-                    && drop.Item.RequiredType == RequiredType.Level 
-                    && drop.Item.RequiredAmount < Config.DropLowestEquipmentsExcludeWeapon
-                    && drop.Item.Rarity == Rarity.Common
-                    && (drop.Item.ItemType == ItemType.Armour
-                    || drop.Item.ItemType == ItemType.Helmet
-                    || drop.Item.ItemType == ItemType.Shoes
-                    || drop.Item.ItemType == ItemType.Ring
-                    || drop.Item.ItemType == ItemType.Bracelet
-                    || drop.Item.ItemType == ItemType.Necklace)) continue;
+                if (drop.Item.ItemType == ItemType.Consumable 
+                    && !Config.DropConsumable 
+                    && drop.Item.Rarity == Rarity.Common)
+                    continue;
 
                 if (drop.Item.Rarity == Rarity.Common
                     && (drop.Item.ItemType == ItemType.Poison
                     || drop.Item.ItemType == ItemType.Amulet
                     || drop.Item.ItemType == ItemType.Torch)) continue;
 
-                if (Config.DropLowestWeapon > 0
-                    && drop.Item.ItemType == ItemType.Weapon
-                    && drop.Item.RequiredType == RequiredType.Level
-                    && drop.Item.RequiredAmount < Config.DropLowestWeapon
-                    && drop.Item.Rarity == Rarity.Common) continue;
-
                 if (drop.EasterEvent && !EasterEventMob) continue;
 
-                if (!Config.DropNothingTypeCommonItem
-                    && drop.Item.ItemType == ItemType.Nothing
+                if (drop.Item.ItemType == ItemType.Nothing
+                    && !Config.DropNothingTypeCommonItem
                     && drop.Item.Rarity == Rarity.Common
-                    && drop.Item.Effect != ItemEffect.None) continue;
+                    && drop.Item.Effect == ItemEffect.None) continue;
 
                 long amount = Math.Max(1, drop.Amount / 2 + SEnvir.Random.Next(drop.Amount));
 
@@ -2950,10 +2963,17 @@ namespace Zircon.Server.Models
                 while (amount > 0)
                 {
                     UserItem item = SEnvir.CreateDropItem(drop.Item);
+
                     item.Count = Math.Min(drop.Item.StackSize, amount);
                     amount -= item.Count;
 
                     item.IsTemporary = true; //REMOVE ON Gain
+
+                    if (item.AddedStats.Count <= 0 && !CheckDrop(item.Info))
+                    {
+                        item.Delete();
+                        continue;
+                    }
 
                     if (NeedHarvest)
                     {

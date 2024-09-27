@@ -39,4 +39,4 @@ SEnvir.StartServer();
 
 while(!stop) Thread.Sleep(100);
 
-ConfigReader.Save();
+//ConfigReader.Save();

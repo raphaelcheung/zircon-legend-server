@@ -14,6 +14,8 @@ using G = Library.Network.GeneralPackets;
 using C = Library.Network.ClientPackets;
 using S = Library.Network.ServerPackets;
 using System.Security.Principal;
+using Library.Network.ClientPackets;
+using System.Numerics;
 
 namespace Server.Envir
 {
@@ -1362,6 +1364,35 @@ namespace Server.Envir
             if (Stage != GameStage.Game) return;
 
             Player.NPCWeaponCraft(p);
+        }
+
+        public void Process(C.AutoFightConfChanged p)
+        {
+            if (Stage != GameStage.Game)
+                return;
+            Player.AutoFightConfChanged(p);
+        }
+
+        public void Process(C.SortBagItem p)
+        {
+            if (Stage != GameStage.Game)
+                return;
+
+            Player.SortBagItem();
+        }
+
+        public void Process(C.PickUpC p)
+        {
+            if (Stage != GameStage.Game) return;
+
+            Player.PickUpC(p.Xpos, p.Ypos, p.ItemIdx);
+        }
+
+        public void Process(C.PickUpA p)
+        {
+            if (Stage != GameStage.Game) return;
+
+            Player.PickUp(p.Xpos, p.Ypos, p.ItemIdx);
         }
     }
 

@@ -582,6 +582,8 @@ namespace Server.Envir
         public static byte[]? DbSystemFile { get; private set; } = null;
         public static string DbSystemFileHash { get; private set; } = string.Empty;
 
+        public static DBCollection<AutoFightConfig> AutoFightConfList { get; set; }
+
         #region Database
 
         private static Session Session;
@@ -814,6 +816,8 @@ namespace Server.Envir
             MysteryShipMapRegion = MapRegionList.Binding.FirstOrDefault(x=> x.Index == Config.MysteryShipRegionIndex);
             LairMapRegion = MapRegionList.Binding.FirstOrDefault(x => x.Index == Config.LairRegionIndex);
             StarterGuild = GuildInfoList.Binding.FirstOrDefault(x => x.StarterGuild);
+
+            AutoFightConfList = Session.GetCollection<AutoFightConfig>();
 
             if (StarterGuild == null)
             {

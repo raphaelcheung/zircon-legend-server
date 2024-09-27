@@ -720,5 +720,41 @@ namespace Server.DBModels
         {
             return EMailAddress;
         }
+
+
+
+
+        public DateTime FlashTime
+        {
+            get
+            {
+                return _FlashTime;
+            }
+            set
+            {
+                if (_FlashTime == value)
+                    return;
+                DateTime? flashTime = _FlashTime;
+                _FlashTime = value;
+                OnChanged((object)flashTime, (object)value, nameof(FlashTime));
+            }
+        }
+        private DateTime _FlashTime = DateTime.MaxValue;
+        public long AutoTime
+        {
+            get
+            {
+                return _AutoTime;
+            }
+            set
+            {
+                if (_AutoTime == value)
+                    return;
+                long autoTime = _AutoTime;
+                _AutoTime = value;
+                OnChanged((object)autoTime, (object)value, nameof(AutoTime));
+            }
+        }
+        private long _AutoTime;
     }
 }
