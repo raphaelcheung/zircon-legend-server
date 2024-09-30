@@ -110,6 +110,7 @@ namespace Server.Envir
         public static int MaxPacket { get; set; } 
         public static TimeSpan PacketBanTime { get; set; }
         public static bool UseProxy { get; set; } = false;
+        public static int ConnectionLimit { get; set; } = 200;
 
 
         [ConfigSection("System")]

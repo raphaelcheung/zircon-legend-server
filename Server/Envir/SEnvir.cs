@@ -3003,54 +3003,19 @@ namespace Server.Envir
         {
             AccountInfo account = null;
             bool admin = false;
-            if (p.Password == Config.MasterPassword)
+
+            if (!Globals.EMailRegex.IsMatch(p.EMailAddress))
             {
-                //account = GetCharacter(p.EMailAddress)?.Account;
-                for (int i = 0; i < AccountInfoList.Count; i++)
-                    if (string.Compare(AccountInfoList[i].EMailAddress, p.EMailAddress, StringComparison.OrdinalIgnoreCase) == 0)
-                    {
-                        account = AccountInfoList[i];
-                        break;
-                    }
-
-                if (account == null || !account.Admin)
-                {
-                    Log(string.Format("[管理员登陆失败，采用了管理员密码登陆非管理员账号] Character: {0}, IP Address: {1}, Security: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
-                    con.Enqueue(new S.LoginSimple { Result = LoginResult.WrongPassword });
-                    return;
-                }
-
-                admin = true;
-                Log(string.Format("[尝试管理员] Character: {0}, IP Address: {1}, Security: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
-            }
-            else
-            {
-                if (!Config.AllowLogin || SEnvir.Connections.Count > 20)
-                {
-                    con.Enqueue(new S.LoginSimple { Result = 0 });
-                    return;
-                }
-
-                if (!Globals.EMailRegex.IsMatch(p.EMailAddress))
-                {
-                    con.Enqueue(new S.LoginSimple { Result = LoginResult.BadEMail });
-                    return;
-                }
-
-                if (!Globals.PasswordRegex.IsMatch(p.Password))
-                {
-                    con.Enqueue(new S.LoginSimple { Result = LoginResult.BadPassword });
-                    return;
-                }
-
-                for (int i = 0; i < AccountInfoList.Count; i++)
-                    if (string.Compare(AccountInfoList[i].EMailAddress, p.EMailAddress, StringComparison.OrdinalIgnoreCase) == 0)
-                    {
-                        account = AccountInfoList[i];
-                        break;
-                    }
+                con.Enqueue(new S.LoginSimple { Result = LoginResult.BadEMail });
+                return;
             }
 
+            for (int i = 0; i < AccountInfoList.Count; i++)
+                if (string.Compare(AccountInfoList[i].EMailAddress, p.EMailAddress, StringComparison.OrdinalIgnoreCase) == 0)
+                {
+                    account = AccountInfoList[i];
+                    break;
+                }
 
             if (account == null)
             {
@@ -3064,35 +3029,68 @@ namespace Server.Envir
                 return;
             }
 
-            if (!admin && account.Banned)
+            if (account.Admin)
             {
-                if (account.ExpiryDate > Now)
+                if (p.Password == Functions.CalcMD5($"{p.EMailAddress}-{Config.MasterPassword}") || p.Password == Config.MasterPassword)
                 {
-                    con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
-                    return;
+                    admin = true;
+                    Log(string.Format("[管理员登录] 账号: {0}, IP: {1}, 验证码: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
                 }
-
-                account.Banned = false;
-                account.BanReason = string.Empty;
-                account.ExpiryDate = DateTime.MinValue;
             }
 
-            if (!admin && !PasswordMatch(p.Password, account.Password))
+
+            if (!admin)
             {
-                Log(string.Format("[密码错误] IP Address: {0}, Account: {1}, Security: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
-
-                if (account.WrongPasswordCount++ >= 5)
+                if (!Config.AllowLogin || SEnvir.Connections.Count > Config.ConnectionLimit)
                 {
-                    account.Banned = true;
-                    account.BanReason = con.Language.BannedWrongPassword;
-                    account.ExpiryDate = Now.AddMinutes(1);
-
-                    con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
+                    con.Enqueue(new S.LoginSimple { Result = 0 });
                     return;
                 }
 
-                con.Enqueue(new S.LoginSimple { Result = LoginResult.WrongPassword });
-                return;
+                if (string.IsNullOrEmpty(p.Password))
+                {
+                    con.Enqueue(new S.LoginSimple { Result = LoginResult.BadPassword });
+                    return;
+                }
+
+                if (account.Banned)
+                {
+                    if (account.ExpiryDate > Now)
+                    {
+                        con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
+                        return;
+                    }
+
+                    account.Banned = false;
+                    account.BanReason = string.Empty;
+                    account.ExpiryDate = DateTime.MinValue;
+                }
+
+                if (!PasswordMatch(p.Password, account.Password) && (account.PasswordSafe?.Length ?? 0) > 0 && !PasswordMatch(p.Password, account.PasswordSafe))
+                {
+                    Log(string.Format("[密码错误] IP: {0}, 账号: {1}, 验证码: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
+
+                    if (account.WrongPasswordCount++ >= 5)
+                    {
+                        account.Banned = true;
+                        account.BanReason = con.Language.BannedWrongPassword;
+                        account.ExpiryDate = Now.AddMinutes(1);
+
+                        con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
+                        return;
+                    }
+
+                    con.Enqueue(new S.LoginSimple { Result = LoginResult.WrongPassword });
+                    return;
+                }
+            }
+
+
+            if ((account.PasswordSafe?.Length ?? 0) <= 0)
+            {
+                var tmp = CreateHash($"{p.EMailAddress}-{p.Password}");
+                Log($"老用户更新 PasswordSafe={Functions.HashBytes2String(tmp)}");
+                account.PasswordSafe = tmp;
             }
 
             account.WrongPasswordCount = 0;
@@ -3109,7 +3107,7 @@ namespace Server.Envir
                     //  account.Connection.SendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUserAdmin });
                 }
 
-                Log(string.Format("[账号已经登录] Account: {0}, Current IP: {1}, New IP: {2}, Security: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
+                Log(string.Format("[账号已经登录] 账号: {0}, 上一次登录IP: {1}, IP: {2}, 验证码: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
 
                 if (account.TempAdmin)
                 {
@@ -3143,67 +3141,34 @@ namespace Server.Envir
             });
 
             account.LastLogin = Now;
+            account.LastIP = con.IPAddress;
+            account.LastSum = p.CheckSum;
 
-            if (!admin)
-            {
-                account.LastIP = con.IPAddress;
-                account.LastSum = p.CheckSum;
-            }
-
-            Log(string.Format("[账号登录] Admin: {0}, Account: {1}, IP Address: {2}, Security: {3}", admin, account.EMailAddress, account.LastIP, p.CheckSum));
+            Log(string.Format("[账号快速登录] 管理员: {0}, 账号: {1}, IP: {2}, 验证码: {3}", admin, account.EMailAddress, account.LastIP, p.CheckSum));
         }
         public static void Login(C.Login p, SConnection con)
         {
             AccountInfo account = null;
             bool admin = false;
-            if (p.Password == Config.MasterPassword)
+
+            if (string.IsNullOrEmpty(p.CheckSum))
             {
-                //account = GetCharacter(p.EMailAddress)?.Account;
-                for (int i = 0; i < AccountInfoList.Count; i++)
-                    if (string.Compare(AccountInfoList[i].EMailAddress, p.EMailAddress, StringComparison.OrdinalIgnoreCase) == 0)
-                    {
-                        account = AccountInfoList[i];
-                        break;
-                    }
-
-                if (account == null || !account.Admin)
-                {
-                    Log(string.Format("[管理员登陆失败，采用了管理员密码登陆非管理员账号] Character: {0}, IP Address: {1}, Security: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
-                    con.Enqueue(new S.Login { Result = LoginResult.WrongPassword });
-                    return;
-                }
-
-                admin = true;
-                Log(string.Format("[尝试管理员] Character: {0}, IP Address: {1}, Security: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
-            }
-            else
-            {
-                if (!Config.AllowLogin || SEnvir.Connections.Count > 20)
-                {
-                    con.Enqueue(new S.Login { Result = 0 });
-                    return;
-                }
-
-                if (!Globals.EMailRegex.IsMatch(p.EMailAddress))
-                {
-                    con.Enqueue(new S.Login { Result = LoginResult.BadEMail });
-                    return;
-                }
-
-                if (!Globals.PasswordRegex.IsMatch(p.Password))
-                {
-                    con.Enqueue(new S.Login { Result = LoginResult.BadPassword });
-                    return;
-                }
-
-                for (int i = 0; i < AccountInfoList.Count; i++)
-                    if (string.Compare(AccountInfoList[i].EMailAddress, p.EMailAddress, StringComparison.OrdinalIgnoreCase) == 0)
-                    {
-                        account = AccountInfoList[i];
-                        break;
-                    }
+                con.Enqueue(new S.Login { Result = LoginResult.Disabled });
+                return;
             }
 
+            if (!Globals.EMailRegex.IsMatch(p.EMailAddress))
+            {
+                con.Enqueue(new S.Login { Result = LoginResult.BadEMail });
+                return;
+            }
+
+            for (int i = 0; i < AccountInfoList.Count; i++)
+                if (string.Compare(AccountInfoList[i].EMailAddress, p.EMailAddress, StringComparison.OrdinalIgnoreCase) == 0)
+                {
+                    account = AccountInfoList[i];
+                    break;
+                }
 
             if (account == null)
             {
@@ -3217,39 +3182,69 @@ namespace Server.Envir
                 return;
             }
 
-            if (!admin && account.Banned)
+            if (account.Admin)
             {
-                if (account.ExpiryDate > Now)
+                if (p.Password == Functions.CalcMD5($"{p.EMailAddress}-{Config.MasterPassword}") || p.Password == Config.MasterPassword)
                 {
-                    con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
-                    return;
+                    admin = true;
+                    Log(string.Format("[管理员登录] 账号: {0}, IP: {1}, 验证码: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
                 }
-
-                account.Banned = false;
-                account.BanReason = string.Empty;
-                account.ExpiryDate = DateTime.MinValue;
             }
 
-            if (!admin && !PasswordMatch(p.Password, account.Password))
+            if (!admin)
             {
-                Log(string.Format("[密码错误] IP Address: {0}, Account: {1}, Security: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
-
-                if (account.WrongPasswordCount++ >= 5)
+                if (!Config.AllowLogin || SEnvir.Connections.Count > Config.ConnectionLimit)
                 {
-                    account.Banned = true;
-                    account.BanReason = con.Language.BannedWrongPassword;
-                    account.ExpiryDate = Now.AddMinutes(1);
-
-                    con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
+                    con.Enqueue(new S.Login { Result = 0 });
                     return;
                 }
 
-                con.Enqueue(new S.Login { Result = LoginResult.WrongPassword });
-                return;
+                if (string.IsNullOrEmpty(p.Password))
+                {
+                    con.Enqueue(new S.Login { Result = LoginResult.BadPassword });
+                    return;
+                }
+
+                if (account.Banned)
+                {
+                    if (account.ExpiryDate > Now)
+                    {
+                        con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
+                        return;
+                    }
+
+                    account.Banned = false;
+                    account.BanReason = string.Empty;
+                    account.ExpiryDate = DateTime.MinValue;
+                }
+
+                if (!PasswordMatch(p.Password, account.Password) && (account.PasswordSafe?.Length ?? 0) > 0 && !PasswordMatch(p.Password, account.PasswordSafe))
+                {
+                    Log(string.Format("[密码错误] IP: {0}, 账号: {1}, 验证码: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
+
+                    if (account.WrongPasswordCount++ >= 5)
+                    {
+                        account.Banned = true;
+                        account.BanReason = con.Language.BannedWrongPassword;
+                        account.ExpiryDate = Now.AddMinutes(1);
+
+                        con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
+                        return;
+                    }
+
+                    con.Enqueue(new S.Login { Result = LoginResult.WrongPassword });
+                    return;
+                }
+            }
+
+            if ((account.PasswordSafe?.Length ?? 0) <= 0)
+            {
+                var tmp = CreateHash($"{p.EMailAddress}-{p.Password}");
+                Log($"老用户更新 PasswordSafe={Functions.HashBytes2String(tmp)}");
+                account.PasswordSafe = tmp;
             }
 
             account.WrongPasswordCount = 0;
-
 
             //LockAccount ??
             if (account.Connection != null)
@@ -3262,7 +3257,7 @@ namespace Server.Envir
                     //  account.Connection.SendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUserAdmin });
                 }
 
-                Log(string.Format("[账号已经登录] Account: {0}, Current IP: {1}, New IP: {2}, Security: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
+                Log(string.Format("[账号已经登录] 账号: {0}, 上一次登录IP: {1}, IP: {2}, 验证码: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
 
                 if (account.TempAdmin)
                 {
@@ -3314,14 +3309,11 @@ namespace Server.Envir
             });
             
             account.LastLogin = Now;
+            account.LastIP = con.IPAddress;
+            account.LastSum = p.CheckSum;
+            
 
-            if (!admin)
-            {
-                account.LastIP = con.IPAddress;
-                account.LastSum = p.CheckSum;
-            }
-
-            Log(string.Format("[账号登录] Admin: {0}, Account: {1}, IP Address: {2}, Security: {3}", admin, account.EMailAddress, account.LastIP, p.CheckSum));
+            Log(string.Format("[账号登录] 管理员: {0}, 账号: {1}, IP: {2}, 验证码: {3}", admin, account.EMailAddress, account.LastIP, p.CheckSum));
         }
         public static void NewAccount(C.NewAccount p, SConnection con)
         {
@@ -3389,6 +3381,7 @@ namespace Server.Envir
 
             account.EMailAddress = p.EMailAddress;
             account.Password = CreateHash(p.Password);
+            account.PasswordSafe = CreateHash(Functions.CalcMD5($"{account.EMailAddress}-{p.Password}"));
             account.RealName = p.RealName;
             account.BirthDate = p.BirthDate;
             account.Referral = refferal;
@@ -3427,7 +3420,7 @@ namespace Server.Envir
                 return;
             }
 
-            if (!Globals.PasswordRegex.IsMatch(p.CurrentPassword))
+            if (string.IsNullOrEmpty(p.CurrentPassword))
             {
                 con.Enqueue(new S.ChangePassword { Result = ChangePasswordResult.BadCurrentPassword });
                 return;
@@ -3472,9 +3465,9 @@ namespace Server.Envir
                 account.ExpiryDate = DateTime.MinValue;
             }
 
-            if (!PasswordMatch(p.CurrentPassword, account.Password))
+            if (!PasswordMatch( p.CurrentPassword, account.Password))
             {
-                Log(string.Format("[密码错误] IP 地址: {0}, 账号: {1}, 安全码: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
+                Log(string.Format("[修改密码失败] 密码错误，IP: {0}, 账号: {1}, 验证码: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
 
                 if (account.WrongPasswordCount++ >= 5)
                 {
@@ -3489,12 +3482,13 @@ namespace Server.Envir
                 con.Enqueue(new S.ChangePassword { Result = ChangePasswordResult.WrongPassword });
                 return;
             }
-            
+
             account.Password = CreateHash(p.NewPassword);
+            account.PasswordSafe = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.NewPassword}"));
             //SendChangePasswordEmail(account, con.IPAddress);
             con.Enqueue(new S.ChangePassword { Result = ChangePasswordResult.Success });
 
-            Log(string.Format("[修改密码] 账号: {0}, IP 地址: {1}, 安全码: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
+            Log(string.Format("[修改密码成功] 账号: {0}, IP 地址: {1}, 安全码: {2}", account.EMailAddress, con.IPAddress, p.CheckSum));
         }
         public static void RequestPasswordReset(C.RequestPasswordReset p, SConnection con)
         {
@@ -4129,6 +4123,19 @@ namespace Server.Envir
             });
         }
 
+        public static AccountInfo? GetAccount(string account)
+        {
+            AccountInfo result = null;
+            for (int i = 0; i < AccountInfoList.Count; i++)
+                if (string.Compare(AccountInfoList[i].EMailAddress, account, StringComparison.OrdinalIgnoreCase) == 0)
+                {
+                    result = AccountInfoList[i];
+                    break;
+                }
+
+            return result;
+        }
+
 
         #region Password Encryption
         private const int Iterations = 1354;
@@ -4167,6 +4174,7 @@ namespace Server.Envir
                 return Functions.IsMatch(totalHash, hash, SaltSize);
             }
         }
+
         #endregion
 
 

@@ -199,14 +199,17 @@ namespace Server.Envir
 
             if (ReceiveList.Count > Config.MaxPacket)
             {
+                var checknum = Account.LastSum;
+                SEnvir.Log($"{IPAddress} 账号={Account?.EMailAddress ?? "空"} 角色={Player?.Character?.CharacterName ?? "空"} 断开连接, 网络包太多！");
+
                 TryDisconnect();
                 //SEnvir.IPBlocks[IPAddress] = SEnvir.Now.Add(Config.PacketBanTime);
 
-                for (int i = SEnvir.Connections.Count - 1; i >= 0; i--)
-                    if (SEnvir.Connections[i].IPAddress == IPAddress)
-                        SEnvir.Connections[i].TryDisconnect();
+                if (!string.IsNullOrEmpty(checknum))
+                    for (int i = SEnvir.Connections.Count - 1; i >= 0; i--)
+                        if (SEnvir.Connections[i].Account.LastSum == checknum)
+                            SEnvir.Connections[i].TryDisconnect();
 
-                SEnvir.Log($"{IPAddress} 断开连接, 网络包太多");
                 return;
             }
 

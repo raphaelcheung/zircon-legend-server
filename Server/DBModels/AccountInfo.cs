@@ -51,6 +51,21 @@ namespace Server.DBModels
         }
         private byte[] _Password;
 
+        public byte[] PasswordSafe
+        {
+            get { return _PasswordSafe; }
+            set
+            {
+                if (_PasswordSafe == value) return;
+
+                var oldValue = _PasswordSafe;
+                _PasswordSafe = value;
+
+                OnChanged(oldValue, value, "PasswordSafe");
+            }
+        }
+        private byte[] _PasswordSafe = [];
+
         public string RealName
         {
             get { return _RealName; }
@@ -65,7 +80,7 @@ namespace Server.DBModels
             }
         }
         private string _RealName;
-
+        
         public DateTime BirthDate
         {
             get { return _BirthDate; }
