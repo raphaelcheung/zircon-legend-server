@@ -6,6 +6,8 @@ using Server.DBModels;
 using Server.Envir;
 using System.Collections.ObjectModel;
 using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
 using Zircon.Server.Models.Monsters;
@@ -30,7 +32,7 @@ namespace Zircon.Server.Models
         {
             get { return Character.Level; }
             set { Character.Level = value; }
-        }
+        } 
         public override Point CurrentLocation
         {
             get { return Character.CurrentLocation; }
@@ -1384,31 +1386,41 @@ namespace Zircon.Server.Models
 
                         Connection.ReceiveChat(ExtractorLock ? "Extraction Enabled" : "Extraction Locked", MessageType.System);
                         break;
+
+                    case "宠物技能3":
                     case "ENABLELEVEL3":
                         CompanionLevelLock3 = !CompanionLevelLock3;
 
                         Connection.ReceiveChat(string.Format(CompanionLevelLock3 ? Connection.Language.CompanionSkillEnabled : Connection.Language.CompanionSkillDisabled, 3), MessageType.System);
                         break;
+
+                    case "宠物技能5":
                     case "ENABLELEVEL5":
                         CompanionLevelLock5 = !CompanionLevelLock5;
                         Connection.ReceiveChat(string.Format(CompanionLevelLock5 ? Connection.Language.CompanionSkillEnabled : Connection.Language.CompanionSkillDisabled, 5), MessageType.System);
                         break;
+
+                    case "宠物技能7":
                     case "ENABLELEVEL7":
                         CompanionLevelLock7 = !CompanionLevelLock7;
                         Connection.ReceiveChat(string.Format(CompanionLevelLock7 ? Connection.Language.CompanionSkillEnabled : Connection.Language.CompanionSkillDisabled, 7), MessageType.System);
                         break;
+                    case "宠物技能10":
                     case "ENABLELEVEL10":
                         CompanionLevelLock10 = !CompanionLevelLock10;
                         Connection.ReceiveChat(string.Format(CompanionLevelLock10 ? Connection.Language.CompanionSkillEnabled : Connection.Language.CompanionSkillDisabled, 10), MessageType.System);
                         break;
+                    case "宠物技能11":
                     case "ENABLELEVEL11":
                         CompanionLevelLock11 = !CompanionLevelLock11;
                         Connection.ReceiveChat(string.Format(CompanionLevelLock11 ? Connection.Language.CompanionSkillEnabled : Connection.Language.CompanionSkillDisabled, 11), MessageType.System);
                         break;
+                    case "宠物技能13":
                     case "ENABLELEVEL13":
                         CompanionLevelLock13 = !CompanionLevelLock13;
                         Connection.ReceiveChat(string.Format(CompanionLevelLock13 ? Connection.Language.CompanionSkillEnabled : Connection.Language.CompanionSkillDisabled, 13), MessageType.System);
                         break;
+                    case "宠物技能15":
                     case "ENABLELEVEL15":
                         CompanionLevelLock15 = !CompanionLevelLock15;
                         Connection.ReceiveChat(string.Format(CompanionLevelLock15 ? Connection.Language.CompanionSkillEnabled : Connection.Language.CompanionSkillDisabled, 15), MessageType.System);
@@ -1423,6 +1435,8 @@ namespace Zircon.Server.Models
                         BlockWhisper = !BlockWhisper;
                         Connection.ReceiveChat(BlockWhisper ? Connection.Language.WhisperDisabled : Connection.Language.WhisperEnabled, MessageType.System);
                         break;
+
+                    case "允许加入行会":
                     case "ALLOWGUILD":
                         Character.Account.AllowGuild = !Character.Account.AllowGuild;
                         Connection.ReceiveChat(Character.Account.AllowGuild ? Connection.Language.GuildInviteEnabled : Connection.Language.GuildInviteDisabled, MessageType.System);
@@ -1430,6 +1444,8 @@ namespace Zircon.Server.Models
 
                     case "退出行会":
                     case "离开行会":
+                    case "退出公会":
+                    case "离开公会":
                     case "LEAVEGUILD":
                         GuildLeave();
                         break;
@@ -1592,16 +1608,24 @@ namespace Zircon.Server.Models
 
                             if (player == null) return;
 
+                            var old = player.Level;
+
                             player.Level = value;
                             player.LevelUp();
+                            SEnvir.Log($"[调整等级] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 调整目标=[{player.Character.CharacterName}：{old}=>{value}]");
+
                         }
                         else if (GameMaster)
                         {
                             if (parts.Length >= 3) return;
-                            if (!int.TryParse(parts[1], out value) || value < 0) return;
+                            if (!int.TryParse(parts[1], out value) || value < 0 || value >= 100) return;
 
+                            var old = Level;
                             Level = value;
                             LevelUp();
+
+                            SEnvir.Log($"[调整等级] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 调整目标=[{Character.CharacterName}：{old}=>{value}]");
+
                         }
                         else return;
 
@@ -1727,6 +1751,8 @@ namespace Zircon.Server.Models
                         if (parts.Length < 3 || !int.TryParse(parts[2], out value) || value <= 0)
                             value = 1;
 
+                        int counter = 0;
+
                         while (value > 0)
                         {
                             count = Math.Min(value, item.StackSize);
@@ -1742,10 +1768,12 @@ namespace Zircon.Server.Models
                                 userItem.Flags |= UserItemFlags.Bound | UserItemFlags.GameMaster | UserItemFlags.Worthless;
 
                             value -= count;
-
+                            counter += count;
 
                             GainItem(userItem);
                         }
+
+                        SEnvir.Log($"[制造道具] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 道具=[{item.ItemName} x {counter}]");
 
                         break;
                     case "GCCOLLECT":
@@ -2036,7 +2064,7 @@ namespace Zircon.Server.Models
                         if (!Character.Account.Admin) return;
 
                         StringBuilder msg = new StringBuilder();
-                        int counter = 0;
+                        counter = 0;
                         int total = 0;
                         int index = 0;
 
@@ -2092,6 +2120,8 @@ namespace Zircon.Server.Models
 
                         account.Admin = admin;
                         Connection.ReceiveChat($"{parts[1]} 的管理员权限设置为：{admin}", MessageType.System);
+                        SEnvir.Log($"[管理员授权] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 被修改账号={account.EMailAddress}");
+
                         break;
 
                     case "修改密码":
@@ -2106,7 +2136,7 @@ namespace Zircon.Server.Models
 
                         if (null != account.Connection)
                         {
-                            Connection.ReceiveChat("修改账号密码必须在账号离线的状态下操作", MessageType.System);
+                            Connection.ReceiveChat("修改账号密码必须在账号离线的状态下操作！", MessageType.System);
                             return;
                         }
 
@@ -2120,6 +2150,8 @@ namespace Zircon.Server.Models
                         account.PasswordSafe = SEnvir.CreateHash(Functions.CalcMD5($"{account.EMailAddress}-{parts[2]}"));
 
                         Connection.ReceiveChat($"{account.EMailAddress} 成功修改密码", MessageType.System);
+                        SEnvir.Log($"[修改密码] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 被修改账号={account.EMailAddress}");
+
                         break;
                     case "禁止登录":
                         if (!Character.Account.TempAdmin || !GameMaster) return;
@@ -2148,14 +2180,63 @@ namespace Zircon.Server.Models
                             account.Connection?.TryDisconnect();
 
                             Connection.ReceiveChat($"{account.EMailAddress} 在 {banner_time.ToString()} 前禁止登录", MessageType.System);
+
+                            SEnvir.Log($"[冻结账号] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 冻结账号={account.EMailAddress}");
                         }
                         else
                         {
                             account.BanReason = "";
                             account.ExpiryDate = DateTime.MinValue;
                             Connection.ReceiveChat($"{account.EMailAddress} 取消禁止登录", MessageType.System);
+                            SEnvir.Log($"[取消冻结账号] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 取消冻结账号={account.EMailAddress}");
                         }
 
+                        break;
+                    case "恢复误删":
+                        if (!Character.Account.TempAdmin || !GameMaster) return;
+                        if (parts.Length < 2) return;
+
+                        var chara = SEnvir.GetCharacter(parts[1], true);
+                        if (chara == null)
+                        {
+                            Connection.ReceiveChat("没有找到这个角色", MessageType.System);
+                            return;
+                        }
+
+                        if (!chara.Deleted)
+                        {
+                            Connection.ReceiveChat("该角色没有被删除！", MessageType.System);
+                            return;
+                        }
+
+                        if (chara.Account.Connection != null)
+                        {
+                            Connection.ReceiveChat("恢复角色必须在账号离线的状态下操作！", MessageType.System);
+                            return;
+                        }
+
+                        count = 0;
+
+                        foreach (var _chara in chara.Account.Characters)
+                            if (!_chara.Deleted) count++;
+
+                        if (count >= Globals.MaxCharacterCount)
+                        {
+                            Connection.ReceiveChat($"该账号下的有效角色已达上限，需删除 {count - Globals.MaxCharacterCount + 1} 个再执行恢复操作！", MessageType.System);
+                            return;
+                        }
+
+                        chara.Deleted = false;
+                        Connection.ReceiveChat($"{chara.CharacterName} 该角色已恢复误删", MessageType.System);
+                        SEnvir.Log($"[恢复误删] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 恢复账号={chara.Account.EMailAddress} 恢复角色=[{chara.CharacterName}({chara.Level}级{Functions.GetEnumDesc(chara.Gender)}{Functions.GetEnumDesc(chara.Class)})]");
+
+                        break;
+                    case "重载更新":
+                        if (!Character.Account.TempAdmin || !GameMaster) return;
+
+                        Connection.ReceiveChat("正在重新生成更新清单...", MessageType.System);
+                        SEnvir.LoadClientHash();
+                        Connection.ReceiveChat("更新清单已刷新！", MessageType.System);
                         break;
                 }
 
@@ -17229,7 +17310,7 @@ namespace Zircon.Server.Models
                     }
 
                     //SEnvir.Broadcast(new S.Chat {Text = "{Name} has died and lost {expbonus:##,##0} Experience, {target?.Name ?? "No one"} has won the experience.", Type = MessageType.System});
-                    string tmp = string.Format("{0} 已经死亡并且失去了 {1} 的经验, {2} 赢得了相应经验.", Name, expbonus, target.Name ?? "No one");
+                    string tmp = string.Format("{0} 已经死亡并且失去了 {1} 的经验, {2} 赢得了相应经验.", Name, expbonus, target?.Name ?? "No one");
                     SEnvir.Broadcast(new S.Chat {Text = tmp, Type = MessageType.System});
                 }
 
@@ -19705,7 +19786,7 @@ namespace Zircon.Server.Models
                 }
             }
         }
-        public void PickUpC(int x, int y, int itemIdx)
+        public void PickUpC(int x, int y, int itemIdx, bool hint = true)
         {
             if (Dead || Companion == null)
                 return;
@@ -19756,10 +19837,11 @@ namespace Zircon.Server.Models
 
                                 if (!CanGainItems(true, checkem))
                                 {
-                                    Connection.ReceiveChat("背包空间不足", MessageType.System);
-                                    foreach (SConnection con4 in Connection.Observers)
+                                    if (hint)
                                     {
-                                        con4.ReceiveChat("背包空间不足", MessageType.System);
+                                        Connection.ReceiveChat("背包空间不足", MessageType.System);
+                                        foreach (SConnection con4 in Connection.Observers)
+                                            con4.ReceiveChat("背包空间不足", MessageType.System);
                                     }
                                     return;
                                 }
@@ -19775,10 +19857,11 @@ namespace Zircon.Server.Models
 
                                 if (!CanGainItems(true, checkemm))
                                 {
-                                    Connection.ReceiveChat("背包空间不足", MessageType.System);
-                                    foreach (SConnection con4 in Connection.Observers)
+                                    if (hint)
                                     {
-                                        con4.ReceiveChat("背包空间不足", MessageType.System);
+                                        Connection.ReceiveChat("背包空间不足", MessageType.System);
+                                        foreach (SConnection con4 in Connection.Observers)
+                                            con4.ReceiveChat("背包空间不足", MessageType.System);
                                     }
                                     return;
                                 }
@@ -19799,7 +19882,7 @@ namespace Zircon.Server.Models
             }
         }
 
-        public void PickUp(int x, int y, int itemIdx)
+        public void PickUp(int x, int y, int itemIdx, bool hint = true)
         {
             if (Dead)
                 return;
@@ -19850,11 +19933,13 @@ namespace Zircon.Server.Models
 
                                 if (!CanGainItems(true, checkem))
                                 {
-                                    Connection.ReceiveChat("背包空间不足", MessageType.System);
-                                    foreach (SConnection con4 in Connection.Observers)
+                                    if (hint)
                                     {
-                                        con4.ReceiveChat("背包空间不足", MessageType.System);
+                                        Connection.ReceiveChat("背包空间不足", MessageType.System);
+                                        foreach (SConnection con4 in Connection.Observers)
+                                            con4.ReceiveChat("背包空间不足", MessageType.System);
                                     }
+                                    
                                     return;
                                 }
                                 Character.Account.Gold -= 500000000;
@@ -19869,11 +19954,13 @@ namespace Zircon.Server.Models
 
                                 if (!CanGainItems(true, checkemm))
                                 {
-                                    Connection.ReceiveChat("背包空间不足", MessageType.System);
-                                    foreach (SConnection con4 in Connection.Observers)
+                                    if (hint)
                                     {
-                                        con4.ReceiveChat("背包空间不足", MessageType.System);
+                                        Connection.ReceiveChat("背包空间不足", MessageType.System);
+                                        foreach (SConnection con4 in Connection.Observers)
+                                            con4.ReceiveChat("背包空间不足", MessageType.System);
                                     }
+
                                     return;
                                 }
                                 Character.Account.Gold -= 1000000000;

@@ -155,21 +155,26 @@ namespace Zircon.Server.Models
                 {
                     Item.Count -= amount;
 
-                    ob.CompanionOwner.Character.Account.GuildMember.Guild.GuildFunds += amount;
-                    ob.CompanionOwner.Character.Account.GuildMember.Guild.DailyGrowth += amount;
-
-                    ob.CompanionOwner.Character.Account.GuildMember.Guild.DailyContribution += amount;
-                    ob.CompanionOwner.Character.Account.GuildMember.Guild.TotalContribution += amount;
-
-                    ob.CompanionOwner.Character.Account.GuildMember.DailyContribution += amount;
-                    ob.CompanionOwner.Character.Account.GuildMember.TotalContribution += amount;
-
-                    foreach (GuildMemberInfo member in ob.CompanionOwner.Character.Account.GuildMember.Guild.Members)
+                    if (ob.CompanionOwner.Character.Account.GuildMember != null)
                     {
-                        if (member.Account.Connection.Player == null) continue;
+                        ob.CompanionOwner.Character.Account.GuildMember.Guild.GuildFunds += amount;
+                        ob.CompanionOwner.Character.Account.GuildMember.Guild.DailyGrowth += amount;
 
-                        member.Account.Connection.Enqueue(new S.GuildMemberContribution { Index = ob.CompanionOwner.Character.Account.GuildMember.Index, Contribution = amount, ObserverPacket = false });
+                        ob.CompanionOwner.Character.Account.GuildMember.Guild.DailyContribution += amount;
+                        ob.CompanionOwner.Character.Account.GuildMember.Guild.TotalContribution += amount;
+
+                        ob.CompanionOwner.Character.Account.GuildMember.DailyContribution += amount;
+                        ob.CompanionOwner.Character.Account.GuildMember.TotalContribution += amount;
+
+                        if ((ob.CompanionOwner.Character.Account.GuildMember.Guild?.Members ?? null) != null)
+                            foreach (GuildMemberInfo member in ob.CompanionOwner.Character.Account.GuildMember.Guild.Members)
+                            {
+                                if ((member.Account.Connection?.Player ?? null) == null) continue;
+
+                                member.Account.Connection.Enqueue(new S.GuildMemberContribution { Index = ob.CompanionOwner.Character.Account.GuildMember.Index, Contribution = amount, ObserverPacket = false });
+                            }
                     }
+
                 }
 
                 Item.UserTask?.Objects?.Remove(this);

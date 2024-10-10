@@ -23,6 +23,7 @@ using S = Library.Network.ServerPackets;
 using C = Library.Network.ClientPackets;
 using System.Security.Principal;
 using System.Globalization;
+using System.Reflection.PortableExecutable;
 
 namespace Server.Envir
 {
@@ -160,11 +161,12 @@ namespace Server.Envir
                 TcpClient client = _listener.EndAcceptTcpClient(result);
                 string ipAddress;
 
-                if (Config.UseProxy)
+                    
+                NetworkStream stream = client.GetStream();
+                
+                if (stream.DataAvailable)
                 {
-                    NetworkStream stream = client.GetStream();
-
-                    StreamReader reader = new (stream);
+                    StreamReader reader = new(stream);
 
                     // 解析Proxy Protocol头
                     string? line = reader.ReadLine();
@@ -178,22 +180,26 @@ namespace Server.Envir
                         }
                         else
                         {
-                            Log($"代理模式下错误的代理头信息：{line} {client.Client.RemoteEndPoint.ToString()}");
-                            client.Close();
-                            ContinueListen();
-                            return;
+                            //Log($"代理模式下错误的代理头信息：{line} {client.Client.RemoteEndPoint.ToString()}");
+                            //client.Close();
+                            //ContinueListen();
+                            //return;
+                            ipAddress = client.Client.RemoteEndPoint.ToString().Split(':')[0];
                         }
                     }
                     else
                     {
-                        Log($"代理模式下错误的代理头信息：{line} {client.Client.RemoteEndPoint.ToString()}");
-                        client.Close();
-                        ContinueListen();
-                        return;
+                        //Log($"代理模式下错误的代理头信息：{line} {client.Client.RemoteEndPoint.ToString()}");
+                        //client.Close();
+                        //ContinueListen();
+                        //return;
+                        ipAddress = client.Client.RemoteEndPoint.ToString().Split(':')[0];
                     }
+                    
                 }
                 else
                     ipAddress = client.Client.RemoteEndPoint.ToString().Split(':')[0];
+
 
                 DateTime banDate;
                 if (!IPBlocks.TryGetValue(ipAddress, out banDate) || banDate < Now)
@@ -695,6 +701,7 @@ namespace Server.Envir
         }
         public static void LoadClientHash()
         {
+            ClientFileHash.Clear();
             Config.ClientPath = Config.ClientPath.Trim();
 
             if (string.IsNullOrEmpty(Config.ClientPath) || !Directory.Exists(Config.ClientPath))
@@ -3086,9 +3093,9 @@ namespace Server.Envir
             }
 
 
-            if ((account.PasswordSafe?.Length ?? 0) <= 0)
+            //if ((account.PasswordSafe?.Length ?? 0) <= 0)
             {
-                var tmp = CreateHash($"{p.EMailAddress}-{p.Password}");
+                var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
                 Log($"老用户更新 PasswordSafe={Functions.HashBytes2String(tmp)}");
                 account.PasswordSafe = tmp;
             }
@@ -3237,9 +3244,9 @@ namespace Server.Envir
                 }
             }
 
-            if ((account.PasswordSafe?.Length ?? 0) <= 0)
+            //if ((account.PasswordSafe?.Length ?? 0) <= 0)
             {
-                var tmp = CreateHash($"{p.EMailAddress}-{p.Password}");
+                var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
                 Log($"老用户更新 PasswordSafe={Functions.HashBytes2String(tmp)}");
                 account.PasswordSafe = tmp;
             }
@@ -3780,7 +3787,7 @@ namespace Server.Envir
             for (int i = 0; i < CharacterInfoList.Count; i++)
                 if (string.Compare(CharacterInfoList[i].CharacterName, p.CharacterName, StringComparison.OrdinalIgnoreCase) == 0)
                 {
-                    if (CharacterInfoList[i].Account == con.Account) continue;
+                    if (CharacterInfoList[i].Account == con.Account && CharacterInfoList[i].Deleted) continue;
 
                     con.Enqueue(new S.NewCharacter { Result = NewCharacterResult.AlreadyExists });
                     return;
@@ -3806,7 +3813,7 @@ namespace Server.Envir
                 Character = cInfo.ToSelectInfo(),
             });
 
-            Log(string.Format("[创建角色] Character: {0}, IP Address: {1}, Security: {2}", p.CharacterName, con.IPAddress, p.CheckSum));
+            Log(string.Format("[创建角色] 账号: {0}, 角色: {1}, IP: {2}, 验证码: {3}", con.Account.EMailAddress, p.CharacterName, con.IPAddress, p.CheckSum));
         }
         public static void DeleteCharacter(C.DeleteCharacter p, SConnection con)
         {
@@ -3829,7 +3836,7 @@ namespace Server.Envir
                 character.Deleted = true;
                 con.Enqueue(new S.DeleteCharacter { Result = DeleteCharacterResult.Success, DeletedIndex = character.Index });
 
-                Log(string.Format("[删除角色] Character: {0}, IP Address: {1}, Security: {2}", character.CharacterName, con.IPAddress, p.CheckSum));
+                Log(string.Format("[删除角色] 账号: {0}, 角色: {1}, IP: {2}, 验证码: {3}", con.Account.EMailAddress, character.CharacterName, con.IPAddress, p.CheckSum));
                 return;
             }
 
@@ -4208,10 +4215,10 @@ namespace Server.Envir
             return GetCharacter(name)?.Account?.Connection;
         }
 
-        public static CharacterInfo GetCharacter(string name)
+        public static CharacterInfo GetCharacter(string name, bool ordinal = false)
         {
             for (int i = 0; i < CharacterInfoList.Count; i++)
-                if (string.Compare(CharacterInfoList[i].CharacterName, name, StringComparison.OrdinalIgnoreCase) == 0)
+                if (string.Compare(CharacterInfoList[i].CharacterName, name, ordinal ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase) == 0)
                     return CharacterInfoList[i];
 
             return null;

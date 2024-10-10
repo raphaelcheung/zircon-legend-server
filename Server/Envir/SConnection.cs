@@ -16,6 +16,7 @@ using S = Library.Network.ServerPackets;
 using System.Security.Principal;
 using Library.Network.ClientPackets;
 using System.Numerics;
+using System.Text;
 
 namespace Server.Envir
 {
@@ -54,10 +55,22 @@ namespace Server.Envir
 
             OnException += (o, e) =>
             {
-                SEnvir.Log(string.Format("崩溃: 账号={0}, 角色={1}.", (Account != null ? Account.EMailAddress : "empty"), Player!=null?Player.Name:"empty"));
+                if (e is SocketException sex)
+                {
+                    SEnvir.Log($"网络崩溃: 账号={(Account != null ? Account.EMailAddress : "empty")}, 角色={(Player != null ? Player.Name : "empty")}.");
+                    File.AppendAllText("./datas/Errors.txt", sex.StackTrace + Environment.NewLine);
+
+                    if (sex.InnerException != null && sex.InnerException.StackTrace != null)
+                        File.AppendAllText("./datas/Errors.txt", sex.InnerException.StackTrace + Environment.NewLine);
+                    return;
+                }
+
+                SEnvir.Log(string.Format("崩溃: 账号={0}, 角色={1}.", (Account != null ? Account.EMailAddress : "empty"), Player != null ? Player.Name : "empty"));
                 SEnvir.Log(e.ToString());
-                SEnvir.Log(e.StackTrace.ToString());
-                
+
+                if (e.StackTrace != null)
+                    SEnvir.Log(e.StackTrace.ToString());
+
                 File.AppendAllText("./datas/Errors.txt", e.StackTrace + Environment.NewLine);
             };
 
@@ -118,7 +131,7 @@ namespace Server.Envir
                 if (!Disconnecting)
                 {
                     Disconnecting = true;
-                    TimeOutTime = Time.Now.AddSeconds(10);
+                    TimeOutTime = Time.Now.AddSeconds(2);
                 }
 
                 if (SEnvir.Now <= TimeOutTime) return;
@@ -140,7 +153,7 @@ namespace Server.Envir
                 {
                     base.SendDisconnect(p);
 
-                    TimeOutTime = Time.Now.AddSeconds(10);
+                    TimeOutTime = Time.Now.AddSeconds(2);
                 }
 
                 if (SEnvir.Now <= TimeOutTime) return;
@@ -197,20 +210,54 @@ namespace Server.Envir
                 Enqueue(new G.Ping { ObserverPacket = false });
             }
 
-            if (ReceiveList.Count > Config.MaxPacket)
+            if (!Disconnecting && ReceiveList.Count > Config.MaxPacket)
             {
-                var checknum = Account.LastSum;
-                SEnvir.Log($"{IPAddress} 账号={Account?.EMailAddress ?? "空"} 角色={Player?.Character?.CharacterName ?? "空"} 断开连接, 网络包太多！");
+                Dictionary<Type, uint> dict = new Dictionary<Type, uint>();
+                foreach(var pack in ReceiveList)
+                {
+                    if (pack == null) continue;
+
+                    if (!dict.TryGetValue(pack.PacketType, out uint counter))
+                    {
+                        dict.Add(pack.PacketType, 1);
+                        continue;
+                    }
+
+                    counter++;
+                    dict[pack.PacketType] = counter;
+                }
+
+                StringBuilder sb = new StringBuilder();
+                foreach(var pair in dict)
+                {
+                    if (sb.Length<= 0) sb.Append($"[{pair.Key.FullName}x{pair.Value}]");
+                    else sb.Append($"、[{pair.Key.FullName}x{pair.Value}]");
+                }
+
+                dict.Clear();
+
+
+                var checknum = Account?.LastSum ?? "";
+                SEnvir.Log($"{IPAddress} 账号={Account?.EMailAddress ?? "空"} 角色={Player?.Character?.CharacterName ?? "空"} 验证码={Account?.LastSum ?? ""} 网络包太多，断开用户连接");
+                SEnvir.Log($"积压的网络包共有 {ReceiveList.Count} 个，统计：{sb.ToString()}");
+                sb.Clear();
 
                 TryDisconnect();
                 //SEnvir.IPBlocks[IPAddress] = SEnvir.Now.Add(Config.PacketBanTime);
 
                 if (!string.IsNullOrEmpty(checknum))
                     for (int i = SEnvir.Connections.Count - 1; i >= 0; i--)
-                        if (SEnvir.Connections[i].Account.LastSum == checknum)
-                            SEnvir.Connections[i].TryDisconnect();
+                    {
+                        var con = SEnvir.Connections[i];
+                        if (con == null || con.Account == null)
+                            continue;
 
-                return;
+                        if (con.Account.LastSum == checknum)
+                        {
+                            SEnvir.Log($"断开相同验证码的连接 账号={con.Account} 角色={con.Player?.Character?.CharacterName ?? ""}");
+                            SEnvir.Connections[i].TryDisconnect();
+                        }
+                    }
             }
 
             base.Process();
@@ -1396,6 +1443,20 @@ namespace Server.Envir
             if (Stage != GameStage.Game) return;
 
             Player.PickUp(p.Xpos, p.Ypos, p.ItemIdx);
+        }
+
+        public void Process(C.PickUpS p)
+        {
+            if (Stage != GameStage.Game) return;
+            if ((p.UserItems?.Count ?? 0) <= 0 && (p.CompanionItems?.Count ?? 0) <= 0) return;
+
+            if (p.UserItems != null)
+                foreach(var item in p.UserItems)
+                    Player.PickUp(item.xPos, item.yPos, item.ItemIndex, false);
+
+            if (p.CompanionItems != null)
+                foreach (var item in p.CompanionItems)
+                    Player.PickUpC(item.xPos, item.yPos, item.ItemIndex, false);
         }
     }
 
