@@ -3074,7 +3074,26 @@ namespace Server.Envir
                     account.ExpiryDate = DateTime.MinValue;
                 }
 
-                if (!PasswordMatch(p.Password, account.Password) && (account.PasswordSafe?.Length ?? 0) > 0 && !PasswordMatch(p.Password, account.PasswordSafe))
+                if (PasswordMatch(p.Password, account.Password))
+                {
+                    var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
+
+                    if ((account.RealPassword?.Length ?? 0) <= 0)
+                    {
+                        Log($"{p.EMailAddress} RealPassword={Functions.HashBytes2String(tmp)}");
+                        account.RealPassword = tmp;
+                    }
+                    else
+                    {
+                        if (tmp != account.RealPassword)
+                            Log($"用户的 RealPassword 异常，原来的：{account.RealPassword} 期望为：{tmp}");
+                    }
+                }
+                else if ((account.RealPassword?.Length ?? 0) > 0 && PasswordMatch(p.Password, account.RealPassword))
+                {
+                    Log($"用户{{{p.EMailAddress}}} RealPassword 验证通过！");
+                }
+                else
                 {
                     Log(string.Format("[密码错误] IP: {0}, 账号: {1}, 验证码: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
 
@@ -3085,20 +3104,13 @@ namespace Server.Envir
                         account.ExpiryDate = Now.AddMinutes(1);
 
                         con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
+
                         return;
                     }
 
                     con.Enqueue(new S.LoginSimple { Result = LoginResult.WrongPassword });
                     return;
                 }
-            }
-
-
-            //if ((account.PasswordSafe?.Length ?? 0) <= 0)
-            {
-                var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
-                Log($"老用户更新 PasswordSafe={Functions.HashBytes2String(tmp)}");
-                account.PasswordSafe = tmp;
             }
 
             account.WrongPasswordCount = 0;
@@ -3201,7 +3213,7 @@ namespace Server.Envir
 
             if (!admin)
             {
-                if (!Config.AllowLogin || SEnvir.Connections.Count > Config.ConnectionLimit)
+                if (!Config.AllowLogin || Connections.Count > Config.ConnectionLimit)
                 {
                     con.Enqueue(new S.Login { Result = 0 });
                     return;
@@ -3226,7 +3238,26 @@ namespace Server.Envir
                     account.ExpiryDate = DateTime.MinValue;
                 }
 
-                if (!PasswordMatch(p.Password, account.Password) && (account.PasswordSafe?.Length ?? 0) > 0 && !PasswordMatch(p.Password, account.PasswordSafe))
+                if (PasswordMatch(p.Password, account.Password))
+                {
+                    var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
+
+                    if ((account.RealPassword?.Length ?? 0) <= 0)
+                    {
+                        Log($"{p.EMailAddress} RealPassword={Functions.HashBytes2String(tmp)}");
+                        account.RealPassword = tmp;
+                    }
+                    else
+                    {
+                        if (tmp != account.RealPassword)
+                            Log($"用户的 RealPassword 异常，原来的：{account.RealPassword} 期望为：{tmp}");
+                    }
+                }
+                else if((account.RealPassword?.Length ?? 0) > 0 && PasswordMatch(p.Password, account.RealPassword))
+                {
+                    Log($"用户{{{p.EMailAddress}}} RealPassword 验证通过！");
+                }
+                else
                 {
                     Log(string.Format("[密码错误] IP: {0}, 账号: {1}, 验证码: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
 
@@ -3243,13 +3274,6 @@ namespace Server.Envir
                     con.Enqueue(new S.Login { Result = LoginResult.WrongPassword });
                     return;
                 }
-            }
-
-            //if ((account.PasswordSafe?.Length ?? 0) <= 0)
-            {
-                var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
-                Log($"老用户更新 PasswordSafe={Functions.HashBytes2String(tmp)}");
-                account.PasswordSafe = tmp;
             }
 
             account.WrongPasswordCount = 0;
@@ -3389,7 +3413,7 @@ namespace Server.Envir
 
             account.EMailAddress = p.EMailAddress;
             account.Password = CreateHash(p.Password);
-            account.PasswordSafe = CreateHash(Functions.CalcMD5($"{account.EMailAddress}-{p.Password}"));
+            account.RealPassword = CreateHash(Functions.CalcMD5($"{account.EMailAddress}-{p.Password}"));
             account.RealName = p.RealName;
             account.BirthDate = p.BirthDate;
             account.Referral = refferal;
@@ -3474,7 +3498,28 @@ namespace Server.Envir
                 account.ExpiryDate = DateTime.MinValue;
             }
 
-            if (!PasswordMatch( p.CurrentPassword, account.Password))
+
+
+            if (PasswordMatch(p.CurrentPassword, account.Password))
+            {
+                var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.CurrentPassword}"));
+
+                if ((account.RealPassword?.Length ?? 0) <= 0)
+                {
+                    Log($"{p.EMailAddress} RealPassword={Functions.HashBytes2String(tmp)}");
+                    account.RealPassword = tmp;
+                }
+                else
+                {
+                    if (tmp != account.RealPassword)
+                        Log($"用户的 RealPassword 异常，原来的：{account.RealPassword} 期望为：{tmp}");
+                }
+            }
+            else if ((account.RealPassword?.Length ?? 0) > 0 && PasswordMatch(p.CurrentPassword, account.RealPassword))
+            {
+                Log($"用户{{{p.EMailAddress}}} RealPassword 验证通过！");
+            }
+            else
             {
                 Log(string.Format("[修改密码失败] 密码错误，IP: {0}, 账号: {1}, 验证码: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
 
@@ -3493,7 +3538,7 @@ namespace Server.Envir
             }
 
             account.Password = CreateHash(p.NewPassword);
-            account.PasswordSafe = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.NewPassword}"));
+            account.RealPassword = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.NewPassword}"));
             //SendChangePasswordEmail(account, con.IPAddress);
             con.Enqueue(new S.ChangePassword { Result = ChangePasswordResult.Success });
 

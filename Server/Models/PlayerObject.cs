@@ -2174,7 +2174,7 @@ namespace Zircon.Server.Models
                         }
 
                         account.Password = SEnvir.CreateHash(parts[2]);
-                        account.PasswordSafe = SEnvir.CreateHash(Functions.CalcMD5($"{account.EMailAddress}-{parts[2]}"));
+                        account.RealPassword = SEnvir.CreateHash(Functions.CalcMD5($"{account.EMailAddress}-{parts[2]}"));
 
                         Connection.ReceiveChat($"{account.EMailAddress} 成功修改密码", MessageType.System);
                         SEnvir.Log($"[修改密码] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 被修改账号={account.EMailAddress}");

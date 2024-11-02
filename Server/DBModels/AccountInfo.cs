@@ -51,20 +51,20 @@ namespace Server.DBModels
         }
         private byte[] _Password;
 
-        public byte[] PasswordSafe
+        public byte[] RealPassword
         {
-            get { return _PasswordSafe; }
+            get { return _RealPassword; }
             set
             {
-                if (_PasswordSafe == value) return;
+                if (_RealPassword == value) return;
 
-                var oldValue = _PasswordSafe;
-                _PasswordSafe = value;
+                var oldValue = _RealPassword;
+                _RealPassword = value;
 
-                OnChanged(oldValue, value, "PasswordSafe");
+                OnChanged(oldValue, value, "RealPassword");
             }
         }
-        private byte[] _PasswordSafe = [];
+        private byte[] _RealPassword = [];
 
         public string RealName
         {
