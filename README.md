@@ -154,29 +154,29 @@ UseProxy=True
 
 ```
 @TAKECASTLE [城堡指数]
-@FORCEENDWAR [城堡指数] 参数1  结束攻城
-@FORCEWAR [城堡指数]    参数1   开始
+@FORCEENDWAR [城堡指数] 参数1       #结束攻城
+@FORCEWAR [城堡指数]    参数1            #开始攻城
 @CLEARBELT
 @MAP [地图名]
 @GLOBALBAN [角色名] [*持续时间]
-@CHATBAN [角色名] [*持续时间]    禁止聊天
-@REFUNDHUNTGOLD [角色] [数量]   狩猎金币
-@REFUNDGAMEGOLD  [角色] [数量]    奖励游戏币
-@TAKEGAMEGOLD  [角色] [数量]      移除游戏币
-@REMOVEGAMEGOLD [角色] [数量]  因为支付失败扣除游戏币
-@GIVEGAMEGOLD  [角色] [数量]   成功购买 游戏币
+@CHATBAN [角色名] [*持续时间]             #禁止聊天
+@REFUNDHUNTGOLD [角色] [数量]        #狩猎金币
+@REFUNDGAMEGOLD  [角色] [数量]       #奖励游戏币
+@TAKEGAMEGOLD  [角色] [数量]            #移除游戏币
+@REMOVEGAMEGOLD [角色] [数量]       #因为支付失败扣除游戏币
+@GIVEGAMEGOLD  [角色] [数量]              #成功购买 游戏币
 @REBOOT   重启
 @GCCOLLECT   gc收集
 @MAKE [物品名称] [数量]
 @SETCOMPANIONVALUE [Level] [Stat] [Value]
-@GIVESKILLS [角色名]   给与全部技能
+@GIVESKILLS [角色名]         #给与全部技能
 @GOTO [角色名]
-@LEVEL [角色名|  Level] [*Level]  调整自身等级
+@LEVEL [角色名]   等级        #调整指定角色等级，如果角色名为空，则调整当前角色
 @ITEMBOT [角色名]
 @GOLDBOT [角色名]
 @GAMEMASTER    
-@OBSERVER      退出 进入隐身模式
-@RECALL [角色名]    召唤到身边
+@OBSERVER                         #切换隐身模式
+@RECALL [角色名]                #召唤到身边
 @LEAVEGUILD
 @ALLOWGUILD
 @BLOCKWHISPER
@@ -190,8 +190,13 @@ UseProxy=True
 @ENABLELEVEL15
 @EXTRACTORLOCK
 @ROLL [Amount]
-@PLAYERONLINE  //查看在线人数
-@CHARACTERONLINE //列举 20 个在线的角色名称
+@PLAYERONLINE                  #查看在线人数
+@CHARACTERONLINE         #列举 20 个在线的角色名称
+@ADMIN 账号 true/false      #在线设置账号的管理员权限（临时管理员），这里设置的权限也会永久保存
+@修改密码 账号 新密码        #修改指定账号的密码
+@禁止登录 账号 封禁秒数    #在指定时间内禁止账号登录，秒数为0表示解禁
+@恢复误删 角色名                #恢复误删角色
+@重载更新                            #重新加载客户端更新目录下的文件
 ```
 
 ## 客户端
