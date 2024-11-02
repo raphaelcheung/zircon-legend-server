@@ -64,7 +64,7 @@ namespace Zircon.Server.Models
 
             if (!File.Exists(fileName))
             {
-                SEnvir.Log(string.Format("Map: {0} not found.", fileName));
+                SEnvir.Log(string.Format("没有找到地图: {0}.", fileName));
                 return;
             }
 
@@ -107,7 +107,7 @@ namespace Zircon.Server.Models
 
                 if (!mob.Spawn(Info, new Point(info.X, info.Y)))
                 {
-                    SEnvir.Log(string.Format("Failed to spawn Guard Map:{0}, Location: {1}, {2}", Info.Description, info.X, info.Y));
+                    SEnvir.Log(string.Format("创建地图护卫失败:{0}, 位置: {1}, {2}", Info.Description, info.X, info.Y));
                     continue;
                 }
             }
@@ -332,7 +332,7 @@ namespace Zircon.Server.Models
                     if (Info.Delay >= 1000000)
                     {
                         foreach (SConnection con in SEnvir.Connections)
-                            con.ReceiveChat(string.Format("{0} has appeared.", mob.MonsterInfo.MonsterName), MessageType.System);
+                            con.ReceiveChat(string.Format("{0} 出现了.", mob.MonsterInfo.MonsterName), MessageType.System);
                     }
                     else
                     {

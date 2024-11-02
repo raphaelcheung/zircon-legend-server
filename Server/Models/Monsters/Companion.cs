@@ -149,6 +149,7 @@ namespace Zircon.Server.Models.Monsters
                 if (distance > bestDistance) continue;
 
 
+
                 ItemObject item = (ItemObject)ob;
 
                 if (!item.OwnerList.Contains(CompanionOwner.Character) || !item.MonsterDrop) continue;
@@ -166,13 +167,21 @@ namespace Zircon.Server.Models.Monsters
 
                 if (distance != bestDistance) closest.Clear();
 
+
+                int itemIdx = item.Item.Info.Index;
+                if (item.Item.Info.Effect == ItemEffect.ItemPart)
+                    itemIdx = item.Item.Stats[Stat.ItemIndex];
+
+                if (!CompanionOwner.CompanionMemory.ContainsKey(itemIdx))
+                    continue;
+
                 closest.Add(item);
                 bestDistance = distance;
             }
 
             if (closest.Count == 0)
             {
-                SearchTime = SEnvir.Now.AddSeconds(10);
+                SearchTime = SEnvir.Now.AddSeconds(3);
                 return;
             }
 

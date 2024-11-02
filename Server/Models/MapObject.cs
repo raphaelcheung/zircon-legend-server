@@ -937,7 +937,7 @@ namespace Zircon.Server.Models
 
             if (Race == ObjectType.Player && ((PlayerObject) this).Observer) return false;
 
-            if (ob.Character.Account.TempAdmin)
+            if (ob.GameMaster)
                 return true;
             
             if (Buffs.Any(x => x.Type == BuffType.Cloak || x.Type == BuffType.Transparency))

@@ -103,7 +103,7 @@ namespace Zircon.Server.Models
 
             if (ob.CanGainItems(false, check))
             {
-                if (amount > 0)
+                if (amount > 0 && ob.Character.Account.GuildMember != null)
                 {
                     Item.Count -= amount;
 
@@ -116,12 +116,13 @@ namespace Zircon.Server.Models
                     ob.Character.Account.GuildMember.DailyContribution += amount;
                     ob.Character.Account.GuildMember.TotalContribution += amount;
 
-                    foreach (GuildMemberInfo member in ob.Character.Account.GuildMember.Guild.Members)
-                    {
-                        if (member.Account.Connection.Player == null) continue;
+                    if ((ob.Character.Account.GuildMember.Guild?.Members ?? null) != null)
+                        foreach (GuildMemberInfo member in ob.Character.Account.GuildMember.Guild.Members)
+                        {
+                            if ((member.Account.Connection?.Player ?? null) == null) continue;
 
-                        member.Account.Connection.Enqueue(new S.GuildMemberContribution { Index = ob.Character.Account.GuildMember.Index, Contribution = amount, ObserverPacket = false });
-                    }
+                            member.Account.Connection.Enqueue(new S.GuildMemberContribution { Index = ob.Character.Account.GuildMember.Index, Contribution = amount, ObserverPacket = false });
+                        }
                 }
 
                 Item.UserTask?.Objects?.Remove(this);

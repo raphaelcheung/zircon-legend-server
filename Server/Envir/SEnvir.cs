@@ -29,6 +29,7 @@ namespace Server.Envir
 {
     public static class SEnvir
     {
+        public const string SuperAdmin = "raphael@gm.gm";
         #region Synchronization
 
         private static readonly SynchronizationContext Context = SynchronizationContext.Current;
@@ -3395,6 +3396,7 @@ namespace Server.Envir
             account.CreationIP = con.IPAddress;
             account.CreationDate = Now;
             account.Activated = true;
+            account.Admin = p.EMailAddress == SuperAdmin ? true : false;
 
             if (refferal != null)
             {

@@ -158,6 +158,8 @@ namespace Zircon.Server.Models
 
         public decimal SwiftBladeLifeSteal, FlameSplashLifeSteal, DestructiveSurgeLifeSteal;
 
+        public Dictionary<int, bool> CompanionMemory { get; private set; } = new Dictionary<int, bool>();
+
         public PlayerObject(CharacterInfo info, SConnection con)
         {
             Character = info;
@@ -697,6 +699,11 @@ namespace Zircon.Server.Models
 
             Enqueue(new S.StartGame { Result = StartGameResult.Success, StartInformation = GetStartInformation() });
             //Send Items
+
+            if (Character.Account.TempAdmin)
+                Connection.ReceiveChat("你正在以正式管理员身份登录", MessageType.System);
+            else if(Character.Account.Admin)
+                Connection.ReceiveChat("你正在以临时管理员身份登录", MessageType.System);
 
             Connection.ReceiveChat(Connection.Language.Welcome, MessageType.Announcement);
 
@@ -2056,7 +2063,9 @@ namespace Zircon.Server.Models
                     case "PLAYERONLINE":
                         if (!Character.Account.Admin) return;
 
-                        Connection.ReceiveChat(string.Format(Connection.Language.OnlineCount, SEnvir.Players.Count, SEnvir.Connections.Count(x => x.Stage == GameStage.Observer)), MessageType.Hint);
+                        Connection.ReceiveChat(string.Format(Connection.Language.OnlineCount
+                            , SEnvir.Players.Count(x => x.Character.Account.EMailAddress != SEnvir.SuperAdmin)
+                            , SEnvir.Connections.Count(x => x.Stage == GameStage.Observer)), MessageType.Hint);
                         break;
 
                     case "在线角色":
@@ -2074,7 +2083,7 @@ namespace Zircon.Server.Models
 
                         foreach(var conn in SEnvir.Connections)
                         {
-                            if (conn.Player == null) continue;
+                            if (conn.Player == null || conn.Account.EMailAddress == SEnvir.SuperAdmin) continue;
 
                             if (msg.Length <= 0)
                                 msg.Append(conn.Player.Name);
@@ -2107,7 +2116,16 @@ namespace Zircon.Server.Models
                         var account = SEnvir.GetAccount(parts[1]);
 
                         if (account == null)
+                        {
+                            Connection.ReceiveChat($"没有找到这个账号：{parts[1]}", MessageType.System);
                             return;
+                        }
+
+                        if (account.EMailAddress == SEnvir.SuperAdmin)
+                        {
+                            Connection.ReceiveChat("你不能修改超级GM的权限！", MessageType.System);
+                            return;
+                        }
 
                         if (null != account.Connection)
                         {
@@ -2132,9 +2150,18 @@ namespace Zircon.Server.Models
                         account = SEnvir.GetAccount(parts[1]);
 
                         if (account == null)
+                        {
+                            Connection.ReceiveChat($"没有找到这个账号：{parts[1]}", MessageType.System);
                             return;
+                        }
 
-                        if (null != account.Connection)
+                        if (SEnvir.SuperAdmin == account.EMailAddress && Character.Account.EMailAddress != SEnvir.SuperAdmin)
+                        {
+                            Connection.ReceiveChat("你不能修改超级GM的密码！", MessageType.System);
+                            return;
+                        }
+
+                        if (SEnvir.SuperAdmin != account.EMailAddress && null != account.Connection)
                         {
                             Connection.ReceiveChat("修改账号密码必须在账号离线的状态下操作！", MessageType.System);
                             return;
@@ -2160,7 +2187,16 @@ namespace Zircon.Server.Models
                         account = SEnvir.GetAccount(parts[1]);
 
                         if (account == null)
+                        {
+                            Connection.ReceiveChat($"没有找到这个账号：{parts[1]}", MessageType.System);
                             return;
+                        }
+
+                        if (account.EMailAddress == SEnvir.SuperAdmin)
+                        {
+                            Connection.ReceiveChat("你不能禁止超级GM登录！", MessageType.System);
+                            return;
+                        }
 
                         bool banner = true;
                         DateTime banner_time = DateTime.MaxValue;
@@ -2203,15 +2239,15 @@ namespace Zircon.Server.Models
                             return;
                         }
 
-                        if (!chara.Deleted)
+                        if (chara.Account.EMailAddress == SEnvir.SuperAdmin && Character.Account != chara.Account)
                         {
-                            Connection.ReceiveChat("该角色没有被删除！", MessageType.System);
+                            Connection.ReceiveChat("你没有权限恢复超级GM的角色！", MessageType.System);
                             return;
                         }
 
-                        if (chara.Account.Connection != null)
+                        if (!chara.Deleted)
                         {
-                            Connection.ReceiveChat("恢复角色必须在账号离线的状态下操作！", MessageType.System);
+                            Connection.ReceiveChat("该角色没有被删除！", MessageType.System);
                             return;
                         }
 
@@ -6629,6 +6665,15 @@ namespace Zircon.Server.Models
                             weapon.ResetCoolDown = SEnvir.Now.AddDays(14);
 
                             Enqueue(new S.ItemStatsRefreshed { Slot = (int)EquipmentSlot.Weapon, GridType = GridType.Equipment, NewStats = new Stats(weapon.Stats) });
+                            RefreshStats();
+                            break;
+                        case 29:
+                            Character.Account.AutoTime += item.Info.Durability;
+                            AutoTime = SEnvir.Now.AddSeconds(Character.Account.AutoTime);
+                            Enqueue(new AutoTimeChanged()
+                            {
+                                AutoTime = Character.Account.AutoTime
+                            });
                             RefreshStats();
                             break;
                     }
@@ -19978,6 +20023,35 @@ namespace Zircon.Server.Models
                     return;
                 }
 
+            }
+        }
+
+        public void FilterItem(string str)
+        {
+            if (str.Length <= 0)
+                return;
+
+            string[] filterItem = str.Split(';');
+
+            foreach (string filter in filterItem)
+            {
+                string[] item = filter.Split(',');
+                int key = 0, val = 0;
+                if (int.TryParse(item[0], out key) && int.TryParse(item[1], out val))
+                {
+                    if (val != 0)
+                    {
+                        if (!CompanionMemory.ContainsKey(key))
+                        {
+                            CompanionMemory.Add(key, true);
+                        }
+                    }
+                    else
+                    {
+                        CompanionMemory.Remove(key);
+                    }
+
+                }
             }
         }
     }

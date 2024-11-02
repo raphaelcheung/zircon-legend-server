@@ -89,8 +89,9 @@ namespace Zircon.Server.Models
         public override ObjectType Race {get{return ObjectType.Monster;}}
         
         public sealed override MirDirection Direction { get; set; }
+        public DateTime SearchTime { get; set; }
 
-        public DateTime SearchTime,  RoamTime, EXPOwnerTime, DeadTime, RageTime;
+        public DateTime RoamTime, EXPOwnerTime, DeadTime, RageTime;
         public DateTime TameTime { get; set; }
 
         public TimeSpan SearchDelay = TimeSpan.FromSeconds(3),

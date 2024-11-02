@@ -1458,6 +1458,14 @@ namespace Server.Envir
                 foreach (var item in p.CompanionItems)
                     Player.PickUpC(item.xPos, item.yPos, item.ItemIndex, false);
         }
+
+        public void Process(C.PktFilterItem p)
+        {
+            if (Stage != GameStage.Game) return;
+
+            foreach(var str in p.FilterStr)
+                Player.FilterItem(str);
+        }
     }
 
 
