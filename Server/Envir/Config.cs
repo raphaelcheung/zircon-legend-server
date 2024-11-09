@@ -201,7 +201,7 @@ namespace Server.Envir
         public static TimeSpan HarvestDuration { get; set; }
         public static int MysteryShipRegionIndex { get; set; }
         public static int LairRegionIndex { get; set; }
-        public static bool DropConsumable { get; set; } = true;
+        public static int 不掉落低于本价格的普通药水 { get; set; } = 0;
         public static bool DropNothingTypeCommonItem { get; set; } = true;
         public static int DropLowestEquipmentsExcludeWeapon { get; set; } = 0;
         public static int DropLowestWeapon { get; set; } = 0;
@@ -223,6 +223,8 @@ namespace Server.Envir
         public static bool MonsterDropGroupShare { get; set; } = false;
         public static bool CanSeeOthersDropped { get; set; } = false;
         public static int MonsterDropProtectionDuration { get; set; } = 0;
+        public static int 武器最高精炼等级 { get; set; } = 20;
+        public static int 武器品质每低一档降低精炼上限 { get; set; } = 3;
 
         [ConfigSection("Rates")]
         public static int ExperienceRate { get; set; }

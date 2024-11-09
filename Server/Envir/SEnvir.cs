@@ -49,8 +49,8 @@ namespace Server.Envir
 
         #region Logging
 
-        public static ConcurrentQueue<string> DisplayLogs = new ConcurrentQueue<string>();
-        public static ConcurrentQueue<string> Logs = new ConcurrentQueue<string>();
+        public static ConcurrentQueue<string> DisplayLogs { get; set; } = new ConcurrentQueue<string>();
+        public static ConcurrentQueue<string> Logs { get; set; } = new ConcurrentQueue<string>();
         public static void Log(string log, bool hardLog = true)
         {
             DateTime now = Time.Now.ToLocalTime();
@@ -74,12 +74,17 @@ namespace Server.Envir
             if (ex.InnerException != null)
                 Log(ex);
         }
+
+        public static int GetWeaponLimitLevel(Rarity r)
+        {
+            return Config.武器最高精炼等级 - (Rarity.Elite - r) * Config.武器品质每低一档降低精炼上限;
+        }
         
         public static ConcurrentQueue<string> DisplayChatLogs = new ConcurrentQueue<string>();
         public static ConcurrentQueue<string> ChatLogs = new ConcurrentQueue<string>();
         public static void LogChat(string log)
         {
-            log = string.Format("[{0:F}]: {1}", Time.Now, log);
+            log = string.Format("[{0:F}]: {1}", Time.Now.ToLocalTime(), log);
 
             if (DisplayChatLogs.Count < 500)
                 DisplayChatLogs.Enqueue(log);
@@ -698,6 +703,22 @@ namespace Server.Envir
 
             //EnvirThread = new Thread(EnvirLoop) { IsBackground = true };
             //EnvirThread.Start();
+
+            if (Config.武器最高精炼等级 <= 0 || Config.武器最高精炼等级 >= 255)
+                Config.武器最高精炼等级 = 20;
+
+            if (Config.武器最高精炼等级 > Globals.WeaponExperienceList.Count)
+            {
+                Log($"配置项中的“武器最高精炼等级”不应高于 Globals.WeaponExperienceList 中的列表数量，现重置为：{Globals.WeaponExperienceList.Count}");
+                Config.武器最高精炼等级 = Globals.WeaponExperienceList.Count;
+            }
+
+            if (Config.武器品质每低一档降低精炼上限 < 0 || Config.武器品质每低一档降低精炼上限 >= 255)
+            {
+                Log($"配置项中的“武器品质每低一档降低精炼上限”无效，现重置为：3");
+                Config.武器品质每低一档降低精炼上限 = 3;
+            }
+
             EnvirLoop();
         }
         public static void LoadClientHash()
@@ -3049,7 +3070,7 @@ namespace Server.Envir
 
             if (!admin)
             {
-                if (!Config.AllowLogin || SEnvir.Connections.Count > Config.ConnectionLimit)
+                if (!Config.AllowLogin || Connections.Count > Config.ConnectionLimit)
                 {
                     con.Enqueue(new S.LoginSimple { Result = 0 });
                     return;
@@ -3076,17 +3097,18 @@ namespace Server.Envir
 
                 if (PasswordMatch(p.Password, account.Password))
                 {
-                    var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
 
                     if ((account.RealPassword?.Length ?? 0) <= 0)
                     {
+                        var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
+
                         Log($"{p.EMailAddress} RealPassword={Functions.HashBytes2String(tmp)}");
                         account.RealPassword = tmp;
                     }
                     else
                     {
-                        if (tmp != account.RealPassword)
-                            Log($"用户的 RealPassword 异常，原来的：{account.RealPassword} 期望为：{tmp}");
+                        if (!PasswordMatch(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"), account.RealPassword))
+                            Log($"{p.EMailAddress} 的 RealPassword 核对异常");
                     }
                 }
                 else if ((account.RealPassword?.Length ?? 0) > 0 && PasswordMatch(p.Password, account.RealPassword))
@@ -3240,17 +3262,18 @@ namespace Server.Envir
 
                 if (PasswordMatch(p.Password, account.Password))
                 {
-                    var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
 
                     if ((account.RealPassword?.Length ?? 0) <= 0)
                     {
+                        var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
+
                         Log($"{p.EMailAddress} RealPassword={Functions.HashBytes2String(tmp)}");
                         account.RealPassword = tmp;
                     }
                     else
                     {
-                        if (tmp != account.RealPassword)
-                            Log($"用户的 RealPassword 异常，原来的：{account.RealPassword} 期望为：{tmp}");
+                        if (!PasswordMatch(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"), account.RealPassword))
+                            Log($"{p.EMailAddress} 的 RealPassword 核对异常");
                     }
                 }
                 else if((account.RealPassword?.Length ?? 0) > 0 && PasswordMatch(p.Password, account.RealPassword))
@@ -3502,17 +3525,17 @@ namespace Server.Envir
 
             if (PasswordMatch(p.CurrentPassword, account.Password))
             {
-                var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.CurrentPassword}"));
-
                 if ((account.RealPassword?.Length ?? 0) <= 0)
                 {
+                    var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.CurrentPassword}"));
+
                     Log($"{p.EMailAddress} RealPassword={Functions.HashBytes2String(tmp)}");
                     account.RealPassword = tmp;
                 }
                 else
                 {
-                    if (tmp != account.RealPassword)
-                        Log($"用户的 RealPassword 异常，原来的：{account.RealPassword} 期望为：{tmp}");
+                    if (!PasswordMatch(Functions.CalcMD5($"{p.EMailAddress}-{p.CurrentPassword}"), account.RealPassword))
+                        Log($"{p.EMailAddress} 的 RealPassword 核对异常");
                 }
             }
             else if ((account.RealPassword?.Length ?? 0) > 0 && PasswordMatch(p.CurrentPassword, account.RealPassword))

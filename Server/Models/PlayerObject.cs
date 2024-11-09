@@ -127,7 +127,7 @@ namespace Zircon.Server.Models
 
         public List<MonsterObject> Pets = new List<MonsterObject>();
 
-        public HashSet<MapObject> VisibleObjects = new HashSet<MapObject>();
+        public HashSet<MapObject> VisibleObjects { get; set; } = new HashSet<MapObject>();
         public HashSet<MapObject> VisibleDataObjects = new HashSet<MapObject>();
         public HashSet<MonsterObject> TaggedMonsters = new HashSet<MonsterObject>();
         public HashSet<MapObject> NearByObjects = new HashSet<MapObject>();
@@ -811,7 +811,7 @@ namespace Zircon.Server.Models
             if (SEnvir.TopRankings.Contains(Character))
                 BuffAdd(BuffType.Ranking, TimeSpan.MaxValue, null, true, false, TimeSpan.Zero);
 
-            if (Character.Account.Admin)
+            if (GameMaster)
                 BuffAdd(BuffType.Developer, TimeSpan.MaxValue, null, true, false, TimeSpan.Zero);
 
             Enqueue(new S.HelmetToggle { HideHelmet = Character.HideHelmet });
@@ -1567,6 +1567,12 @@ namespace Zircon.Server.Models
                     case "GAMEMASTER":
                         if (!Character.Account.TempAdmin && !Character.Account.Admin) return;
                         GameMaster = !GameMaster;
+
+                        if (GameMaster)
+                            BuffAdd(BuffType.Developer, TimeSpan.MaxValue, null, true, false, TimeSpan.Zero);
+                        else
+                            BuffRemove(BuffType.Developer);
+
                         Connection.ReceiveChat($"GM模式: {(GameMaster ? "开启" : "关闭")}", MessageType.Hint);
                         break;
                     case "GOLDBOT":
@@ -1958,7 +1964,7 @@ namespace Zircon.Server.Models
 
                         if (parts.Length < 2) return;
 
-                        MapInfo info = SEnvir.MapInfoList.Binding.FirstOrDefault(x => string.Compare(x.FileName, parts[1], StringComparison.OrdinalIgnoreCase) == 0);
+                        MapInfo? info = SEnvir.MapInfoList.Binding.FirstOrDefault(x => string.Compare(x.FileName, parts[1], StringComparison.OrdinalIgnoreCase) == 0 || string.Compare(x.Description, parts[1], StringComparison.OrdinalIgnoreCase) == 0);
 
                         Map map = SEnvir.GetMap(info);
 
@@ -2274,6 +2280,11 @@ namespace Zircon.Server.Models
                         SEnvir.LoadClientHash();
                         Connection.ReceiveChat("更新清单已刷新！", MessageType.System);
                         break;
+                    case "怪物攻城":
+                        if (!Character.Account.TempAdmin) return;
+                        if (parts.Length < 2) return;
+
+                        break;
                 }
 
             }
@@ -2557,8 +2568,7 @@ namespace Zircon.Server.Models
             UserItem weapon = Equipment[(int)EquipmentSlot.Weapon];
             if (weapon != null)
             {
-                int limit_level = Globals.WeaponExperienceList.Count;
-                limit_level -= (2 - (int)weapon.Info.Rarity) * 3;
+                int limit_level = SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity);
 
                 if (weapon.Info.Effect != ItemEffect.PickAxe && (weapon.Flags & UserItemFlags.Refinable) != UserItemFlags.Refinable && (weapon.Flags & UserItemFlags.NonRefinable) != UserItemFlags.NonRefinable && weapon.Level < limit_level && rateEffected)
                 {
@@ -6448,9 +6458,11 @@ namespace Zircon.Server.Models
                                 return;
                             }
 
-                            if (weapon.Level != 17)
+
+
+                            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity))
                             {
-                                Connection.ReceiveChat("你的武器不是最高等级.", MessageType.System);
+                                Connection.ReceiveChat("你的武器没达到最高等级.", MessageType.System);
                                 return;
                             }
 
@@ -6519,9 +6531,9 @@ namespace Zircon.Server.Models
                                 return;
                             }
 
-                            if (weapon.Level != 17)
+                            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity))
                             {
-                                Connection.ReceiveChat("你的武器不是最高等级.", MessageType.System);
+                                Connection.ReceiveChat("你的武器没达到最高等级.", MessageType.System);
                                 return;
                             }
                             
@@ -6562,9 +6574,9 @@ namespace Zircon.Server.Models
                                 return;
                             }
 
-                            if (weapon.Level != 17)
+                            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity))
                             {
-                                Connection.ReceiveChat("你的武器不是最高等级.", MessageType.System);
+                                Connection.ReceiveChat("你的武器没达到最高等级.", MessageType.System);
                                 return;
                             }
 
@@ -6639,9 +6651,9 @@ namespace Zircon.Server.Models
                                 return;
                             }
 
-                            if (weapon.Level != 17)
+                            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity))
                             {
-                                Connection.ReceiveChat("你的武器不是最高等级.", MessageType.System);
+                                Connection.ReceiveChat("你的武器没达到最高等级.", MessageType.System);
                                 return;
                             }
 
@@ -11473,7 +11485,7 @@ namespace Zircon.Server.Models
 
             if ((weapon.Flags & UserItemFlags.NonRefinable) == UserItemFlags.NonRefinable) return;
 
-            if (weapon.Level != 17) return;
+            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity)) return;
 
             long fragmentCount = 0;
             int special = 0;
@@ -11925,7 +11937,7 @@ namespace Zircon.Server.Models
 
             if (weapon == null) return;
 
-            if (weapon.Level != 17) return;
+            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity)) return;
 
             weapon.AddStat(stat, amount, StatSource.Refine);
 
@@ -11983,7 +11995,7 @@ namespace Zircon.Server.Models
 
             if ((weapon.Flags & UserItemFlags.NonRefinable) == UserItemFlags.NonRefinable) return;
 
-            if (weapon.Level != 17) return;
+            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity)) return;
 
             long fragmentCount = 0;
             int special = 0;
@@ -19716,6 +19728,84 @@ namespace Zircon.Server.Models
                 AutoFights.Add(newObject);
                 setConfArr[(int)p.Slot] = p.Enabled;
             }
+        }
+
+        public void SortStorageItem()
+        {
+            int ItemCount = 0;
+            SortedDictionary<int, List<UserItem>> ItemSortList = new SortedDictionary<int, List<UserItem>>();
+
+            for (int i = 0; i <= 31; i++)
+            {
+                ItemSortList[i] = new List<UserItem>();
+            }
+            for (int i = 0; i < Globals.StorageSize; i++)
+            {
+                UserItem Item = Storage[i];
+                if (Item != null)
+                {
+                    switch (Item.Info.ItemType)
+                    {
+                        case ItemType.Nothing:
+                            ItemSortList[0].Add(Item);
+                            break;
+                        case ItemType.Consumable:
+                            ItemSortList[1].Add(Item);
+                            break;
+                        case ItemType.Weapon: ItemSortList[2].Add(Item); break;
+                        case ItemType.Armour: ItemSortList[3].Add(Item); break;
+                        case ItemType.Torch: ItemSortList[4].Add(Item); break;
+                        case ItemType.Helmet: ItemSortList[5].Add(Item); break;
+                        case ItemType.Necklace: ItemSortList[6].Add(Item); break;
+                        case ItemType.Bracelet: ItemSortList[7].Add(Item); break;
+                        case ItemType.Ring: ItemSortList[8].Add(Item); break;
+                        case ItemType.Shoes: ItemSortList[9].Add(Item); break;
+                        case ItemType.Poison: ItemSortList[10].Add(Item); break;
+                        case ItemType.Amulet: ItemSortList[11].Add(Item); break;
+                        case ItemType.Meat: ItemSortList[12].Add(Item); break;
+                        case ItemType.Ore: ItemSortList[13].Add(Item); break;
+                        case ItemType.Book: ItemSortList[14].Add(Item); break;
+                        case ItemType.Scroll: ItemSortList[15].Add(Item); break;
+                        case ItemType.DarkStone: ItemSortList[16].Add(Item); break;
+                        case ItemType.RefineSpecial: ItemSortList[17].Add(Item); break;
+                        case ItemType.HorseArmour: ItemSortList[18].Add(Item); break;
+                        case ItemType.Flower: ItemSortList[19].Add(Item); break;
+                        case ItemType.CompanionFood: ItemSortList[20].Add(Item); break;
+                        case ItemType.CompanionBag: ItemSortList[21].Add(Item); break;
+                        case ItemType.CompanionHead: ItemSortList[22].Add(Item); break;
+                        case ItemType.CompanionBack: ItemSortList[23].Add(Item); break;
+                        case ItemType.System: ItemSortList[24].Add(Item); break;
+                        case ItemType.ItemPart: ItemSortList[25].Add(Item); break;
+                        case ItemType.Emblem: ItemSortList[26].Add(Item); break;
+                        case ItemType.Shield: ItemSortList[27].Add(Item); break;
+                        //case ItemType.Baoshi: ItemSortList[28].Add(Item); break;
+                        //case ItemType.SwChenghao: ItemSortList[29].Add(Item); break;
+                        //case ItemType.Shizhuang: ItemSortList[30].Add(Item); break;
+                        //case ItemType.Fabao: ItemSortList[31].Add(Item); break;
+                        default:
+                            ItemSortList[31].Add(Item);
+                            break;
+                    }
+                    Storage[i] = null;
+                }
+            }
+            List<UserItem> TY = new List<UserItem>();
+            for (int i = 0; i <= 31; i++)
+            {
+                TY = ItemSortList[i];
+                foreach (UserItem item in TY)
+                {
+                    item.Slot = ItemCount;
+                    item.Character = Character;
+                    Storage[ItemCount] = item;
+                    ++ItemCount;
+                }
+                ItemSortList[i].Clear();
+            }
+            TY.Clear();
+            TY = null;
+            ItemSortList = null;
+            Enqueue(new S.SortStorageItem { Items = Character.Items.Where(x => x.Slot < Globals.StorageSize).Select(x => x.ToClientInfo()).ToList() });
         }
 
         public void SortBagItem()

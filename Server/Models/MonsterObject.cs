@@ -152,7 +152,7 @@ namespace Zircon.Server.Models
 
         #endregion
 
-        public Dictionary<AccountInfo, List<UserItem>> Drops;
+        public Dictionary<AccountInfo, List<UserItem>> Drops { get; set; }
 
         public virtual decimal Experience {get{return MonsterInfo.Experience;}}
 
@@ -2800,7 +2800,9 @@ namespace Zircon.Server.Models
                     continue;
 
                 if (drop.Item.ItemType == ItemType.Consumable 
-                    && !Config.DropConsumable 
+                    && Config.不掉落低于本价格的普通药水 > 0
+                    && Config.不掉落低于本价格的普通药水 > drop.Item.Price
+                    && drop.Item.Shape == 0
                     && drop.Item.Rarity == Rarity.Common)
                     continue;
 

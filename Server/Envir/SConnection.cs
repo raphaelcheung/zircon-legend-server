@@ -350,10 +350,20 @@ namespace Server.Envir
         {
             if (Upgrading) return;
 
-            if (SEnvir.ClientFileHash.Count <= 0 
-                || string.IsNullOrEmpty(p.FileKey))
+            if (SEnvir.ClientFileHash.Count <= 0)
             {
-                SEnvir.Log($"服务器没有加载更新清单或请求的文件名为空 ClientFileHash.Count={SEnvir.ClientFileHash.Count} FileKey={p.FileKey}");
+                Enqueue(new S.UpgradeClient()
+                {
+                    FileKey = p.FileKey,
+                    TotalSize = 0,
+                    Datas = [0],
+                });
+                return;
+            }
+
+            if (string.IsNullOrEmpty(p.FileKey))
+            {
+                SEnvir.Log($"客户端请求更新的文件名为空 FileKey={p.FileKey}");
                 Enqueue(new S.UpgradeClient()
                 {
                     FileKey = p.FileKey,
@@ -1429,6 +1439,14 @@ namespace Server.Envir
                 return;
 
             Player.SortBagItem();
+        }
+
+        public void Process(C.SortStorageItem p)
+        {
+            if (Stage != GameStage.Game)
+                return;
+
+            Player.SortStorageItem();
         }
 
         public void Process(C.PickUpC p)
