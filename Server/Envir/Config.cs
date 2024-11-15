@@ -126,6 +126,9 @@ namespace Server.Envir
         public static DateTime ChristmasEventEnd { get; set; }
         public static int UpgradeChunkSize { get; set; } = 512 * 1014;//默认 512KB
         public static string WelcomeWordsFile { get; set; } = "";
+        public static bool 开启BOSS封印事件 { get; set; } = true;
+        public static int 挖出的黑铁矿最小纯度 { get; set; } = 25;
+        public static int 挖出的黑铁矿最大纯度 { get; set; } = 45;
 
         [ConfigSection("Control")]
         public static bool AllowLogin { get; set; } 
@@ -193,7 +196,9 @@ namespace Server.Envir
         public static int RedPoint { get; set; }
         public static TimeSpan PvPCurseDuration { get; set; } 
         public static int PvPCurseRate { get; set; } 
-        public static TimeSpan AutoReviveDelay { get; set; } 
+        public static TimeSpan AutoReviveDelay { get; set; }
+        public static int 最高转生次数 { get; set; } = 2;
+        public static int 转生基础等级 { get; set; } = 86;
 
 
         [ConfigSection("Monsters")]
@@ -225,6 +230,7 @@ namespace Server.Envir
         public static int MonsterDropProtectionDuration { get; set; } = 0;
         public static int 武器最高精炼等级 { get; set; } = 20;
         public static int 武器品质每低一档降低精炼上限 { get; set; } = 3;
+        public static int 武器重置等待分钟 { get; set; } = 60 * 24;
 
         [ConfigSection("Rates")]
         public static int ExperienceRate { get; set; }

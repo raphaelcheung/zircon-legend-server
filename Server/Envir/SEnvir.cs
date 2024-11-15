@@ -3940,6 +3940,13 @@ namespace Server.Envir
 
                 PlayerObject player = new PlayerObject(character, con);
                 player.StartGame();
+
+                con.Enqueue(new S.WeaponRefineBase
+                {
+                    LevelLimit = Config.武器最高精炼等级,
+                    RarityStep = Config.武器品质每低一档降低精炼上限,
+                });
+
                 return;
             }
 
@@ -4212,7 +4219,7 @@ namespace Server.Envir
 
             return result;
         }
-
+        public static void SaveSystem() { Session.ForceSaveSystem(); }
 
         #region Password Encryption
         private const int Iterations = 1354;

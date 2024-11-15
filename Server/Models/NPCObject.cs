@@ -163,8 +163,19 @@ namespace Zircon.Server.Models
                         ob.NPCSpecialRefine(action.StatParameter1, action.IntParameter1);
                         break;
                     case NPCActionType.Rebirth:
-                        if (ob.Level >= 86 + ob.Character.Rebirth)
-                            ob.NPCRebirth();
+                        if (ob.Character.Rebirth >= Config.最高转生次数)
+                        {
+                            ob.Connection.ReceiveChat("你的转生次数已达上限，不可再次转生.", MessageType.System);
+                            continue;
+                        }
+
+                        if (ob.Level < Config.转生基础等级 + ob.Character.Rebirth)
+                        {
+                            ob.Connection.ReceiveChat($"下次转生需要 {Config.转生基础等级 + ob.Character.Rebirth} 级，你目前实力还不够.", MessageType.System);
+                            continue;
+                        }
+
+                        ob.NPCRebirth();
                         break;
                 }
             }
@@ -195,7 +206,10 @@ namespace Zircon.Server.Models
                     case NPCCheckType.WeaponLevel:
                         if (!Compare(check.Operator, ob.Equipment[(int)EquipmentSlot.Weapon].Level, check.IntParameter1)) return false;
                         break;
-
+                    case NPCCheckType.WeaponLevelFull:
+                        bool full = SEnvir.GetWeaponLimitLevel(ob.Equipment[(int)EquipmentSlot.Weapon].Info.Rarity) <= ob.Equipment[(int)EquipmentSlot.Weapon].Level;
+                        if (!Compare(check.Operator, full ? 1 : 0, check.IntParameter1)) return false;
+                        break;
                     case NPCCheckType.WeaponCanRefine:
                         if ((ob.Equipment[(int)EquipmentSlot.Weapon].Flags & UserItemFlags.Refinable) == UserItemFlags.Refinable != (check.Operator == Operator.Equal)) return false;
                         break;

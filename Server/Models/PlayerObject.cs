@@ -2,6 +2,7 @@
 using Library.Network;
 using Library.Network.ServerPackets;
 using Library.SystemModels;
+using MirDB;
 using Server.DBModels;
 using Server.Envir;
 using System.Collections.ObjectModel;
@@ -22,6 +23,8 @@ namespace Zircon.Server.Models
 
         public CharacterInfo Character;
         public SConnection Connection;
+
+        public bool SwatchOnlineChanged { get; private set; } = false;
 
         public override string Name
         {
@@ -831,6 +834,17 @@ namespace Zircon.Server.Models
 
             Enqueue(new S.FortuneUpdate { Fortunes = Character.Account.Fortunes.Select(x => x.ToClientInfo()).ToList() });
             SEnvir.Log($"[{Connection.IPAddress}] {Character.Account.EMailAddress}-{Name}({Level}级) 上线了...（当前在线 {SEnvir.Players?.Count ?? 0} 人）");
+
+            if (SEnvir.Players != null && Character.Account.EMailAddress != SEnvir.SuperAdmin)
+                foreach(var player in SEnvir.Players)
+                {
+                    if (!player.Character.Account.Admin || !player.SwatchOnlineChanged || player == this) continue;
+
+                    if (Character.Account.TempAdmin && !player.Character.Account.TempAdmin) continue;
+
+
+                    player.Connection.ReceiveChat($"{Name}({Level}级) 上线了...", MessageType.System);
+                }
         }
         public void SetUpObserver(SConnection con)
         {
@@ -1114,6 +1128,16 @@ namespace Zircon.Server.Models
             SEnvir.Players.Remove(this);
 
             SEnvir.Log($"[{Connection.IPAddress}] {Character.Account.EMailAddress}-{Name}({Level}级) 已下线.（剩余在线 {SEnvir.Players?.Count ?? 0} 人）");
+
+            if (SEnvir.Players != null && Character.Account.EMailAddress != SEnvir.SuperAdmin)
+                foreach(var player in SEnvir.Players)
+                {
+                    if (!player.Character.Account.Admin || !player.SwatchOnlineChanged) continue;
+
+                    if (Character.Account.TempAdmin && !player.Character.Account.TempAdmin) continue;
+
+                    player.Connection.ReceiveChat($"{Name}({Level}级) 已下线.", MessageType.System);
+                }
 
         }
         public override void OnSafeDespawn()
@@ -2280,10 +2304,94 @@ namespace Zircon.Server.Models
                         SEnvir.LoadClientHash();
                         Connection.ReceiveChat("更新清单已刷新！", MessageType.System);
                         break;
-                    case "怪物攻城":
-                        if (!Character.Account.TempAdmin) return;
-                        if (parts.Length < 2) return;
+                    //case "怪物攻城":
+                    //    if (!Character.Account.TempAdmin) return;
+                    //    if (parts.Length < 2) return;
 
+                    //    break;
+
+                    case "屏蔽物品掉落":
+                        if (!Character.Account.TempAdmin || !GameMaster) return;
+                        if (parts.Length < 3) return;
+
+                        if (!bool.TryParse(parts[2], out bool block))
+                            return;
+
+                        item = SEnvir.GetItemInfo(parts[1]);
+
+                        if (item == null) return;
+
+                        item.BlockMonsterDrop = block;
+                        Connection.ReceiveChat($"{item.ItemName}.BlockMonsterDrop => {block}", MessageType.System);
+
+                        break;
+
+                    case "保存数据库":
+                        if (!Character.Account.TempAdmin) return;
+
+                        SEnvir.SaveSystem();
+                        Connection.ReceiveChat($"服务器数据库已保存", MessageType.System);
+
+                        break;
+
+                    case "监控在线":
+                        if (!Character.Account.Admin) return;
+
+                        SwatchOnlineChanged = !SwatchOnlineChanged;
+                        Connection.ReceiveChat($"监控角色上下线：{SwatchOnlineChanged}", MessageType.System);
+                        break;
+
+                    case "怪物倍率":
+                        if (!Character.Account.TempAdmin) return;
+
+                        var m = CurrentMap.Info;
+
+                        if (parts.Length < 11)
+                        {
+                            Connection.ReceiveChat($"{m.Description} [HP:{m.MonsterHealth}-{m.MaxMonsterHealth}] [DC:{m.MonsterDamage}-{m.MaxMonsterDamage}] [EXP:{m.ExperienceRate}-{m.MaxExperienceRate}] [DROP:{m.DropRate}-{m.MaxDropRate}] [GOLD:{m.GoldRate}-{m.MaxGoldRate}]"
+                                , MessageType.System);
+                            return;
+                        }
+
+                        
+                        int[] args = new int[10];
+                        for(int i = 0; i < 10; i++)
+                        {
+                            if (!int.TryParse(parts[i + 1], out var arg))
+                            {
+                                Connection.ReceiveChat("输入参数不正确", MessageType.System);
+                                return;
+                            }
+
+                            args[i] = arg;
+                        }
+
+                        m.MonsterHealth = args[0];
+                        m.MaxMonsterHealth = args[1];
+                        m.MonsterDamage = args[2];
+                        m.MaxMonsterDamage = args[3];
+                        m.ExperienceRate = args[4];
+                        m.MaxExperienceRate = args[5];
+                        m.DropRate = args[6];
+                        m.MaxDropRate = args[7];
+                        m.GoldRate = args[8];
+                        m.MaxGoldRate = args[9];
+
+                        Connection.ReceiveChat("修改成功", MessageType.System);
+                        break;
+
+                    case "清理怪物":
+                        if (!Character.Account.TempAdmin) return;
+
+                        List<MonsterObject> ClearList = new List<MonsterObject>();
+                        foreach (var obj in SEnvir.ActiveObjects)
+                            if (obj is MonsterObject monster && monster.CurrentMap == CurrentMap && monster.PetOwner == null)
+                                ClearList.Add(monster);
+
+                        foreach (var monster in ClearList)
+                            monster.Despawn();
+
+                        Connection.ReceiveChat($"{CurrentMap.Info.Description} 已清理全部怪物.", MessageType.System);
                         break;
                 }
 
@@ -6417,6 +6525,8 @@ namespace Zircon.Server.Models
 
 
                                         string text = string.Format("一个 [{0}] 被使用于 {1}", item.Info.ItemName, CurrentMap.Info.Description);
+                                        SEnvir.Log($"{Character.CharacterName} 在 {CurrentMap.Info.Description} 使用 {item.Info.ItemName} 召唤来了 {boss.MonsterName}");
+
 
                                         foreach (SConnection con in SEnvir.Connections)
                                         {
@@ -6457,7 +6567,6 @@ namespace Zircon.Server.Models
                                 Connection.ReceiveChat(string.Format("你不能提取 {0}.", weapon.Info.ItemName), MessageType.System);
                                 return;
                             }
-
 
 
                             if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity))
@@ -11415,7 +11524,7 @@ namespace Zircon.Server.Models
             info.MaxChance = 100;
             info.Quality = RefineQuality.Precise;
             info.Type = RefineType.Reset;
-            info.RetrieveTime = SEnvir.Now + Globals.RefineTimes[RefineQuality.Precise];
+            info.RetrieveTime = SEnvir.Now.AddMinutes(Config.武器重置等待分钟);
 
             SendShapeUpdate();
             RefreshStats();
@@ -11481,11 +11590,23 @@ namespace Zircon.Server.Models
 
             UserItem weapon = Equipment[(int)EquipmentSlot.Weapon];
 
-            if (weapon == null) return;
+            if (weapon == null)
+            {
+                Connection.ReceiveChat("你手上没有武器.", MessageType.System);
+                return;
+            }
 
-            if ((weapon.Flags & UserItemFlags.NonRefinable) == UserItemFlags.NonRefinable) return;
+            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity))
+            {
+                Connection.ReceiveChat("你的武器还没有满级.", MessageType.System);
+                return;
+            }
 
-            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity)) return;
+            if ((weapon.Flags & UserItemFlags.NonRefinable) == UserItemFlags.NonRefinable)
+            {
+                Connection.ReceiveChat("你的武器不可精炼.", MessageType.System);
+                return;
+            }
 
             long fragmentCount = 0;
             int special = 0;
@@ -11935,9 +12056,17 @@ namespace Zircon.Server.Models
         {
             UserItem weapon = Equipment[(int)EquipmentSlot.Weapon];
 
-            if (weapon == null) return;
+            if (weapon == null)
+            {
+                Connection.ReceiveChat("你手上没有武器.", MessageType.System);
+                return;
+            }
 
-            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity)) return;
+            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity))
+            {
+                Connection.ReceiveChat("你的武器还没有满级.", MessageType.System);
+                return;
+            }
 
             weapon.AddStat(stat, amount, StatSource.Refine);
 
@@ -11993,9 +12122,17 @@ namespace Zircon.Server.Models
 
             if (weapon == null) return;
 
-            if ((weapon.Flags & UserItemFlags.NonRefinable) == UserItemFlags.NonRefinable) return;
+            if ((weapon.Flags & UserItemFlags.NonRefinable) == UserItemFlags.NonRefinable)
+            {
+                Connection.ReceiveChat("你的武器不可精炼.", MessageType.System);
+                return;
+            }
 
-            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity)) return;
+            if (weapon.Level < SEnvir.GetWeaponLimitLevel(weapon.Info.Rarity))
+            {
+                Connection.ReceiveChat("你的武器没有满级.", MessageType.System);
+                return;
+            }
 
             long fragmentCount = 0;
             int special = 0;
@@ -15512,6 +15649,7 @@ namespace Zircon.Server.Models
                         if (!CanGainItems(false, check)) continue;
 
                         UserItem item = SEnvir.CreateDropItem(check);
+                        item.CurrentDurability = SEnvir.Random.Next(Config.挖出的黑铁矿最小纯度, Config.挖出的黑铁矿最大纯度);
                         GainItem(item);
                     }
 
@@ -17353,7 +17491,7 @@ namespace Zircon.Server.Models
 
                     foreach (PlayerObject player in SEnvir.Players)
                     {
-                        if (player.Character.Rebirth > 0 || player.Character.Level >= 86) continue;
+                        if (player.Character.Rebirth > 0 || player.Character.Level >= Config.转生基础等级) continue;
 
                         targets.Add(player);
                     }
@@ -17366,8 +17504,13 @@ namespace Zircon.Server.Models
                         target.GainExperience(expbonus, false, int.MaxValue, false);
                     }
 
+                    string tmp;
                     //SEnvir.Broadcast(new S.Chat {Text = "{Name} has died and lost {expbonus:##,##0} Experience, {target?.Name ?? "No one"} has won the experience.", Type = MessageType.System});
-                    string tmp = string.Format("{0} 已经死亡并且失去了 {1} 的经验, {2} 赢得了相应经验.", Name, expbonus, target?.Name ?? "No one");
+                    if (target == null)
+                        tmp = string.Format("{0} 已经死亡并且失去了 {1} 的经验, 没有任何人赢得该经验.", Name, expbonus);
+                    else
+                        tmp = string.Format("{0} 已经死亡并且失去了 {1} 的经验, {2} 赢得了相应经验.", Name, expbonus, target.Name);
+
                     SEnvir.Broadcast(new S.Chat {Text = tmp, Type = MessageType.System});
                 }
 

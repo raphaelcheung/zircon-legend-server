@@ -189,7 +189,11 @@ namespace Zircon.Server.Models
 
         public bool EasterEventMob, HalloweenEventMob, ChristmasEventMob;
 
-        public int MapHealthRate, MapDamageRate, MapExperienceRate, MapDropRate, MapGoldRate;
+        public int MapGoldRate { get; set; }
+        public int MapExperienceRate { get; set; }
+        public int MapDamageRate { get; set; }
+        public int MapHealthRate { get; set; }
+        public int MapDropRate { get; set; }
 
         public Element AttackElement {get{return Stats.GetAffinityElement();}}
 
@@ -835,7 +839,6 @@ namespace Zircon.Server.Models
             if (PetOwner == null && CurrentMap != null)
             {
                 Stats[Stat.Health] += (int)(Stats[Stat.Health] * (long)MapHealthRate / 100);
-
                 Stats[Stat.MinDC] += (int)(Stats[Stat.MinDC] * (long)MapDamageRate / 100);
                 Stats[Stat.MaxDC] += (int)(Stats[Stat.MaxDC] * (long)MapDamageRate / 100);
             }
@@ -2709,7 +2712,7 @@ namespace Zircon.Server.Models
 
             if (PetOwner == null && CurrentMap != null)
                 eRate *= 1 + MapExperienceRate / 100M;
-            
+
             decimal exp = Math.Min(Experience * eRate, 500000000);
 
             if (ePlayers.Count == 0)
@@ -2798,6 +2801,8 @@ namespace Zircon.Server.Models
                     || drop.Chance == 0 
                     || (DropSet & drop.DropSet) != drop.DropSet) 
                     continue;
+
+                if (drop.Item.BlockMonsterDrop) continue;
 
                 if (drop.Item.ItemType == ItemType.Consumable 
                     && Config.不掉落低于本价格的普通药水 > 0
