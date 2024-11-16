@@ -19,7 +19,7 @@ namespace Zircon.Server.Models
 {
     public sealed class PlayerObject : MapObject
     {
-        public override ObjectType Race {get{return ObjectType.Player;}}
+        public override ObjectType Race { get { return ObjectType.Player; } }
 
         public CharacterInfo Character;
         public SConnection Connection;
@@ -35,15 +35,15 @@ namespace Zircon.Server.Models
         {
             get { return Character.Level; }
             set { Character.Level = value; }
-        } 
+        }
         public override Point CurrentLocation
         {
             get { return Character.CurrentLocation; }
             set { Character.CurrentLocation = value; }
         }
 
-        public MirGender Gender {get{return Character.Gender;}}
-        public MirClass Class {get{return Character.Class;}}
+        public MirGender Gender { get { return Character.Gender; } }
+        public MirClass Class { get { return Character.Class; } }
 
         public DateTime AutoTime { get; private set; }
         public bool[] setConfArr = new bool[60];
@@ -113,7 +113,7 @@ namespace Zircon.Server.Models
 
         public bool GameMaster { get; set; } = false;
 
-        public override bool Blocking {get{return base.Blocking && !Observer;}}
+        public override bool Blocking { get { return base.Blocking && !Observer; } }
 
         public NPCObject NPC;
         public NPCPage NPCPage;
@@ -124,9 +124,9 @@ namespace Zircon.Server.Models
         public bool CompanionLevelLock3, CompanionLevelLock5, CompanionLevelLock7, CompanionLevelLock10, CompanionLevelLock11, CompanionLevelLock13, CompanionLevelLock15;
         public bool ExtractorLock;
 
-        public override bool CanAttack {get{return base.CanAttack && Horse == HorseType.None;}}
-        public override bool CanCast {get{return base.CanCast && Horse == HorseType.None;}}
-        
+        public override bool CanAttack { get { return base.CanAttack && Horse == HorseType.None; } }
+        public override bool CanCast { get { return base.CanCast && Horse == HorseType.None; } }
+
 
         public List<MonsterObject> Pets = new List<MonsterObject>();
 
@@ -136,8 +136,8 @@ namespace Zircon.Server.Models
         public HashSet<MapObject> NearByObjects = new HashSet<MapObject>();
 
         public UserItem[] Inventory = new UserItem[Globals.InventorySize],
-            Equipment = new UserItem[Globals.EquipmentSize],
-            Storage = new UserItem[1000];
+            Equipment = new UserItem[Globals.EquipmentSize];
+        public UserItem[] Storage { get; set; } = new UserItem[1000];
 
         public Companion Companion;
 
@@ -173,8 +173,13 @@ namespace Zircon.Server.Models
 
             Character.LastStats = Stats = new Stats();
 
+            List<UserItem> WrongItemList = new();
+
             foreach (UserItem item in Character.Account.Items)
-                Storage[item.Slot] = item;
+                if (item.Slot >= 0 || item.Slot < 1000) 
+                    Storage[item.Slot] = item;
+                else
+                    SEnvir.Log($"仓库道具异常！{Character.Account.EMailAddress} - {Character.CharacterName} - {item.Info.ItemName} slot={item.Slot}");
 
             foreach (UserItem item in Character.Items)
             {
@@ -184,9 +189,19 @@ namespace Zircon.Server.Models
                     continue;
                 }
 
-                Inventory[item.Slot] = item;
+                if (item.Slot >= 0 && item.Slot < Globals.InventorySize)
+                    Inventory[item.Slot] = item;
+                else
+                    WrongItemList.Add(item);
             }
 
+            foreach (var item in WrongItemList)
+                item.Account = Character.Account;
+
+            if (WrongItemList.Count > 0)
+                SEnvir.Log($"修复 {Character.Account.EMailAddress}-{Character.CharacterName} 异常道具 {WrongItemList.Count} 个，整理仓库后将恢复正常。");
+            
+            WrongItemList.Clear();
             ItemReviveTime = info.ItemReviveTime;
             ItemTime = SEnvir.Now;
 
@@ -2385,12 +2400,17 @@ namespace Zircon.Server.Models
 
                         List<MonsterObject> ClearList = new List<MonsterObject>();
                         foreach (var obj in SEnvir.ActiveObjects)
-                            if (obj is MonsterObject monster && monster.CurrentMap == CurrentMap && monster.PetOwner == null)
+                            if (obj is MonsterObject monster 
+                                && monster.CurrentMap == CurrentMap 
+                                && monster.Activated
+                                && monster.PetOwner == null 
+                                && !(monster is Guard))
                                 ClearList.Add(monster);
 
                         foreach (var monster in ClearList)
                             monster.Despawn();
 
+                        ClearList.Clear();
                         Connection.ReceiveChat($"{CurrentMap.Info.Description} 已清理全部怪物.", MessageType.System);
                         break;
                 }
@@ -19939,7 +19959,7 @@ namespace Zircon.Server.Models
                 foreach (UserItem item in TY)
                 {
                     item.Slot = ItemCount;
-                    item.Character = Character;
+                    item.Account = Character.Account;
                     Storage[ItemCount] = item;
                     ++ItemCount;
                 }
@@ -19948,7 +19968,7 @@ namespace Zircon.Server.Models
             TY.Clear();
             TY = null;
             ItemSortList = null;
-            Enqueue(new S.SortStorageItem { Items = Character.Items.Where(x => x.Slot < Globals.StorageSize).Select(x => x.ToClientInfo()).ToList() });
+            Enqueue(new S.SortStorageItem { Items = Character.Account.Items.Where(x => x.Slot < Globals.StorageSize).Select(x => x.ToClientInfo()).ToList() });
         }
 
         public void SortBagItem()
