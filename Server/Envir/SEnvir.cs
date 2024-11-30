@@ -691,7 +691,7 @@ namespace Server.Envir
             }
         }
 
-        public static LinkedList<CharacterInfo> Rankings;
+        public static LinkedList<CharacterInfo> Rankings { get; set; }
         public static HashSet<CharacterInfo> TopRankings;
 
         public static long ConDelay, SaveDelay;
@@ -896,6 +896,7 @@ namespace Server.Envir
                     Messages.Enqueue(new IPNMessage { FileName = file, Message = File.ReadAllText(file), Verified = true });
             }
 
+            Session.BackUpSpace = Config.玩家数据备份间隔;
         }
         //Only works on Increasing EXP, still need to do Rebirth or loss of exp ranking update.
         public static void RankingSort(CharacterInfo character, bool updateLead = true)
@@ -4329,7 +4330,7 @@ namespace Server.Envir
             int rank = 0;
             foreach (CharacterInfo info in Rankings)
             {
-                if (info.Deleted) continue;
+                if (info.Deleted || !info.Account.Activated) continue;
 
                 switch (info.Class)
                 {
@@ -4351,8 +4352,9 @@ namespace Server.Envir
 
                 if (p.OnlineOnly && info.Player == null) continue;
 
+                if (total++ < p.StartIndex) continue;
 
-                if (total++ < p.StartIndex || result.Ranks.Count > 20) continue;
+                if (result.Ranks.Count >= 20 || (Config.排名只显示前多少名 >= 0 && (p.StartIndex + total) > Config.排名只显示前多少名)) continue;
 
                 result.Ranks.Add(new RankInfo
                 {

@@ -41,6 +41,12 @@ if (Config.挖出的黑铁矿最大纯度 < Config.挖出的黑铁矿最小纯�
     Config.挖出的黑铁矿最大纯度 = Config.挖出的黑铁矿最小纯度;
 }
 
+if (Config.技能最高等级 < 0)
+{
+    Console.WriteLine($"[技能最高等级] 设置了无效值：{Config.技能最高等级}，采用默认值...");
+    Config.技能最高等级 = 1;
+}
+
 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
 
 bool stop = false;

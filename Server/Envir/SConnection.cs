@@ -874,7 +874,7 @@ namespace Server.Envir
         {
             if (Stage != GameStage.Game && Stage != GameStage.Observer && Stage != GameStage.Login) return;
 
-            Enqueue(SEnvir.GetRanks(p, Account != null && (Account.TempAdmin || Account.Observer)));
+            Enqueue(SEnvir.GetRanks(p, Account != null && Account.Admin));
         }
 
         public void Process(C.ObserverRequest p)

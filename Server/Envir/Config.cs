@@ -69,7 +69,7 @@ namespace Server.Envir
             GlobalDelay = TimeSpan.FromSeconds(60);
             MaxLevel = 10;
             DayCycleCount = 3;
-            SkillExp = 3;
+            技能初级阶段基础经验 = 3;
             AllowObservation = true;
             BrownDuration = TimeSpan.FromSeconds(60);
             PKPointTickRate = TimeSpan.FromSeconds(60);
@@ -126,9 +126,10 @@ namespace Server.Envir
         public static DateTime ChristmasEventEnd { get; set; }
         public static int UpgradeChunkSize { get; set; } = 512 * 1014;//默认 512KB
         public static string WelcomeWordsFile { get; set; } = "";
-        public static bool 开启BOSS封印事件 { get; set; } = true;
         public static int 挖出的黑铁矿最小纯度 { get; set; } = 25;
         public static int 挖出的黑铁矿最大纯度 { get; set; } = 45;
+        public static int 排名只显示前多少名 { get; set; } = -1;
+        public static TimeSpan 玩家数据备份间隔 { get; set; } = TimeSpan.FromMinutes(30);
 
         [ConfigSection("Control")]
         public static bool AllowLogin { get; set; } 
@@ -188,7 +189,7 @@ namespace Server.Envir
         public static TimeSpan GlobalDelay { get; set; } 
         public static int MaxLevel { get; set; } 
         public static int DayCycleCount { get; set; }
-        public static int SkillExp { get; set; }
+        public static int 技能初级阶段基础经验 { get; set; } = 3;
         public static bool AllowObservation { get; set; } 
         public static TimeSpan BrownDuration { get; set; } 
         public static int PKPointRate { get; set; }
@@ -199,6 +200,9 @@ namespace Server.Envir
         public static TimeSpan AutoReviveDelay { get; set; }
         public static int 最高转生次数 { get; set; } = 2;
         public static int 转生基础等级 { get; set; } = 86;
+
+        public static int 技能最高等级 { get; set; } = 6;
+        public static int 技能高级阶段基础经验 { get; set; } = 5;
 
 
         [ConfigSection("Monsters")]

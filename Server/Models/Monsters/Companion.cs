@@ -71,7 +71,7 @@ namespace Zircon.Server.Models.Monsters
 
         public override void ProcessAI()
         {
-            if (!CompanionOwner.VisibleObjects.Contains(this))
+            if (!(CompanionOwner?.VisibleObjects?.Contains(this) ?? false))
                 Recall();
 
             if (TargetItem != null && (TargetItem.Node == null || TargetItem.CurrentMap != CurrentMap || !Functions.InRange(CurrentLocation, TargetItem.CurrentLocation, ViewRange)))

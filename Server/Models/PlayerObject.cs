@@ -730,6 +730,11 @@ namespace Zircon.Server.Models
                 Connection.ReceiveChat(word, MessageType.Announcement);
             }
 
+            Enqueue(new S.SkillConfig
+            {
+                SkillLevelLimit = Config.技能最高等级
+            });
+
             SendGuildInfo();
 
             if (Level > 0)
@@ -2128,7 +2133,7 @@ namespace Zircon.Server.Models
 
                         foreach(var conn in SEnvir.Connections)
                         {
-                            if (conn.Player == null || conn.Account.EMailAddress == SEnvir.SuperAdmin) continue;
+                            if (conn.Player == null || conn.Account == null || conn.Account.EMailAddress == SEnvir.SuperAdmin) continue;
 
                             if (msg.Length <= 0)
                                 msg.Append(conn.Player.Name);
@@ -2155,162 +2160,20 @@ namespace Zircon.Server.Models
 
                     case "ADMIN":
                         if (!Character.Account.TempAdmin || !GameMaster) return;
-
-                        if (parts.Length < 3) return;
-
-                        var account = SEnvir.GetAccount(parts[1]);
-
-                        if (account == null)
-                        {
-                            Connection.ReceiveChat($"没有找到这个账号：{parts[1]}", MessageType.System);
-                            return;
-                        }
-
-                        if (account.EMailAddress == SEnvir.SuperAdmin)
-                        {
-                            Connection.ReceiveChat("你不能修改超级GM的权限！", MessageType.System);
-                            return;
-                        }
-
-                        if (null != account.Connection)
-                        {
-                            Connection.ReceiveChat("修改管理员身份必须在账号离线的状态下操作", MessageType.System);
-                            return;
-                        }
-
-                        if (!bool.TryParse(parts[2], out bool admin))
-                            return;
-
-                        account.Admin = admin;
-                        Connection.ReceiveChat($"{parts[1]} 的管理员权限设置为：{admin}", MessageType.System);
-                        SEnvir.Log($"[管理员授权] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 被修改账号={account.EMailAddress}");
-
+                        if (!ChangeAdmin(parts)) return;
                         break;
 
                     case "修改密码":
                         if (!Character.Account.TempAdmin || !GameMaster) return;
-
-                        if (parts.Length < 3) return;
-
-                        account = SEnvir.GetAccount(parts[1]);
-
-                        if (account == null)
-                        {
-                            Connection.ReceiveChat($"没有找到这个账号：{parts[1]}", MessageType.System);
-                            return;
-                        }
-
-                        if (SEnvir.SuperAdmin == account.EMailAddress && Character.Account.EMailAddress != SEnvir.SuperAdmin)
-                        {
-                            Connection.ReceiveChat("你不能修改超级GM的密码！", MessageType.System);
-                            return;
-                        }
-
-                        if (SEnvir.SuperAdmin != account.EMailAddress && null != account.Connection)
-                        {
-                            Connection.ReceiveChat("修改账号密码必须在账号离线的状态下操作！", MessageType.System);
-                            return;
-                        }
-
-                        if (!Globals.PasswordRegex.IsMatch(parts[2]))
-                        {
-                            Connection.ReceiveChat("密码不符合规范", MessageType.System);
-                            return;
-                        }
-
-                        account.Password = SEnvir.CreateHash(parts[2]);
-                        account.RealPassword = SEnvir.CreateHash(Functions.CalcMD5($"{account.EMailAddress}-{parts[2]}"));
-
-                        Connection.ReceiveChat($"{account.EMailAddress} 成功修改密码", MessageType.System);
-                        SEnvir.Log($"[修改密码] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 被修改账号={account.EMailAddress}");
-
+                        if (!ChangeOtherPassword(parts)) return;
                         break;
                     case "禁止登录":
                         if (!Character.Account.TempAdmin || !GameMaster) return;
-                        if (parts.Length < 2) return;
-
-                        account = SEnvir.GetAccount(parts[1]);
-
-                        if (account == null)
-                        {
-                            Connection.ReceiveChat($"没有找到这个账号：{parts[1]}", MessageType.System);
-                            return;
-                        }
-
-                        if (account.EMailAddress == SEnvir.SuperAdmin)
-                        {
-                            Connection.ReceiveChat("你不能禁止超级GM登录！", MessageType.System);
-                            return;
-                        }
-
-                        bool banner = true;
-                        DateTime banner_time = DateTime.MaxValue;
-
-                        if (parts.Length >= 3 && uint.TryParse(parts[2], out var sec))
-                            if (sec == 0) 
-                                banner = false;
-                            else 
-                                banner_time = SEnvir.Now.AddSeconds(sec);
-
-                        account.Banned = banner;
-
-                        if (account.Banned)
-                        {
-                            account.BanReason = "管理员冻结账号";
-                            account.ExpiryDate = banner_time;
-                            account.Connection?.TryDisconnect();
-
-                            Connection.ReceiveChat($"{account.EMailAddress} 在 {banner_time.ToString()} 前禁止登录", MessageType.System);
-
-                            SEnvir.Log($"[冻结账号] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 冻结账号={account.EMailAddress}");
-                        }
-                        else
-                        {
-                            account.BanReason = "";
-                            account.ExpiryDate = DateTime.MinValue;
-                            Connection.ReceiveChat($"{account.EMailAddress} 取消禁止登录", MessageType.System);
-                            SEnvir.Log($"[取消冻结账号] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 取消冻结账号={account.EMailAddress}");
-                        }
-
+                        if (!BanLogin(parts)) return;
                         break;
                     case "恢复误删":
                         if (!Character.Account.TempAdmin || !GameMaster) return;
-                        if (parts.Length < 2) return;
-
-                        var chara = SEnvir.GetCharacter(parts[1], true);
-                        if (chara == null)
-                        {
-                            Connection.ReceiveChat("没有找到这个角色", MessageType.System);
-                            return;
-                        }
-
-                        if (chara.Account.EMailAddress == SEnvir.SuperAdmin && Character.Account != chara.Account)
-                        {
-                            Connection.ReceiveChat("你没有权限恢复超级GM的角色！", MessageType.System);
-                            return;
-                        }
-
-                        if (!chara.Deleted)
-                        {
-                            Connection.ReceiveChat("该角色没有被删除！", MessageType.System);
-                            return;
-                        }
-
-                        count = 0;
-
-                        foreach (var _chara in chara.Account.Characters)
-                            if (!_chara.Deleted) count++;
-
-                        if (count >= Globals.MaxCharacterCount)
-                        {
-                            Connection.ReceiveChat($"该账号下的有效角色已达上限，需删除 {count - Globals.MaxCharacterCount + 1} 个再执行恢复操作！", MessageType.System);
-                            return;
-                        }
-
-                        chara.Deleted = false;
-                        Connection.ReceiveChat($"{chara.CharacterName} 该角色已恢复误删", MessageType.System);
-                        SEnvir.Log($"[恢复误删] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 恢复账号={chara.Account.EMailAddress} 恢复角色=[{chara.CharacterName}({chara.Level}级{Functions.GetEnumDesc(chara.Gender)}{Functions.GetEnumDesc(chara.Class)})]");
-
+                        if (!RestoreDeleted(parts)) return;
                         break;
                     case "重载更新":
                         if (!Character.Account.TempAdmin || !GameMaster) return;
@@ -2327,18 +2190,7 @@ namespace Zircon.Server.Models
 
                     case "屏蔽物品掉落":
                         if (!Character.Account.TempAdmin || !GameMaster) return;
-                        if (parts.Length < 3) return;
-
-                        if (!bool.TryParse(parts[2], out bool block))
-                            return;
-
-                        item = SEnvir.GetItemInfo(parts[1]);
-
-                        if (item == null) return;
-
-                        item.BlockMonsterDrop = block;
-                        Connection.ReceiveChat($"{item.ItemName}.BlockMonsterDrop => {block}", MessageType.System);
-
+                        if (!BlockDrop(parts)) return;
                         break;
 
                     case "保存数据库":
@@ -2358,60 +2210,12 @@ namespace Zircon.Server.Models
 
                     case "怪物倍率":
                         if (!Character.Account.TempAdmin) return;
-
-                        var m = CurrentMap.Info;
-
-                        if (parts.Length < 11)
-                        {
-                            Connection.ReceiveChat($"{m.Description} [HP:{m.MonsterHealth}-{m.MaxMonsterHealth}] [DC:{m.MonsterDamage}-{m.MaxMonsterDamage}] [EXP:{m.ExperienceRate}-{m.MaxExperienceRate}] [DROP:{m.DropRate}-{m.MaxDropRate}] [GOLD:{m.GoldRate}-{m.MaxGoldRate}]"
-                                , MessageType.System);
-                            return;
-                        }
-
-                        
-                        int[] args = new int[10];
-                        for(int i = 0; i < 10; i++)
-                        {
-                            if (!int.TryParse(parts[i + 1], out var arg))
-                            {
-                                Connection.ReceiveChat("输入参数不正确", MessageType.System);
-                                return;
-                            }
-
-                            args[i] = arg;
-                        }
-
-                        m.MonsterHealth = args[0];
-                        m.MaxMonsterHealth = args[1];
-                        m.MonsterDamage = args[2];
-                        m.MaxMonsterDamage = args[3];
-                        m.ExperienceRate = args[4];
-                        m.MaxExperienceRate = args[5];
-                        m.DropRate = args[6];
-                        m.MaxDropRate = args[7];
-                        m.GoldRate = args[8];
-                        m.MaxGoldRate = args[9];
-
-                        Connection.ReceiveChat("修改成功", MessageType.System);
+                        if (!ChangeMonsterRate(parts)) return;
                         break;
 
                     case "清理怪物":
                         if (!Character.Account.TempAdmin) return;
-
-                        List<MonsterObject> ClearList = new List<MonsterObject>();
-                        foreach (var obj in SEnvir.ActiveObjects)
-                            if (obj is MonsterObject monster 
-                                && monster.CurrentMap == CurrentMap 
-                                && monster.Activated
-                                && monster.PetOwner == null 
-                                && !(monster is Guard))
-                                ClearList.Add(monster);
-
-                        foreach (var monster in ClearList)
-                            monster.Despawn();
-
-                        ClearList.Clear();
-                        Connection.ReceiveChat($"{CurrentMap.Info.Description} 已清理全部怪物.", MessageType.System);
+                        if (!ClearMonsters(parts)) return;
                         break;
                 }
 
@@ -2449,6 +2253,244 @@ namespace Zircon.Server.Models
                     }
                 }
             }
+        }
+        
+        private bool ChangeAdmin(string[] parts)
+        {
+
+            if (parts.Length < 3) return false;
+
+            var account = SEnvir.GetAccount(parts[1]);
+
+            if (account == null)
+            {
+                Connection.ReceiveChat($"没有找到这个账号：{parts[1]}", MessageType.System);
+                return false;
+            }
+
+            if (account.EMailAddress == SEnvir.SuperAdmin)
+            {
+                Connection.ReceiveChat("你不能修改超级GM的权限！", MessageType.System);
+                return false;
+            }
+
+            if (null != account.Connection)
+            {
+                Connection.ReceiveChat("修改管理员身份必须在账号离线的状态下操作", MessageType.System);
+                return false;
+            }
+
+            if (!bool.TryParse(parts[2], out bool admin))
+                return false;
+
+            account.Admin = admin;
+            Connection.ReceiveChat($"{parts[1]} 的管理员权限设置为：{admin}", MessageType.System);
+            SEnvir.Log($"[管理员授权] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 被修改账号={account.EMailAddress}");
+
+            return true;
+        }
+        private bool ChangeOtherPassword(string[] parts)
+        {
+            if (parts.Length < 3) return false;
+
+            var account = SEnvir.GetAccount(parts[1]);
+
+            if (account == null)
+            {
+                Connection.ReceiveChat($"没有找到这个账号：{parts[1]}", MessageType.System);
+                return false;
+            }
+
+            if (SEnvir.SuperAdmin == account.EMailAddress && Character.Account.EMailAddress != SEnvir.SuperAdmin)
+            {
+                Connection.ReceiveChat("你不能修改超级GM的密码！", MessageType.System);
+                return false;
+            }
+
+            if (SEnvir.SuperAdmin != account.EMailAddress && null != account.Connection)
+            {
+                Connection.ReceiveChat("修改账号密码必须在账号离线的状态下操作！", MessageType.System);
+                return false;
+            }
+
+            if (!Globals.PasswordRegex.IsMatch(parts[2]))
+            {
+                Connection.ReceiveChat("密码不符合规范", MessageType.System);
+                return false;
+            }
+
+            account.Password = SEnvir.CreateHash(parts[2]);
+            account.RealPassword = SEnvir.CreateHash(Functions.CalcMD5($"{account.EMailAddress}-{parts[2]}"));
+
+            Connection.ReceiveChat($"{account.EMailAddress} 成功修改密码", MessageType.System);
+            SEnvir.Log($"[修改密码] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 被修改账号={account.EMailAddress}");
+
+            return true;
+        }
+
+        private bool BanLogin(string[] parts)
+        {
+            if (parts.Length < 2) return false;
+
+            var account = SEnvir.GetAccount(parts[1]);
+
+            if (account == null)
+            {
+                Connection.ReceiveChat($"没有找到这个账号：{parts[1]}", MessageType.System);
+                return false;
+            }
+
+            if (account.EMailAddress == SEnvir.SuperAdmin)
+            {
+                Connection.ReceiveChat("你不能禁止超级GM登录！", MessageType.System);
+                return false;
+            }
+
+            bool banner = true;
+            DateTime banner_time = DateTime.MaxValue;
+
+            if (parts.Length >= 3 && uint.TryParse(parts[2], out var sec))
+                if (sec == 0)
+                    banner = false;
+                else
+                    banner_time = SEnvir.Now.AddSeconds(sec);
+
+            account.Banned = banner;
+
+            if (account.Banned)
+            {
+                account.BanReason = "管理员冻结账号";
+                account.ExpiryDate = banner_time;
+                account.Connection?.TryDisconnect();
+
+                Connection.ReceiveChat($"{account.EMailAddress} 在 {banner_time.ToString()} 前禁止登录", MessageType.System);
+
+                SEnvir.Log($"[冻结账号] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 冻结账号={account.EMailAddress}");
+            }
+            else
+            {
+                account.BanReason = "";
+                account.ExpiryDate = DateTime.MinValue;
+                Connection.ReceiveChat($"{account.EMailAddress} 取消禁止登录", MessageType.System);
+                SEnvir.Log($"[取消冻结账号] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 取消冻结账号={account.EMailAddress}");
+            }
+
+            return true;
+        }
+
+        private bool RestoreDeleted(string[] parts)
+        {
+            if (parts.Length < 2) return false;
+
+            var chara = SEnvir.GetCharacter(parts[1], true);
+            if (chara == null)
+            {
+                Connection.ReceiveChat("没有找到这个角色", MessageType.System);
+                return false;
+            }
+
+            if (chara.Account.EMailAddress == SEnvir.SuperAdmin && Character.Account != chara.Account)
+            {
+                Connection.ReceiveChat("你没有权限恢复超级GM的角色！", MessageType.System);
+                return false;
+            }
+
+            if (!chara.Deleted)
+            {
+                Connection.ReceiveChat("该角色没有被删除！", MessageType.System);
+                return false;
+            }
+
+            int count = 0;
+
+            foreach (var _chara in chara.Account.Characters)
+                if (!_chara.Deleted) count++;
+
+            if (count >= Globals.MaxCharacterCount)
+            {
+                Connection.ReceiveChat($"该账号下的有效角色已达上限，需删除 {count - Globals.MaxCharacterCount + 1} 个再执行恢复操作！", MessageType.System);
+                return false;
+            }
+
+            chara.Deleted = false;
+            Connection.ReceiveChat($"{chara.CharacterName} 该角色已恢复误删", MessageType.System);
+            SEnvir.Log($"[恢复误删] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 恢复账号={chara.Account.EMailAddress} 恢复角色=[{chara.CharacterName}({chara.Level}级{Functions.GetEnumDesc(chara.Gender)}{Functions.GetEnumDesc(chara.Class)})]");
+
+            return true;
+        }
+        private bool BlockDrop(string[] parts)
+        {
+            if (parts.Length < 3) return false;
+
+            if (!bool.TryParse(parts[2], out bool block))
+                return false;
+
+            var item = SEnvir.GetItemInfo(parts[1]);
+
+            if (item == null) return false;
+
+            item.BlockMonsterDrop = block;
+            Connection.ReceiveChat($"{item.ItemName}.BlockMonsterDrop => {block}", MessageType.System);
+
+            return true;
+        }
+        private bool ClearMonsters(string[] parts)
+        {
+            List<MonsterObject> ClearList = new List<MonsterObject>();
+            foreach (var obj in SEnvir.ActiveObjects)
+                if (obj is MonsterObject monster
+                    && monster.CurrentMap.Info == CurrentMap.Info
+                    && monster.Activated
+                    && monster.PetOwner == null
+                    && !(monster is Guard))
+                    ClearList.Add(monster);
+
+            foreach (var monster in ClearList)
+                monster.Despawn();
+
+            Connection.ReceiveChat($"{CurrentMap.Info.Description} 清理了 {ClearList.Count} 只怪物.", MessageType.System);
+            ClearList.Clear();
+            return true;
+        }
+
+        private bool ChangeMonsterRate(string[] parts)
+        {
+            var m = CurrentMap.Info;
+
+            if (parts.Length < 11)
+            {
+                Connection.ReceiveChat($"{m.Description} [HP:{m.MonsterHealth}-{m.MaxMonsterHealth}] [DC:{m.MonsterDamage}-{m.MaxMonsterDamage}] [EXP:{m.ExperienceRate}-{m.MaxExperienceRate}] [DROP:{m.DropRate}-{m.MaxDropRate}] [GOLD:{m.GoldRate}-{m.MaxGoldRate}]"
+                    , MessageType.System);
+                return false;
+            }
+
+
+            int[] args = new int[10];
+            for (int i = 0; i < 10; i++)
+            {
+                if (!int.TryParse(parts[i + 1], out var arg))
+                {
+                    Connection.ReceiveChat("输入参数不正确", MessageType.System);
+                    return false;
+                }
+
+                args[i] = arg;
+            }
+
+            m.MonsterHealth = args[0];
+            m.MaxMonsterHealth = args[1];
+            m.MonsterDamage = args[2];
+            m.MaxMonsterDamage = args[3];
+            m.ExperienceRate = args[4];
+            m.MaxExperienceRate = args[5];
+            m.DropRate = args[6];
+            m.MaxDropRate = args[7];
+            m.GoldRate = args[8];
+            m.MaxGoldRate = args[9];
+
+            Connection.ReceiveChat("修改成功", MessageType.System);
+
+            return true;
         }
 
         public void ObserverChat(SConnection con, string text)
@@ -6866,9 +6908,15 @@ namespace Zircon.Server.Models
 
                     if (Magics.TryGetValue(info.Magic, out magic))
                     {
-                        int rate = (magic.Level - 2) * 500;
+                        if (magic.Level >= Config.技能最高等级)
+                        {
+                            Connection.ReceiveChat($"{magic.Info.Name} 已修炼满级", MessageType.System);
+                            break;
+                        }
 
-                        magic.Experience += (Config.SkillExp + item.CurrentDurability) * Config.SkillRate;
+                        int rate = (int)Math.Pow(2, magic.Level - 3) * 500;
+
+                        magic.Experience += (Config.技能高级阶段基础经验 + 1) * Config.SkillRate;
 
                         if (magic.Experience >= rate || (magic.Level == 3 && SEnvir.Random.Next(rate) == 0))
                         {
@@ -15669,7 +15717,7 @@ namespace Zircon.Server.Models
                         if (!CanGainItems(false, check)) continue;
 
                         UserItem item = SEnvir.CreateDropItem(check);
-                        item.CurrentDurability = SEnvir.Random.Next(Config.挖出的黑铁矿最小纯度, Config.挖出的黑铁矿最大纯度);
+                        item.CurrentDurability = SEnvir.Random.Next(Config.挖出的黑铁矿最小纯度, Config.挖出的黑铁矿最大纯度) * 1000;
                         GainItem(item);
                     }
 
@@ -17280,9 +17328,9 @@ namespace Zircon.Server.Models
         }
         public void LevelMagic(UserMagic magic)
         {
-            if (magic == null) return;
+            if (magic == null || magic.Level >= Config.技能最高等级) return;
 
-            int experience = SEnvir.Random.Next(Config.SkillExp) + 1;
+            int experience = SEnvir.Random.Next(Config.技能初级阶段基础经验) + 1;
 
             experience *= Stats[Stat.SkillRate];
 
@@ -19618,6 +19666,16 @@ namespace Zircon.Server.Models
             {
                 clientAutoFightLinkList.Add(autoFightLink.ToClientInfo());
                 setConfArr[(int)autoFightLink.Slot] = autoFightLink.Enabled;
+            }
+
+            //修正技能超出限制的情况
+            foreach(var magic in Character.Magics)
+            {
+                if (magic.Level > Config.技能最高等级)
+                {
+                    SEnvir.Log($"{Character.Account.EMailAddress}-{Character.CharacterName} 修正技能等级：{magic.Info.Name} {magic.Level} => {Config.技能最高等级}");
+                    magic.Level = Config.技能最高等级;
+                }
             }
 
             return new StartInformation
