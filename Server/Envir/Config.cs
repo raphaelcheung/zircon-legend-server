@@ -81,7 +81,6 @@ namespace Server.Envir
             DeadDuration = TimeSpan.FromMinutes(1);
             HarvestDuration = TimeSpan.FromMinutes(5);
             MysteryShipRegionIndex = 0;
-            LairRegionIndex = 0;
             DropDuration = TimeSpan.FromMinutes(60);
             DropDistance = 5;
             DropLayers = 5;
@@ -130,6 +129,11 @@ namespace Server.Envir
         public static int 挖出的黑铁矿最大纯度 { get; set; } = 45;
         public static int 排名只显示前多少名 { get; set; } = -1;
         public static TimeSpan 玩家数据备份间隔 { get; set; } = TimeSpan.FromMinutes(30);
+        public static int 单次请求排名拉取的数量不超过多少个 { get; set; } = 20;
+        public static string 地狱之门关联地图名称 { get; set; } = "赤龙城入口";
+        public static string 异界之门关联地图名称 { get; set; } = "神舰入口";
+        public static int 内存垃圾回收间隔多少分钟 { get; set; } = 5;
+        public static byte 判断敏感词最大跳几个字符 { get; set; } = 2;
 
         [ConfigSection("Control")]
         public static bool AllowLogin { get; set; } 
@@ -209,7 +213,6 @@ namespace Server.Envir
         public static TimeSpan DeadDuration { get; set; }
         public static TimeSpan HarvestDuration { get; set; }
         public static int MysteryShipRegionIndex { get; set; }
-        public static int LairRegionIndex { get; set; }
         public static int 不掉落低于本价格的普通药水 { get; set; } = 0;
         public static bool DropNothingTypeCommonItem { get; set; } = true;
         public static int DropLowestEquipmentsExcludeWeapon { get; set; } = 0;
@@ -222,8 +225,8 @@ namespace Server.Envir
         public static int DropLayers { get; set; }
         public static int TorchRate { get; set; }
         public static TimeSpan SpecialRepairDelay { get; set; }
-        public static int MaxLuck { get; set; } 
-        public static int MaxCurse { get; set; } 
+        public static int MaxLuck { get; set; }
+        public static int MaxCurse { get; set; }
         public static int CurseRate { get; set; } 
         public static int LuckRate { get; set; }
         public static int MaxStrength { get; set; }
@@ -235,13 +238,16 @@ namespace Server.Envir
         public static int 武器最高精炼等级 { get; set; } = 20;
         public static int 武器品质每低一档降低精炼上限 { get; set; } = 3;
         public static int 武器重置等待分钟 { get; set; } = 60 * 24;
+        public static int 武器精炼最大几率基数 { get; set; } = 90;
+        public static int 武器精炼几率基数 { get; set; } = 60;
 
         [ConfigSection("Rates")]
         public static int ExperienceRate { get; set; }
         public static int DropRate { get; set; }
         public static int GoldRate { get; set; }
         public static int SkillRate { get; set; }
-        public static int CompanionRate { get; set; } 
+        public static int CompanionRate { get; set; }
+        public static int Boss掉落倍率 { get; set; } = 0;
 
     }
 }

@@ -2787,7 +2787,7 @@ namespace Zircon.Server.Models
         {
             rate *= 1M + owner.Stats[Stat.DropRate] / 100M;
 
-            rate *= 1M + owner.Stats[Stat.BaseDropRate] / 100M;
+            rate *= 1M + (MonsterInfo.IsBoss ? Config.Boss掉落倍率 : owner.Stats[Stat.BaseDropRate]) / 100M;
 
             if (PetOwner == null && CurrentMap != null)
                 rate *= 1 + MapDropRate / 100M;

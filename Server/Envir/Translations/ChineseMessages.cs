@@ -19,7 +19,7 @@ namespace Server.Envir.Translations
             Welcome = "欢迎来到【皓石传奇三】，技术交流或想体验公益服进QQ群 915941142。";
             WelcomeObserver = "你现在是观察者玩家 {0}, 想停止观察的话，需要重新登录游戏。";
             ObserverChangeFail= "只有在安全区才能变更为观察模式。";
-            OnlineCount = "在线玩家: {0}, 观察者玩家: {1}";
+            OnlineCount = "在线玩家: {0}，在线设备：{2}，观察者玩家: {1}";
             ObserverCount = "你当前有 {0} 个观察者玩家。";
             CannotFindPlayer = "找不到玩家: {0}";
             AlreadyBlocked = "{0} 已经放入你的阻止名单。";

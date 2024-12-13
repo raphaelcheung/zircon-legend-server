@@ -425,7 +425,7 @@ namespace Zircon.Server.Models.Monsters
 
                 long count = check.Count;
 
-                if (check.Info.Effect == ItemEffect.Experience) continue;
+                if (check.Info.Effect == ItemEffect.Experience || check.Info.Effect == ItemEffect.Gold) continue;
 
                 if (checkWeight)
                 {

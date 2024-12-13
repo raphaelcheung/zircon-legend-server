@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using Zircon.Server.Models.Monsters;
 using C = Library.Network.ClientPackets;
 using S = Library.Network.ServerPackets;
@@ -255,27 +256,27 @@ namespace Zircon.Server.Models
                 CanFlamingSword = false;
                 Enqueue(new S.MagicToggle { Magic = MagicType.FlamingSword, CanUse = CanFlamingSword });
 
-                Connection.ReceiveChat(string.Format(Connection.Language.ChargeExpire, Magics[MagicType.FlamingSword].Info.Name), MessageType.System);
+                Connection.ReceiveChat(string.Format(Connection.Language.ChargeExpire, Magics[MagicType.FlamingSword].Info.Name), MessageType.Hint);
                 foreach (SConnection con in Connection.Observers)
-                    con.ReceiveChat(string.Format(con.Language.ChargeExpire, Magics[MagicType.FlamingSword].Info.Name), MessageType.System);
+                    con.ReceiveChat(string.Format(con.Language.ChargeExpire, Magics[MagicType.FlamingSword].Info.Name), MessageType.Hint);
             }
             if (CanDragonRise && SEnvir.Now >= DragonRiseTime)
             {
                 CanDragonRise = false;
                 Enqueue(new S.MagicToggle { Magic = MagicType.DragonRise, CanUse = CanDragonRise });
 
-                Connection.ReceiveChat(string.Format(Connection.Language.ChargeExpire, Magics[MagicType.DragonRise].Info.Name), MessageType.System);
+                Connection.ReceiveChat(string.Format(Connection.Language.ChargeExpire, Magics[MagicType.DragonRise].Info.Name), MessageType.Hint);
                 foreach (SConnection con in Connection.Observers)
-                    con.ReceiveChat(string.Format(con.Language.ChargeExpire, Magics[MagicType.DragonRise].Info.Name), MessageType.System);
+                    con.ReceiveChat(string.Format(con.Language.ChargeExpire, Magics[MagicType.DragonRise].Info.Name), MessageType.Hint);
             }
             if (CanBladeStorm && SEnvir.Now >= BladeStormTime)
             {
                 CanBladeStorm = false; ;
                 Enqueue(new S.MagicToggle { Magic = MagicType.BladeStorm, CanUse = CanBladeStorm });
 
-                Connection.ReceiveChat(string.Format(Connection.Language.ChargeExpire, Magics[MagicType.BladeStorm].Info.Name), MessageType.System);
+                Connection.ReceiveChat(string.Format(Connection.Language.ChargeExpire, Magics[MagicType.BladeStorm].Info.Name), MessageType.Hint);
                 foreach (SConnection con in Connection.Observers)
-                    con.ReceiveChat(string.Format(con.Language.ChargeExpire, Magics[MagicType.BladeStorm].Info.Name), MessageType.System);
+                    con.ReceiveChat(string.Format(con.Language.ChargeExpire, Magics[MagicType.BladeStorm].Info.Name), MessageType.Hint);
             }
 
             if (Dead && SEnvir.Now >= RevivalTime)
@@ -2112,10 +2113,7 @@ namespace Zircon.Server.Models
                     case "在线统计":
                     case "PLAYERONLINE":
                         if (!Character.Account.Admin) return;
-
-                        Connection.ReceiveChat(string.Format(Connection.Language.OnlineCount
-                            , SEnvir.Players.Count(x => x.Character.Account.EMailAddress != SEnvir.SuperAdmin)
-                            , SEnvir.Connections.Count(x => x.Stage == GameStage.Observer)), MessageType.Hint);
+                        OnlineInfo();
                         break;
 
                     case "在线角色":
@@ -2158,6 +2156,7 @@ namespace Zircon.Server.Models
                         msg.Clear();
                         break;
 
+                    case "管理":
                     case "ADMIN":
                         if (!Character.Account.TempAdmin || !GameMaster) return;
                         if (!ChangeAdmin(parts)) return;
@@ -2217,6 +2216,27 @@ namespace Zircon.Server.Models
                         if (!Character.Account.TempAdmin) return;
                         if (!ClearMonsters(parts)) return;
                         break;
+                    case "屏蔽地图":
+                        if (!Character.Account.TempAdmin) return;
+                        //BlockMap(parts);
+                        break;
+                    case "开启敏感词":
+                        if (!Character.Account.TempAdmin) return;
+                        SEnvir.LoadSensitiveWords();
+                        break;
+                    case "关闭敏感词":
+                        if (!Character.Account.TempAdmin) return;
+                        SEnvir.SensitiveWords = null;
+                        Connection.ReceiveChat("已关闭敏感词检测", MessageType.System);
+                        break;
+                    case "清理已删角色":
+                        if (!Character.Account.TempAdmin) return;
+                        ClearDeletedCharacters(parts);
+                        break;
+                    case "内存清理":
+                        if (!Character.Account.TempAdmin) return;
+                        ClearMemory(parts);
+                        break;
                 }
 
             }
@@ -2254,7 +2274,90 @@ namespace Zircon.Server.Models
                 }
             }
         }
-        
+
+        private void ClearMemory(string[] parts)
+        {
+            if (parts.Length < 2)
+            {
+                Connection.ReceiveChat("正在清理内存 ...", MessageType.System);
+                SEnvir.MemoryCollect(true);
+                Connection.ReceiveChat("内存清理完毕", MessageType.System);
+                return;
+            }
+
+            if (!int.TryParse(parts[1], out int m) || m < 0) return;
+
+            SEnvir.SetMemoryCollectSpace(m);
+            Connection.ReceiveChat($"内存垃圾回收间隔：{m} 分钟", MessageType.System);
+        }
+        private void ClearDeletedCharacters(string[] parts)
+        {
+            if (parts.Length < 2) return;
+
+            if (!ushort.TryParse(parts[1], out ushort days)) return;
+
+            List<CharacterInfo> chars = new();
+
+            for(int i = 0; i < SEnvir.AccountInfoList.Count; i++)
+            {
+                var account = SEnvir.AccountInfoList[i];
+                for(int j = 0; j < account.Characters.Count; j++)
+                {
+                    var character = account.Characters[j];
+                    if (!character.Deleted) continue;
+                    if (character.LastLogin.AddDays(days) > SEnvir.Now || character.CreationDate.AddDays(days) > SEnvir.Now) continue;
+
+                    chars.Add(character);
+                }
+            }
+
+            foreach (var ch in chars)
+                ch.Delete();
+
+            Connection.ReceiveChat($"共清理了 {chars.Count} 个已删除角色的数据", MessageType.System);
+            chars.Clear();
+        }
+        private void BlockMap(string[] parts)
+        {
+            if (parts.Length < 3) return;
+
+            if (!bool.TryParse(parts[2], out bool valid)) return;
+
+            MapInfo? info = SEnvir.MapInfoList.Binding.FirstOrDefault(x => 
+                string.Compare(x.FileName, parts[1], StringComparison.OrdinalIgnoreCase) == 0 
+                || string.Compare(x.Description, parts[1], StringComparison.OrdinalIgnoreCase) == 0);
+
+            if (info == null)
+            {
+                Connection.ReceiveChat($"找不到地图：{parts[1]}", MessageType.System);
+                return;
+            }
+
+            if (valid == info.Valid)
+                return;
+
+            info.Valid = valid;
+            //info.
+        }
+        private void OnlineInfo()
+        {
+            Dictionary<string, int> a = new();
+            foreach (var player in SEnvir.Players)
+            {
+                if (player.Character?.Account == null) continue;
+                if (player.Character.Account.EMailAddress == SEnvir.SuperAdmin) continue;
+
+                if (!a.ContainsKey(player.Character.Account.LastSum))
+                    a.Add(player.Character.Account.LastSum, 0);
+            }
+                
+            Connection.ReceiveChat(string.Format(Connection.Language.OnlineCount
+                , SEnvir.Players.Count(x => x.Character.Account.EMailAddress != SEnvir.SuperAdmin)
+                , SEnvir.Connections.Count(x => x.Stage == GameStage.Observer)
+                , a.Count), MessageType.Hint);
+
+            a.Clear();
+        }
         private bool ChangeAdmin(string[] parts)
         {
 
@@ -2270,7 +2373,7 @@ namespace Zircon.Server.Models
 
             if (account.EMailAddress == SEnvir.SuperAdmin)
             {
-                Connection.ReceiveChat("你不能修改超级GM的权限！", MessageType.System);
+                Connection.ReceiveChat("你不能修改超级管理员的权限！", MessageType.System);
                 return false;
             }
 
@@ -2350,10 +2453,17 @@ namespace Zircon.Server.Models
             DateTime banner_time = DateTime.MaxValue;
 
             if (parts.Length >= 3 && uint.TryParse(parts[2], out var sec))
+            {   
                 if (sec == 0)
                     banner = false;
                 else
                     banner_time = SEnvir.Now.AddSeconds(sec);
+            }
+            else
+            {
+                Connection.ReceiveChat(account.Banned ? $"封禁原因：{account.BanReason}，解封时间：{account.ExpiryDate.ToLocalTime()}" : "该账号没有被封禁", MessageType.System);
+                return true;
+            }
 
             account.Banned = banner;
 
@@ -2363,6 +2473,8 @@ namespace Zircon.Server.Models
                 account.ExpiryDate = banner_time;
                 account.Connection?.TryDisconnect();
 
+                SEnvir.QuitRanking(account);
+
                 Connection.ReceiveChat($"{account.EMailAddress} 在 {banner_time.ToString()} 前禁止登录", MessageType.System);
 
                 SEnvir.Log($"[冻结账号] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 冻结账号={account.EMailAddress}");
@@ -2371,6 +2483,11 @@ namespace Zircon.Server.Models
             {
                 account.BanReason = "";
                 account.ExpiryDate = DateTime.MinValue;
+
+                foreach (var ch in account.Characters)
+                    if (!ch.Deleted)
+                        SEnvir.AddRanking(ch);
+
                 Connection.ReceiveChat($"{account.EMailAddress} 取消禁止登录", MessageType.System);
                 SEnvir.Log($"[取消冻结账号] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 取消冻结账号={account.EMailAddress}");
             }
@@ -2413,6 +2530,8 @@ namespace Zircon.Server.Models
             }
 
             chara.Deleted = false;
+
+            SEnvir.AddRanking(chara);
             Connection.ReceiveChat($"{chara.CharacterName} 该角色已恢复误删", MessageType.System);
             SEnvir.Log($"[恢复误删] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 恢复账号={chara.Account.EMailAddress} 恢复角色=[{chara.CharacterName}({chara.Level}级{Functions.GetEnumDesc(chara.Gender)}{Functions.GetEnumDesc(chara.Class)})]");
 
@@ -3244,6 +3363,8 @@ namespace Zircon.Server.Models
                     Character.Account.Banned = true;
                     Character.Account.BanReason = "尝试添加非法修炼点.";
                     Character.Account.ExpiryDate = SEnvir.Now.AddYears(10);
+
+                    SEnvir.QuitRanking(Character.Account);
                     return;
             }
 
@@ -4920,6 +5041,15 @@ namespace Zircon.Server.Models
                 return;
             }
 
+            if (Character.Account.EMailAddress != SEnvir.SuperAdmin && SEnvir.SensitiveWords != null)
+            {
+                var check = new ContentCheck(SEnvir.SensitiveWords, p.Name, 2);
+                if (check.FindSensitiveWords().Count > 0)
+                {
+                    Connection.ReceiveChat(Connection.Language.GuildBadName, MessageType.System);
+                    return;
+                }
+            }
 
             var info = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => string.Compare(x.GuildName, p.Name, StringComparison.OrdinalIgnoreCase) == 0);
 
@@ -8657,7 +8787,7 @@ namespace Zircon.Server.Models
         }
         public void NameChange(string newName)
         {
-            if (!Globals.CharacterReg.IsMatch(newName))
+            if (!Regex.IsMatch(newName, Globals.CharacterReg, RegexOptions.IgnoreCase))
             {
                 Connection.ReceiveChat("角色名称不符合要求.", MessageType.System);
                 return;
@@ -8997,7 +9127,14 @@ namespace Zircon.Server.Models
                     break;
             }
 
-            Enqueue(new S.BuffAdd { Buff = info.ToClientInfo() });
+            switch(type)
+            {
+                case BuffType.MapEffect:
+                    break;
+                default:
+                    Enqueue(new S.BuffAdd { Buff = info.ToClientInfo() });
+                    break;
+            }
 
             switch (type)
             {
@@ -9029,8 +9166,15 @@ namespace Zircon.Server.Models
 
             base.BuffRemove(info);
 
-            Enqueue(new S.BuffRemove { Index = info.Index });
-            
+
+            switch (info.Type)
+            {
+                case BuffType.MapEffect:
+                    break;
+                default:
+                    Enqueue(new S.BuffRemove { Index = info.Index });
+                    break;
+            }
 
             switch (info.Type)
             {
@@ -10310,7 +10454,12 @@ namespace Zircon.Server.Models
                     result.NewStats[Stat.DCPercent] = 1;
                     break;
                 case RefineType.SPPercent:
-                    if (targetItem.Info.Stats[Stat.MinMC] == 0 && targetItem.Info.Stats[Stat.MaxMC] == 0 && targetItem.Info.Stats[Stat.MinSC] == 0 && targetItem.Info.Stats[Stat.MaxSC] == 0)
+                    if (targetItem.Info.Stats[Stat.MinMC] == 0 
+                        && targetItem.Info.Stats[Stat.MaxMC] == 0 
+                        && targetItem.Info.Stats[Stat.MinSC] == 0 
+                        && targetItem.Info.Stats[Stat.MaxSC] == 0
+                        && targetItem.Info.Stats[Stat.MCPercent] == 0
+                        && targetItem.Info.Stats[Stat.SCPercent] == 0)
                     {
                         targetItem.AddStat(Stat.MCPercent, 1, StatSource.Refine);
                         result.NewStats[Stat.MCPercent] = 1;
@@ -10319,13 +10468,17 @@ namespace Zircon.Server.Models
                         result.NewStats[Stat.SCPercent] = 1;
                     }
 
-                    if (targetItem.Info.Stats[Stat.MinMC] > 0 || targetItem.Info.Stats[Stat.MaxMC] > 0)
+                    if (targetItem.Info.Stats[Stat.MinMC] > 0 
+                        || targetItem.Info.Stats[Stat.MaxMC] > 0
+                        || targetItem.Info.Stats[Stat.MCPercent] > 0)
                     {
                         targetItem.AddStat(Stat.MCPercent, 1, StatSource.Refine);
                         result.NewStats[Stat.MCPercent] = 1;
                     }
 
-                    if (targetItem.Info.Stats[Stat.MinSC] > 0 || targetItem.Info.Stats[Stat.MaxSC] > 0)
+                    if (targetItem.Info.Stats[Stat.MinSC] > 0 
+                        || targetItem.Info.Stats[Stat.MaxSC] > 0
+                        || targetItem.Info.Stats[Stat.SCPercent] > 0)
                     {
                         targetItem.AddStat(Stat.SCPercent, 1, StatSource.Refine);
                         result.NewStats[Stat.SCPercent] = 1;
@@ -10391,6 +10544,8 @@ namespace Zircon.Server.Models
                     Character.Account.Banned = true;
                     Character.Account.BanReason = "精炼配饰时尝试使用非法的精炼类型.";
                     Character.Account.ExpiryDate = SEnvir.Now.AddYears(10);
+
+                    SEnvir.QuitRanking(Character.Account);
                     return;
             }
 
@@ -11091,6 +11246,8 @@ namespace Zircon.Server.Models
                     Character.Account.Banned = true;
                     Character.Account.BanReason = "精炼武器时尝试使用非法的精炼品质";
                     Character.Account.ExpiryDate = SEnvir.Now.AddYears(10);
+                    SEnvir.QuitRanking(Character.Account);
+
                     return;
             }
 
@@ -11111,6 +11268,8 @@ namespace Zircon.Server.Models
                     Character.Account.Banned = true;
                     Character.Account.BanReason = "精炼武器时尝试使用非法的精炼类型.";
                     Character.Account.ExpiryDate = SEnvir.Now.AddYears(10);
+                    SEnvir.QuitRanking(Character.Account);
+
                     return;
             }
 
@@ -11216,7 +11375,7 @@ namespace Zircon.Server.Models
                 items += item.Info.RequiredAmount;
 
                 if (item.Info.Rarity == Rarity.Superior)
-                    quality++;
+                    quality ++;
                 else if (item.Info.Rarity == Rarity.Elite)
                     quality += 2;
             }
@@ -11263,8 +11422,8 @@ namespace Zircon.Server.Models
              * Base Chance = 60% -Weapon Level  * 5%
              */
 
-            int maxChance = 90 - weapon.Level + special;
-            int chance = 60 - weapon.Level * 4;
+            int maxChance = Config.武器精炼最大几率基数 - weapon.Level + special;
+            int chance = Config.武器精炼几率基数 - weapon.Level * 4;
 
             switch (p.RefineQuality)
             {
@@ -11645,6 +11804,8 @@ namespace Zircon.Server.Models
                     Character.Account.Banned = true;
                     Character.Account.BanReason = "大师精炼时尝试使用非法的精炼类型.";
                     Character.Account.ExpiryDate = SEnvir.Now.AddYears(10);
+                    SEnvir.QuitRanking(Character.Account);
+
                     return;
             }
 
@@ -15552,10 +15713,10 @@ namespace Zircon.Server.Models
 
                     if (CanFlamingSword)
                     {
-                        Connection.ReceiveChat(string.Format(Connection.Language.ChargeFail, magic.Info.Name), MessageType.System);
+                        Connection.ReceiveChat(string.Format(Connection.Language.ChargeFail, magic.Info.Name), MessageType.Hint);
 
                         foreach (SConnection con in Connection.Observers)
-                            con.ReceiveChat(string.Format(con.Language.ChargeFail, magic.Info.Name), MessageType.System);
+                            con.ReceiveChat(string.Format(con.Language.ChargeFail, magic.Info.Name), MessageType.Hint);
                     }
                     else
                     {
@@ -15586,10 +15747,10 @@ namespace Zircon.Server.Models
 
                     if (CanDragonRise)
                     {
-                        Connection.ReceiveChat(string.Format(Connection.Language.ChargeFail, magic.Info.Name), MessageType.System);
+                        Connection.ReceiveChat(string.Format(Connection.Language.ChargeFail, magic.Info.Name), MessageType.Hint);
 
                         foreach (SConnection con in Connection.Observers)
-                            con.ReceiveChat(string.Format(con.Language.ChargeFail, magic.Info.Name), MessageType.System);
+                            con.ReceiveChat(string.Format(con.Language.ChargeFail, magic.Info.Name), MessageType.Hint);
                     }
                     else
                     {
@@ -15619,10 +15780,10 @@ namespace Zircon.Server.Models
 
                     if (CanBladeStorm)
                     {
-                        Connection.ReceiveChat(string.Format(Connection.Language.ChargeFail, magic.Info.Name), MessageType.System);
+                        Connection.ReceiveChat(string.Format(Connection.Language.ChargeFail, magic.Info.Name), MessageType.Hint);
 
                         foreach (SConnection con in Connection.Observers)
-                            con.ReceiveChat(string.Format(con.Language.ChargeFail, magic.Info.Name), MessageType.System);
+                            con.ReceiveChat(string.Format(con.Language.ChargeFail, magic.Info.Name), MessageType.Hint);
                     }
                     else
                     {
@@ -17575,9 +17736,9 @@ namespace Zircon.Server.Models
                     string tmp;
                     //SEnvir.Broadcast(new S.Chat {Text = "{Name} has died and lost {expbonus:##,##0} Experience, {target?.Name ?? "No one"} has won the experience.", Type = MessageType.System});
                     if (target == null)
-                        tmp = string.Format("{0} 已经死亡并且失去了 {1} 的经验, 没有任何人赢得该经验.", Name, expbonus);
+                        tmp = string.Format("[{0}] 已经死亡并且失去了 {1:##,##0} 的经验, 没有任何人赢得该经验.", Name, expbonus);
                     else
-                        tmp = string.Format("{0} 已经死亡并且失去了 {1} 的经验, {2} 赢得了相应经验.", Name, expbonus, target.Name);
+                        tmp = string.Format("[{0}] 已经死亡并且失去了 {1:##,##0} 的经验, [{2}] 赢得了相应经验.", Name, expbonus, target.Name);
 
                     SEnvir.Broadcast(new S.Chat {Text = tmp, Type = MessageType.System});
                 }
@@ -19651,10 +19812,14 @@ namespace Zircon.Server.Models
 
             foreach (CharacterBeltLink link in Character.BeltLinks)
             {
-                if (link.LinkItemIndex > 0 && Inventory.FirstOrDefault(delegate(UserItem x){ return x.Index == link.LinkItemIndex;}) == null)
-                    link.LinkItemIndex = -1;
+                try
+                {
+                    if (link.LinkItemIndex > 0 && Inventory.FirstOrDefault(delegate (UserItem x) { return x.Index == link.LinkItemIndex; }) == null)
+                        link.LinkItemIndex = -1;
 
-                blinks.Add(link.ToClientInfo());
+                    blinks.Add(link.ToClientInfo());
+                }
+                catch(Exception ex) { SEnvir.Log(ex.Message);SEnvir.Log(ex.StackTrace); }
             }
 
             List<ClientAutoPotionLink> alinks = new List<ClientAutoPotionLink>();
@@ -19683,8 +19848,8 @@ namespace Zircon.Server.Models
                 Index = Character.Index,
                 ObjectID = ObjectID,
                 Name = Name,
-                GuildName = Character.Account.GuildMember != null ? Character.Account.GuildMember.Guild.GuildName : null,
-                GuildRank = Character.Account.GuildMember != null ? Character.Account.GuildMember.Rank : null,
+                GuildName = Character.Account.GuildMember?.Guild?.GuildName ?? null,
+                GuildRank = Character.Account.GuildMember?.Rank ?? null,
                 NameColour = NameColour,
 
                 Level = Level,
@@ -19701,13 +19866,13 @@ namespace Zircon.Server.Models
                 HairType = HairType,
                 HairColour = HairColour,
 
-                Weapon = Equipment[(int)EquipmentSlot.Weapon] != null ? Equipment[(int)EquipmentSlot.Weapon].Info.Shape : -1,
+                Weapon = Equipment[(int)EquipmentSlot.Weapon]?.Info?.Shape ?? -1,
 
-                Shield = Equipment[(int)EquipmentSlot.Shield] != null ? Equipment[(int)EquipmentSlot.Shield].Info.Shape : -1,
+                Shield = Equipment[(int)EquipmentSlot.Shield]?.Info?.Shape ?? -1,
 
-                Armour = Equipment[(int)EquipmentSlot.Armour] != null ? Equipment[(int)EquipmentSlot.Armour].Info.Shape : 0,
-                ArmourColour = Equipment[(int)EquipmentSlot.Armour] != null ? Equipment[(int)EquipmentSlot.Armour].Colour : Color.Empty,
-                ArmourImage = Equipment[(int)EquipmentSlot.Armour] != null ? Equipment[(int)EquipmentSlot.Armour].Info.Image : 0,
+                Armour = Equipment[(int)EquipmentSlot.Armour]?.Info?.Shape ?? 0,
+                ArmourColour = Equipment[(int)EquipmentSlot.Armour]?.Colour ?? Color.Empty,
+                ArmourImage = Equipment[(int)EquipmentSlot.Armour]?.Info?.Image ?? 0,
 
 
                 Experience = Experience,
@@ -19721,11 +19886,11 @@ namespace Zircon.Server.Models
                 AttackMode = AttackMode,
                 PetMode = PetMode,
 
-                Items = Character.Items.Select(x => x.ToClientInfo()).ToList(),
+                Items = Character.Items?.Select(x => x.ToClientInfo()).ToList(),
                 BeltLinks = blinks,
                 AutoPotionLinks = alinks,
-                Magics = Character.Magics.Select(X => X.ToClientInfo()).ToList(),
-                Buffs = Buffs.Select(X => X.ToClientInfo()).ToList(),
+                Magics = Character.Magics?.Select(X => X.ToClientInfo()).ToList(),
+                Buffs = Buffs?.Select(X => X.ToClientInfo()).ToList(),
 
                 Poison = Poison,
 
@@ -19738,17 +19903,17 @@ namespace Zircon.Server.Models
 
                 Horse = Horse,
 
-                HelmetShape = Character.HideHelmet ? 0 : Equipment[(int)EquipmentSlot.Helmet] != null ? Equipment[(int)EquipmentSlot.Helmet].Info.Shape : 0,
+                HelmetShape = Character.HideHelmet ? 0 : (Equipment[(int)EquipmentSlot.Helmet]?.Info?.Shape ?? 0),
 
-                HorseShape = Equipment[(int)EquipmentSlot.HorseArmour] != null ? Equipment[(int)EquipmentSlot.HorseArmour].Info.Shape : 0,
+                HorseShape = Equipment[(int)EquipmentSlot.HorseArmour]?.Info?.Shape ?? 0,
 
-                Quests = Character.Quests.Select(x => x.ToClientInfo()).ToList(),
+                Quests = Character.Quests?.Select(x => x.ToClientInfo()).ToList(),
 
-                CompanionUnlocks = Character.Account.CompanionUnlocks.Select(x => x.CompanionInfo.Index).ToList(),
+                CompanionUnlocks = Character.Account.CompanionUnlocks?.Select(x => x.CompanionInfo?.Index ?? -1).ToList(),
 
-                Companions = Character.Account.Companions.Select(x => x.ToClientInfo()).ToList(),
+                Companions = Character.Account.Companions?.Select(x => x.ToClientInfo()).ToList(),
 
-                Companion = Character.Companion != null ? Character.Companion.Index : 0,
+                Companion = Character.Companion?.Index ?? 0,
 
                 StorageSize = Character.Account.StorageSize,
                 AutoFightLinks = clientAutoFightLinkList,
@@ -20182,7 +20347,7 @@ namespace Zircon.Server.Models
                     {
                         item.PickUpItem(Companion);
 
-                        if (setConfArr[34])
+                        if (setConfArr[(int)AutoSetConf.SetAutojinpiaoBox])
                         {
                             if (Gold < 500000000) return;
                             if (Gold >= 500000000 && Gold < 1000000000)
@@ -20272,18 +20437,26 @@ namespace Zircon.Server.Models
 
                 ItemObject item = (ItemObject)cellObject;
 
+                if (item.Item?.Info == null)
+                {
+                    SEnvir.Log($"捡拾物品发现物品信息错误：{item.Name} {item.Item?.Index ?? -1}");
+                    continue;
+                }
+
                 if (itemIdx != -1)
                 {
                     if (item.Item.Info.Index == itemIdx)
                     {
                         item.PickUpItem(this);
 
-                        if (setConfArr[34])
+                        if (setConfArr[(int)AutoSetConf.SetAutojinpiaoBox])
                         {
                             if (Gold < 500000000) return;
                             if (Gold >= 500000000 && Gold < 1000000000)
                             {
                                 ItemInfo jinpiao = SEnvir.GetItemInfo("金票");
+                                if (jinpiao == null) return;
+
                                 UserItemFlags flags = UserItemFlags.Locked;
                                 ItemCheck checkem = new ItemCheck(jinpiao, 1, flags, TimeSpan.Zero);
 
@@ -20298,13 +20471,16 @@ namespace Zircon.Server.Models
                                     
                                     return;
                                 }
-                                Character.Account.Gold -= 500000000;
+                                
                                 GainItem(SEnvir.CreateFreshItem(checkem));
+                                Character.Account.Gold -= 500000000;
                                 GoldChanged();
                             }
                             else if (Gold >= 1000000000)
                             {
                                 ItemInfo jinpiao = SEnvir.GetItemInfo("金票");
+                                if (jinpiao == null) return;
+
                                 UserItemFlags flags = UserItemFlags.Locked;
                                 ItemCheck checkemm = new ItemCheck(jinpiao, 2, flags, TimeSpan.Zero);
 
@@ -20319,8 +20495,9 @@ namespace Zircon.Server.Models
 
                                     return;
                                 }
-                                Character.Account.Gold -= 1000000000;
+                                
                                 GainItem(SEnvir.CreateFreshItem(checkemm));
+                                Character.Account.Gold -= 1000000000;
                                 GoldChanged();
                             }
                         }

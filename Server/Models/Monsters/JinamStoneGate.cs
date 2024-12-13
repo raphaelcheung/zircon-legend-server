@@ -37,7 +37,7 @@ namespace Zircon.Server.Models.Monsters
             foreach (SConnection con in SEnvir.Connections)
                 con.ReceiveChat(string.Format(con.Language.LairGateOpen, CurrentMap.Info.Description, CurrentLocation), MessageType.System);
 
-           }
+        }
 
         public override void Process()
         {

@@ -17,34 +17,40 @@ Console.WriteLine($"地图文件路径：{Config.MapPath}");
 
 if (Config.ConnectionLimit <= 0 || Config.ConnectionLimit >= 65534)
 {
-    Console.WriteLine($"[最大连接数量限制] 配置了无效值 {Config.ConnectionLimit}，采用默认值...");
     Config.ConnectionLimit = 200;
+    Console.WriteLine($"[最大连接数量限制] 配置了无效值，恢复默认值 {Config.ConnectionLimit}...");
 }
 
 Console.WriteLine($"最大连接数量限制：{Config.ConnectionLimit}");
 
 if (Config.武器重置等待分钟 < 0)
 {
-    Console.WriteLine($"[武器重置等待分钟] 配置了无效值 {Config.武器重置等待分钟}，采用默认值...");
     Config.武器重置等待分钟 = 24 * 60;
+    Console.WriteLine($"[武器重置等待分钟] 配置了无效值，恢复默认值 {Config.武器重置等待分钟} ...");
 }
 
 if (Config.挖出的黑铁矿最小纯度 < 0 )
 {
-    Console.WriteLine($"[挖出的黑铁矿最小纯度] 设置了无效值：{Config.挖出的黑铁矿最小纯度}，采用默认值...");
     Config.挖出的黑铁矿最小纯度 = 25;
+    Console.WriteLine($"[挖出的黑铁矿最小纯度] 设置了无效值，恢复默认值 {Config.挖出的黑铁矿最小纯度} ...");
 }
 
 if (Config.挖出的黑铁矿最大纯度 < Config.挖出的黑铁矿最小纯度)
 {
-    Console.WriteLine($"[挖出的黑铁矿最大纯度] 设置了无效值：{Config.挖出的黑铁矿最大纯度}，采用默认值...");
     Config.挖出的黑铁矿最大纯度 = Config.挖出的黑铁矿最小纯度;
+    Console.WriteLine($"[挖出的黑铁矿最大纯度] 设置了无效值，恢复默认值 {Config.挖出的黑铁矿最大纯度}...");
 }
 
 if (Config.技能最高等级 < 0)
 {
-    Console.WriteLine($"[技能最高等级] 设置了无效值：{Config.技能最高等级}，采用默认值...");
-    Config.技能最高等级 = 1;
+    Config.技能最高等级 = 3;
+    Console.WriteLine($"[技能最高等级] 设置了无效值，恢复默认值 {Config.技能最高等级} ...");
+}
+
+if (Config.内存垃圾回收间隔多少分钟 < 0)
+{
+    Config.内存垃圾回收间隔多少分钟 = 0;
+    Console.WriteLine($"[内存垃圾回收间隔多少分钟] 设置了无效值，恢复默认值 {Config.内存垃圾回收间隔多少分钟} ...");
 }
 
 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;

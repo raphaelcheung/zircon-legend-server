@@ -24,12 +24,17 @@ using C = Library.Network.ClientPackets;
 using System.Security.Principal;
 using System.Globalization;
 using System.Reflection.PortableExecutable;
+using Library.ContentSafe.SensitiveWord;
+using System.Text.RegularExpressions;
 
 namespace Server.Envir
 {
     public static class SEnvir
     {
         public const string SuperAdmin = "raphael@gm.gm";
+        public static readonly string[] MarkRebirth = ["①", "②", "③", "④", "⑤", "⑥", "⑦"];
+
+        private static DateTime MemoryCollectTime = DateTime.MinValue;
         #region Synchronization
 
         private static readonly SynchronizationContext Context = SynchronizationContext.Current;
@@ -82,6 +87,7 @@ namespace Server.Envir
         
         public static ConcurrentQueue<string> DisplayChatLogs = new ConcurrentQueue<string>();
         public static ConcurrentQueue<string> ChatLogs = new ConcurrentQueue<string>();
+        public static WordsLibrary? SensitiveWords = null;
         public static void LogChat(string log)
         {
             log = string.Format("[{0:F}]: {1}", Time.Now.ToLocalTime(), log);
@@ -649,8 +655,8 @@ namespace Server.Envir
 
         public static GuildInfo StarterGuild;
 
-        public static MapRegion LairMapRegion { get; set; }
-        public static MapRegion MysteryShipMapRegion { get; set; }
+        public static MapRegion? LairMapRegion { get; set; }
+        public static MapRegion? MysteryShipMapRegion { get; set; }
 
         public static List<MonsterInfo> BossList = new List<MonsterInfo>();
 
@@ -692,7 +698,7 @@ namespace Server.Envir
         }
 
         public static LinkedList<CharacterInfo> Rankings { get; set; }
-        public static HashSet<CharacterInfo> TopRankings;
+        public static HashSet<CharacterInfo> TopRankings { get; set; }
 
         public static long ConDelay, SaveDelay;
         #endregion
@@ -842,8 +848,8 @@ namespace Server.Envir
             FortuneCheckerInfo = ItemInfoList.Binding.First(x => x.Effect == ItemEffect.FortuneChecker);
 
 
-            MysteryShipMapRegion = MapRegionList.Binding.FirstOrDefault(x=> x.Index == Config.MysteryShipRegionIndex);
-            LairMapRegion = MapRegionList.Binding.FirstOrDefault(x => x.Index == Config.LairRegionIndex);
+            MysteryShipMapRegion = MapRegionList?.Binding?.FirstOrDefault(x=> x.Map.Description == Config.异界之门关联地图名称);
+            LairMapRegion = MapRegionList?.Binding?.FirstOrDefault(x => x.Map.Description == Config.地狱之门关联地图名称);
             StarterGuild = GuildInfoList.Binding.FirstOrDefault(x => x.StarterGuild);
 
             AutoFightConfList = Session.GetCollection<AutoFightConfig>();
@@ -861,6 +867,10 @@ namespace Server.Envir
             TopRankings = new HashSet<CharacterInfo>();
             foreach (CharacterInfo info in CharacterInfoList.Binding)
             {
+                if (info.Deleted || !info.Account.Activated 
+                    || info.Account.Banned 
+                    || info.Account.EMailAddress == SuperAdmin) continue;
+
                 info.RankingNode = Rankings.AddLast(info);
                 RankingSort(info, false);
             }
@@ -901,13 +911,27 @@ namespace Server.Envir
         //Only works on Increasing EXP, still need to do Rebirth or loss of exp ranking update.
         public static void RankingSort(CharacterInfo character, bool updateLead = true)
         {
+            if (character.Deleted
+                || !character.Account.Activated 
+                || character.Account.Banned 
+                || character.Account.EMailAddress == SuperAdmin)
+                return;
+
             bool changed = false;
 
-            LinkedListNode<CharacterInfo> node;
+            LinkedListNode<CharacterInfo>? node;
             while ((node = character.RankingNode.Previous) != null)
             {
-                if (node.Value.Level > character.Level) break;
-                if (node.Value.Level == character.Level && node.Value.Experience >= character.Experience) break;
+                if (node.Value.Rebirth > character.Rebirth) break;
+
+                if (node.Value.Rebirth == character.Rebirth 
+                    && node.Value.Level > character.Level) 
+                    break;
+
+                if (node.Value.Rebirth == character.Rebirth 
+                    && node.Value.Level == character.Level 
+                    && node.Value.Experience >= character.Experience) 
+                    break;
 
                 changed = true;
 
@@ -919,8 +943,31 @@ namespace Server.Envir
 
             UpdateLead();
         }
+        public static void QuitRanking(AccountInfo account)
+        {
+            foreach (var ch in account.Characters)
+                QuitRanking(ch);
+        }
+        public static void QuitRanking(CharacterInfo character)
+        {
+            if (Rankings.Contains(character))
+                Rankings.Remove(character);
+        }
+        public static void AddRanking(AccountInfo account)
+        {
+            if (!account.Activated) return;
 
+            foreach(var ch in account.Characters)
+                if (!ch.Deleted)
+                    AddRanking(ch);
+        }
+        public static void AddRanking(CharacterInfo character)
+        {
+            if (Rankings.Contains(character)) return;
 
+            Rankings.AddLast(character);
+            RankingSort(character, true);
+        }
         public static void UpdateLead()
         {
             HashSet<CharacterInfo> newTopRankings = new HashSet<CharacterInfo>();
@@ -929,7 +976,11 @@ namespace Server.Envir
 
             foreach (CharacterInfo cInfo in Rankings)
             {
-                if (cInfo.Account.Admin) continue;
+                if (cInfo.Deleted 
+                    || !cInfo.Account.Activated 
+                    || cInfo.Account.Banned 
+                    || cInfo.Account.EMailAddress == SuperAdmin) 
+                    continue;
 
                 switch (cInfo.Class)
                 {
@@ -975,8 +1026,46 @@ namespace Server.Envir
             TopRankings = newTopRankings;
         }
 
+        public static void LoadSensitiveWords()
+        {
+            try
+            {
+                SensitiveWords = null;
+                string file = "./datas/敏感词.txt";
+                if (!File.Exists(file))
+                {
+                    Log($"敏感词库文件 {file} 不存在，关闭敏感词判断");
+                    return;
+                }
+
+                using FileStream stream = File.OpenRead(file);
+                using var reader = new StreamReader(stream);
+                string? line;
+                List<string> words = new();
+                while ((line = reader.ReadLine()) != null)
+                {
+                    line = line.Trim();
+                    if (string.IsNullOrEmpty(line)) continue;
+
+                    words.Add(line);
+                }
+
+                if (words.Count > 0)
+                    SensitiveWords = new(words.ToArray());
+                
+                Log($"共加载 {words.Count} 条敏感词");
+            }
+            catch (Exception ex) 
+            { 
+                Log($"加载敏感词库发生异常：{ex.Message}");
+                if(!string.IsNullOrEmpty(ex.StackTrace))
+                    Log(ex.StackTrace);
+            }
+        }
+
         private static void StartEnvir()
         {
+            LoadSensitiveWords();
             LoadDatabase();
 
             if (string.IsNullOrEmpty(Config.WelcomeWordsFile) || !File.Exists(Config.WelcomeWordsFile))
@@ -1045,20 +1134,20 @@ namespace Server.Envir
                 Map sourceMap = GetMap(movement.SourceRegion.Map);
                 if (sourceMap == null)
                 {
-                    Log(string.Format("[活动] 源映射错误, Source: {0}", movement.SourceRegion.ServerDescription));
+                    Log(string.Format("[地图连接点] 源映射错误, SourceRegion: {0}", movement.SourceRegion.ServerDescription));
                     continue;
                 }
                 
                 if (movement.DestinationRegion == null)
                 {
-                    Log(string.Format("[活动] 目标区域没有找到, Source: {0}", movement.SourceRegion.ServerDescription));
+                    Log(string.Format("[地图连接点] 目标区域没有找到, SourceRegion: {0}", movement.SourceRegion.ServerDescription));
                     continue;
                 }
 
                 Map destMap = GetMap(movement.DestinationRegion.Map);
                 if (destMap == null)
                 {
-                    Log(string.Format("[活动] 目标映射错误, Source: {0}", movement.DestinationRegion.ServerDescription));
+                    Log(string.Format("[地图连接点] 目标映射错误, DestinationRegion: {0}", movement.DestinationRegion.ServerDescription));
                     continue;
                 }
 
@@ -1069,7 +1158,7 @@ namespace Server.Envir
 
                     if (source == null)
                     {
-                        Log(string.Format("[活动] 来源错误, Source: {0}, X:{1}, Y:{2}", movement.SourceRegion.ServerDescription, sPoint.X, sPoint.Y));
+                        Log(string.Format("[地图连接点] 来源错误, SourceRegion: {0}, X:{1}, Y:{2}", movement.SourceRegion.ServerDescription, sPoint.X, sPoint.Y));
                         continue;
                     }
 
@@ -1254,7 +1343,19 @@ namespace Server.Envir
             EnvirThread = null;
         }
 
+        public static void MemoryCollect(bool force = false)
+        {
+            if (!force && (Config.内存垃圾回收间隔多少分钟 <= 0 || MemoryCollectTime > Now))
+                return;
 
+            MemoryCollectTime = Now.AddMinutes(Config.内存垃圾回收间隔多少分钟);
+            System.GC.Collect();
+        }
+        public static void SetMemoryCollectSpace(int m)
+        {
+            Config.内存垃圾回收间隔多少分钟 = m;
+            MemoryCollectTime = Now.AddMinutes(m);
+        }
         public static void EnvirLoop()
         {
             Now = Time.Now;
@@ -1279,9 +1380,16 @@ namespace Server.Envir
             bool ship = MysteryShipMapRegion != null && MysteryShipMapRegion.PointList.Count > 0;
 
             if (ship)
-                Log($"幽灵船设置在地图 {MysteryShipMapRegion.Map.FileName}");
+                Log($"幽灵船通向地图：{MysteryShipMapRegion?.Map?.Description}");
             else
                 Log("幽灵船关闭");
+
+            bool lair = LairMapRegion != null && LairMapRegion.PointList.Count > 0;
+
+            if (lair)
+                Log($"地狱之门通向地图：{LairMapRegion?.Map?.Description}");
+            else
+                Log("地狱之门关闭");
 
             Log(string.Format("加载耗时: {0}", Functions.ToString(Time.Now - Now, true)));
 
@@ -1403,12 +1511,22 @@ namespace Server.Envir
                         {
                             UserCountTime = Now.AddMinutes(5);
 
+                            Dictionary<string, int> a = new();
+                            foreach (var player in SEnvir.Players)
+                            {
+                                if (player.Character?.Account == null) continue;
+                                if (player.Character.Account.EMailAddress == SEnvir.SuperAdmin) continue;
+
+                                if (!a.ContainsKey(player.Character.Account.LastSum))
+                                    a.Add(player.Character.Account.LastSum, 0);
+                            }
+
                             foreach (SConnection conn in Connections)
                             {
                                 if (conn == null || !conn.Connected || conn.Disconnecting) continue;
 
                                 if (conn.Account?.Admin ?? false)
-                                    conn.ReceiveChat(string.Format(conn.Language.OnlineCount, Players.Count, Connections.Count(x => x.Stage == GameStage.Observer)), MessageType.Hint);
+                                    conn.ReceiveChat(string.Format(conn.Language.OnlineCount, Players.Count, Connections.Count(x => x.Stage == GameStage.Observer), a.Count), MessageType.Hint);
 
                                 switch (conn.Stage)
                                 {
@@ -1513,6 +1631,8 @@ namespace Server.Envir
                             catch (Exception ex) { Log(ex); }
                         }
                     }
+
+                    MemoryCollect();
                 }
                 catch (Exception ex)
                 {
@@ -3094,6 +3214,8 @@ namespace Server.Envir
                     account.Banned = false;
                     account.BanReason = string.Empty;
                     account.ExpiryDate = DateTime.MinValue;
+
+                    AddRanking(account);
                 }
 
                 if (PasswordMatch(p.Password, account.Password))
@@ -3259,6 +3381,8 @@ namespace Server.Envir
                     account.Banned = false;
                     account.BanReason = string.Empty;
                     account.ExpiryDate = DateTime.MinValue;
+
+                    AddRanking(account);
                 }
 
                 if (PasswordMatch(p.Password, account.Password))
@@ -3520,9 +3644,9 @@ namespace Server.Envir
                 account.Banned = false;
                 account.BanReason = string.Empty;
                 account.ExpiryDate = DateTime.MinValue;
+
+                AddRanking(account);
             }
-
-
 
             if (PasswordMatch(p.CurrentPassword, account.Password))
             {
@@ -3737,10 +3861,20 @@ namespace Server.Envir
                 return;
             }
             
-            if (!Globals.CharacterReg.IsMatch(p.CharacterName))
+            if (!Regex.IsMatch(p.CharacterName, Globals.CharacterReg, RegexOptions.IgnoreCase))
             {
                 con.Enqueue(new S.NewCharacter { Result = NewCharacterResult.BadCharacterName });
                 return;
+            }
+
+            if (SensitiveWords != null && con.Account.EMailAddress != SuperAdmin)
+            {
+                var check = new ContentCheck(SensitiveWords, p.CharacterName, 2);
+                if (check.FindSensitiveWords().Count > 0)
+                {
+                    con.Enqueue(new S.NewCharacter { Result = NewCharacterResult.BadCharacterName });
+                    return;
+                }
             }
 
             switch (p.Gender)
@@ -3876,7 +4010,8 @@ namespace Server.Envir
             cInfo.CreationIP = con.IPAddress;
             cInfo.CreationDate = Now;
 
-            cInfo.RankingNode = Rankings.AddLast(cInfo);
+            if (con.Account.EMailAddress != SuperAdmin)
+                cInfo.RankingNode = Rankings.AddLast(cInfo);
 
             con.Enqueue(new S.NewCharacter
             {
@@ -3905,6 +4040,9 @@ namespace Server.Envir
                 }
 
                 character.Deleted = true;
+
+                QuitRanking(character);
+
                 con.Enqueue(new S.DeleteCharacter { Result = DeleteCharacterResult.Success, DeletedIndex = character.Index });
 
                 Log(string.Format("[删除角色] 账号: {0}, 角色: {1}, IP: {2}, 验证码: {3}", con.Account.EMailAddress, character.CharacterName, con.IPAddress, p.CheckSum));
@@ -4315,7 +4453,7 @@ namespace Server.Envir
             foreach (PlayerObject player in Players)
                 player.Enqueue(p);
         }
-        public static S.Rankings GetRanks(C.RankRequest p, bool isGM)
+        public static S.Rankings GetRanks(C.RankRequest p, bool gm)
         {
             S.Rankings result = new S.Rankings
             {
@@ -4330,7 +4468,11 @@ namespace Server.Envir
             int rank = 0;
             foreach (CharacterInfo info in Rankings)
             {
-                if (info.Deleted || !info.Account.Activated) continue;
+                if (info.Deleted 
+                    || !info.Account.Activated 
+                    || info.Account.Banned 
+                    || info.Account.EMailAddress == SuperAdmin) 
+                    continue;
 
                 switch (info.Class)
                 {
@@ -4354,7 +4496,9 @@ namespace Server.Envir
 
                 if (total++ < p.StartIndex) continue;
 
-                if (result.Ranks.Count >= 20 || (Config.排名只显示前多少名 >= 0 && (p.StartIndex + total) > Config.排名只显示前多少名)) continue;
+                if (result.Ranks.Count >= Config.单次请求排名拉取的数量不超过多少个
+                    || ((Config.排名只显示前多少名 >= 0 && (p.StartIndex + total) > Config.排名只显示前多少名)
+                    && !gm)) continue;
 
                 result.Ranks.Add(new RankInfo
                 {
@@ -4363,9 +4507,9 @@ namespace Server.Envir
                     Class = info.Class,
                     Experience = info.Experience,
                     Level = info.Level,
-                    Name = info.CharacterName,
+                    Name = $"{info.CharacterName} {(info.Rebirth > 0 && info.Rebirth <= MarkRebirth.Length ? MarkRebirth[info.Rebirth - 1] : "")}",
                     Online = info.Player != null,
-                    Observable = info.Observable || isGM,
+                    Observable = gm,
                 });
             }
 

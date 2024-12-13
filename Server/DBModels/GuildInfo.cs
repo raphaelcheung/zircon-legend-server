@@ -288,7 +288,7 @@ namespace Server.DBModels
             {
                 if (item.Slot < 0 || item.Slot >= Storage.Length)
                 {
-                    SEnvir.Log(string.Format("[BAD ITEM] Guild: {0}, Slot: {1}", GuildName, item.Slot));
+                    SEnvir.Log(string.Format("[物品错误] 行会: {0}, 插槽: {1}", GuildName, item.Slot));
                     continue;
                 }
 
@@ -300,7 +300,7 @@ namespace Server.DBModels
         {
             base.OnCreated();
 
-            DefaultRank = "New Member";
+            DefaultRank = "新成员";
             DefaultPermission = GuildPermission.None;
         }
 
