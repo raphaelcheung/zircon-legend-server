@@ -662,6 +662,35 @@ namespace Server.Envir
 
         public static List<string> WelcomeList = new();
 
+        private static ItemInfo? GoldBar = null;
+        private static ItemInfo? GoldBrick = null;
+        private static ItemInfo? GoldBox = null;
+
+        public static ItemInfo? GetGoldBar()
+        {
+            if (GoldBar != null) return GoldBar;
+
+            GoldBar = ItemInfoList.Binding.FirstOrDefault(x => x.ItemName == "金条");
+            if (GoldBar == default(ItemInfo)) GoldBar = null;
+            return GoldBar;
+        }
+        public static ItemInfo? GetGoldBrick()
+        {
+            if (GoldBrick != null) return GoldBrick;
+
+            GoldBrick = ItemInfoList.Binding.FirstOrDefault(x => x.ItemName == "金砖");
+            if (GoldBrick == default(ItemInfo)) GoldBrick = null;
+            return GoldBrick;
+        }
+
+        public static ItemInfo? GetGoldBox()
+        {
+            if (GoldBox != null) return GoldBox;
+
+            GoldBox = ItemInfoList.Binding.FirstOrDefault(x => x.ItemName == "金盒");
+            if (GoldBox == default(ItemInfo)) GoldBox = null;
+            return GoldBox;
+        }
         #endregion
 
         #region Game Variables
@@ -3231,7 +3260,11 @@ namespace Server.Envir
                     else
                     {
                         if (!PasswordMatch(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"), account.RealPassword))
-                            Log($"{p.EMailAddress} 的 RealPassword 核对异常");
+                        {
+                            Log($"核对 {p.EMailAddress} 的RealPassword时发现不一致，现已纠正");
+                            var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
+                            account.RealPassword = tmp;
+                        }
                     }
                 }
                 else if ((account.RealPassword?.Length ?? 0) > 0 && PasswordMatch(p.Password, account.RealPassword))

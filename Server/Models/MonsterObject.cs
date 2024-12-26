@@ -2970,10 +2970,37 @@ namespace Zircon.Server.Models
                 result = true;
                 while (amount > 0)
                 {
-                    UserItem item = SEnvir.CreateDropItem(drop.Item);
+                    UserItem item;
+                    if (drop.Item.Effect == ItemEffect.Gold && amount > 1000000000)
+                    {
+                        var goldbox = SEnvir.GetGoldBox();
+                        item = SEnvir.CreateDropItem(goldbox ?? drop.Item);
 
-                    item.Count = Math.Min(drop.Item.StackSize, amount);
-                    amount -= item.Count;
+                        item.Count = 1;
+                        amount -= (goldbox?.Price ?? item.Count);
+                    }
+                    else if (drop.Item.Effect == ItemEffect.Gold && amount > 10000000)
+                    {
+                        item = SEnvir.CreateDropItem(drop.Item);
+
+                        item.Count = Math.Min(drop.Item.StackSize, amount);
+                        amount -= item.Count;
+                    }
+                    else if (drop.Item.Effect == ItemEffect.Gold && amount > 1000000)
+                    {
+                        item = SEnvir.CreateDropItem(drop.Item);
+
+                        item.Count = Math.Min(drop.Item.StackSize, amount);
+                        amount -= item.Count;
+                    }
+                    else
+                    {
+                        item = SEnvir.CreateDropItem(drop.Item);
+
+                        item.Count = Math.Min(drop.Item.StackSize, amount);
+                        amount -= item.Count;
+                    }
+                    
 
                     item.IsTemporary = true; //REMOVE ON Gain
 

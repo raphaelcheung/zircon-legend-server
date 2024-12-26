@@ -134,20 +134,20 @@ namespace Server.DBModels
             {
                 Index = Index,
 
-                Name = Account.LastCharacter.CharacterName,
+                Name = Account?.LastCharacter?.CharacterName ?? "",
                 Rank = Rank,
                 DailyContribution = DailyContribution,
                 TotalContribution = TotalContribution,
                 Permission = Permission,
             };
 
-            if ((Account.Connection?.Player ?? null ) != null)
+            if ((Account?.Connection?.Player ?? null) != null)
             {
                 info.Online = TimeSpan.MinValue;
                 info.ObjectID = Account.Connection.Player.ObjectID;
             }
             else
-                info.Online = SEnvir.Now - Account.Characters.Max(x => x.LastLogin);
+                info.Online = (Account?.Characters?.Count ?? 0) > 0 ? SEnvir.Now - Account.Characters.Max(x => x.LastLogin) : TimeSpan.MinValue;
 
 
             return info;
