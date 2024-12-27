@@ -7,6 +7,7 @@ using Server.DBModels;
 using Server.Envir;
 using System.Collections.ObjectModel;
 using System.Drawing;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Principal;
@@ -1498,6 +1499,8 @@ namespace Zircon.Server.Models
                     case "离开行会":
                     case "退出公会":
                     case "离开公会":
+                    case "离开帮会":
+                    case "退出帮会":
                     case "LEAVEGUILD":
                         GuildLeave();
                         break;
@@ -1505,13 +1508,8 @@ namespace Zircon.Server.Models
                     case "召唤":
                     case "RECALL":
                         if (!Character.Account.Admin) return;
-                        if (parts.Length < 2) return;
-
-                        player = SEnvir.GetPlayerByCharacter(parts[1]);
-                        if (player != null)
-                        player.Teleport(CurrentMap, Functions.Move(CurrentLocation, Direction));
+                        Recall(parts);
                         break;
-
                     case "允许召唤":
                     case "ALLOWRECALL":
                         Character.Account.AllowGroupRecall = !Character.Account.AllowGroupRecall;
@@ -1524,81 +1522,7 @@ namespace Zircon.Server.Models
                     case "队伍召唤":
                     case "GROUPRECALL":
                         if (Stats[Stat.RecallSet] <= 0) return;
-
-
-                        if (GroupMembers == null)
-                        {
-                            Connection.ReceiveChat(Connection.Language.GroupNoGroup, MessageType.System);
-
-                            foreach (SConnection con in Connection.Observers)
-                                con.ReceiveChat(con.Language.GroupNoGroup, MessageType.System);
-                            return;
-                        }
-
-                        if (GroupMembers[0] != this)
-                        {
-                            Connection.ReceiveChat(Connection.Language.GroupNotLeader, MessageType.System);
-
-                            foreach (SConnection con in Connection.Observers)
-                                con.ReceiveChat(con.Language.GroupNotLeader, MessageType.System);
-                            return;
-                        }
-
-                        if (!CurrentMap.Info.AllowTT || !CurrentMap.Info.AllowRT || CurrentMap.Info.SkillDelay > 0)
-                        {
-                            Connection.ReceiveChat(Connection.Language.GroupRecallMap, MessageType.System);
-
-                            foreach (SConnection con in Connection.Observers)
-                                con.ReceiveChat(con.Language.GroupRecallMap, MessageType.System);
-                            return;
-                        }
-
-                        if (SEnvir.Now < Character.GroupRecallTime)
-                        {
-                            Connection.ReceiveChat(string.Format(Connection.Language.GroupRecallDelay, Functions.ToString(Character.GroupRecallTime - SEnvir.Now, true)), MessageType.System);
-
-                            foreach (SConnection con in Connection.Observers)
-                                con.ReceiveChat(string.Format(con.Language.GroupRecallDelay, Functions.ToString(Character.GroupRecallTime - SEnvir.Now, true)), MessageType.System);
-                            return;
-                        }
-
-                        foreach (PlayerObject member in GroupMembers)
-                        {
-                            if (member.Dead || member == this) continue;
-
-                            if (!member.CurrentMap.Info.AllowTT)
-                            {
-                                member.Connection.ReceiveChat(member.Connection.Language.GroupRecallFromMap, MessageType.System);
-
-                                foreach (SConnection con in member.Connection.Observers)
-                                    con.ReceiveChat(con.Language.GroupRecallFromMap, MessageType.System);
-
-                                Connection.ReceiveChat(string.Format(Connection.Language.GroupRecallMemberFromMap, member.Name), MessageType.System);
-
-                                foreach (SConnection con in Connection.Observers)
-                                    con.ReceiveChat(string.Format(con.Language.GroupRecallMemberFromMap, member.Name), MessageType.System);
-                                continue;
-                            }
-
-                            if (!member.Character.Account.AllowGroupRecall)
-                            {
-                                member.Connection.ReceiveChat(member.Connection.Language.GroupRecallNotAllowed, MessageType.System);
-
-                                foreach (SConnection con in member.Connection.Observers)
-                                    con.ReceiveChat(con.Language.GroupRecallNotAllowed, MessageType.System);
-
-                                Connection.ReceiveChat(string.Format(member.Connection.Language.GroupRecallMemberNotAllowed, member.Name), MessageType.System);
-
-                                foreach (SConnection con in Connection.Observers)
-                                    con.ReceiveChat(string.Format(con.Language.GroupRecallMemberNotAllowed, member.Name), MessageType.System);
-                                continue;
-                            }
-
-
-                            member.Teleport(CurrentMap, CurrentMap.GetRandomLocation(CurrentLocation, 10));
-                        }
-
-                        Character.GroupRecallTime = SEnvir.Now.AddMinutes(3);
+                        GroupRecall();
                         break;
                     case "OBSERVER":
                         if (!Character.Account.TempAdmin) return;
@@ -2274,7 +2198,92 @@ namespace Zircon.Server.Models
                 }
             }
         }
+        private void Recall(string[] parts)
+        {
+            if (parts.Length < 2) return;
 
+            var player = SEnvir.GetPlayerByCharacter(parts[1]);
+            string? result = player?.Teleport(CurrentMap, Functions.Move(CurrentLocation, Direction));
+            if (!string.IsNullOrEmpty(result))
+                Connection.ReceiveChat(result, MessageType.System);
+        }
+        private void GroupRecall()
+        {
+
+            if (GroupMembers == null)
+            {
+                Connection.ReceiveChat(Connection.Language.GroupNoGroup, MessageType.System);
+
+                foreach (SConnection con in Connection.Observers)
+                    con.ReceiveChat(con.Language.GroupNoGroup, MessageType.System);
+                return;
+            }
+
+            if (GroupMembers[0] != this)
+            {
+                Connection.ReceiveChat(Connection.Language.GroupNotLeader, MessageType.System);
+
+                foreach (SConnection con in Connection.Observers)
+                    con.ReceiveChat(con.Language.GroupNotLeader, MessageType.System);
+                return;
+            }
+
+            if (!CurrentMap.Info.AllowTT || !CurrentMap.Info.AllowRT || CurrentMap.Info.SkillDelay > 0)
+            {
+                Connection.ReceiveChat(Connection.Language.GroupRecallMap, MessageType.System);
+
+                foreach (SConnection con in Connection.Observers)
+                    con.ReceiveChat(con.Language.GroupRecallMap, MessageType.System);
+                return;
+            }
+
+            if (SEnvir.Now < Character.GroupRecallTime)
+            {
+                Connection.ReceiveChat(string.Format(Connection.Language.GroupRecallDelay, Functions.ToString(Character.GroupRecallTime - SEnvir.Now, true)), MessageType.System);
+
+                foreach (SConnection con in Connection.Observers)
+                    con.ReceiveChat(string.Format(con.Language.GroupRecallDelay, Functions.ToString(Character.GroupRecallTime - SEnvir.Now, true)), MessageType.System);
+                return;
+            }
+
+            foreach (PlayerObject member in GroupMembers)
+            {
+                if (member.Dead || member == this) continue;
+
+                if (!member.CurrentMap.Info.AllowTT)
+                {
+                    member.Connection.ReceiveChat(member.Connection.Language.GroupRecallFromMap, MessageType.System);
+
+                    foreach (SConnection con in member.Connection.Observers)
+                        con.ReceiveChat(con.Language.GroupRecallFromMap, MessageType.System);
+
+                    Connection.ReceiveChat(string.Format(Connection.Language.GroupRecallMemberFromMap, member.Name), MessageType.System);
+
+                    foreach (SConnection con in Connection.Observers)
+                        con.ReceiveChat(string.Format(con.Language.GroupRecallMemberFromMap, member.Name), MessageType.System);
+                    continue;
+                }
+
+                if (!member.Character.Account.AllowGroupRecall)
+                {
+                    member.Connection.ReceiveChat(member.Connection.Language.GroupRecallNotAllowed, MessageType.System);
+
+                    foreach (SConnection con in member.Connection.Observers)
+                        con.ReceiveChat(con.Language.GroupRecallNotAllowed, MessageType.System);
+
+                    Connection.ReceiveChat(string.Format(member.Connection.Language.GroupRecallMemberNotAllowed, member.Name), MessageType.System);
+
+                    foreach (SConnection con in Connection.Observers)
+                        con.ReceiveChat(string.Format(con.Language.GroupRecallMemberNotAllowed, member.Name), MessageType.System);
+                    continue;
+                }
+
+
+                member.Teleport(CurrentMap, CurrentMap.GetRandomLocation(CurrentLocation, 10));
+            }
+
+            Character.GroupRecallTime = SEnvir.Now.AddMinutes(3);
+        }
         private void ClearMemory(string[] parts)
         {
             if (parts.Length < 2)
@@ -3531,11 +3540,11 @@ namespace Zircon.Server.Models
         }
         #endregion
 
-        public override bool Teleport(Map map, Point location, bool leaveEffect = true)
+        public override string Teleport(Map map, Point location, bool leaveEffect = true)
         {
-            bool res = base.Teleport(map, location, leaveEffect);
+            string res = base.Teleport(map, location, leaveEffect);
 
-            if (res)
+            if (string.IsNullOrEmpty(res))
             {
                 BuffRemove(BuffType.Cloak);
                 BuffRemove(BuffType.Transparency);
@@ -3567,7 +3576,7 @@ namespace Zircon.Server.Models
 
             Map destMap = SEnvir.GetMap(destInfo);
 
-            if (!Teleport(destMap, destMap.GetRandomLocation(location, 10, 25))) return;
+            if (!string.IsNullOrEmpty(Teleport(destMap, destMap.GetRandomLocation(location, 10, 25)))) return;
 
             TeleportTime = SEnvir.Now.AddMinutes(5);
         }
@@ -3820,7 +3829,7 @@ namespace Zircon.Server.Models
             }
 
 
-            if (Teleport(Character.Partner.Player.CurrentMap, Character.Partner.Player.CurrentMap.GetRandomLocation(Character.Partner.Player.CurrentLocation, 10)))
+            if (string.IsNullOrEmpty(Teleport(Character.Partner.Player.CurrentMap, Character.Partner.Player.CurrentMap.GetRandomLocation(Character.Partner.Player.CurrentLocation, 10))))
                 Character.MarriageTeleportTime = SEnvir.Now.AddSeconds(120);
         }
 
@@ -6285,7 +6294,7 @@ namespace Zircon.Server.Models
                                 return;
                             }
 
-                            if (!Teleport(SEnvir.Maps[Character.BindPoint.BindRegion.Map], Character.BindPoint.ValidBindPoints[SEnvir.Random.Next(Character.BindPoint.ValidBindPoints.Count)]))
+                            if (!string.IsNullOrEmpty(Teleport(SEnvir.Maps[Character.BindPoint.BindRegion.Map], Character.BindPoint.ValidBindPoints[SEnvir.Random.Next(Character.BindPoint.ValidBindPoints.Count)])))
                                 return;
                             break;
                         case 3: //Random Teleport
@@ -6299,7 +6308,7 @@ namespace Zircon.Server.Models
                                 return;
                             }
 
-                            if (!Teleport(CurrentMap, CurrentMap.GetRandomLocation()))
+                            if (!string.IsNullOrEmpty(Teleport(CurrentMap, CurrentMap.GetRandomLocation())))
                                 return;
                             break;
                         case 4: //Benediction
@@ -18441,7 +18450,7 @@ namespace Zircon.Server.Models
                     return;
             }
 
-            if (!ob.Teleport(CurrentMap, Functions.Move(CurrentLocation, Direction))) return;
+            if (!string.IsNullOrEmpty(ob.Teleport(CurrentMap, Functions.Move(CurrentLocation, Direction)))) return;
 
             /*   if (CurrentMap.Info.SkillDelay > 0)
                {
@@ -18492,7 +18501,7 @@ namespace Zircon.Server.Models
 
 
 
-                if (!ob.Teleport(CurrentMap, CurrentMap.GetRandomLocation(CurrentLocation, 3))) continue;
+                if (!string.IsNullOrEmpty(ob.Teleport(CurrentMap, CurrentMap.GetRandomLocation(CurrentLocation, 3)))) continue;
 
                 ob.ApplyPoison(new Poison
                 {
@@ -18798,7 +18807,7 @@ namespace Zircon.Server.Models
 
             if (SEnvir.Random.Next(100) > 25 + magic.Level * 25) return;
 
-            if (!Teleport(CurrentMap, location, false)) return;
+            if (!string.IsNullOrEmpty(Teleport(CurrentMap, location, false))) return;
             /*
             if (CurrentMap.Info.SkillDelay > 0)
             {

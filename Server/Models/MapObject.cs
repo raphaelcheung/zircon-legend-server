@@ -805,7 +805,7 @@ namespace Zircon.Server.Models
 
             Teleport(CurrentMap, cells[SEnvir.Random.Next(cells.Count)].Location);
         }
-        public bool Teleport(MapRegion region, bool leaveEffect = true)
+        public string Teleport(MapRegion region, bool leaveEffect = true)
         {
             Map map = SEnvir.GetMap(region.Map);
 
@@ -813,14 +813,17 @@ namespace Zircon.Server.Models
             
             return Teleport(map, point, leaveEffect);
         }
-        public virtual bool Teleport(Map map, Point location, bool leaveEffect = true)
+        public virtual string Teleport(Map map, Point location, bool leaveEffect = true)
         {
-            if (Race == ObjectType.Player && map.Info.MinimumLevel > Level && !((PlayerObject)this).Character.Account.TempAdmin) return false;
-            if (Race == ObjectType.Player && map.Info.MaximumLevel > 0 && map.Info.MaximumLevel < Level && !((PlayerObject)this).Character.Account.TempAdmin) return false;
+            if (Race == ObjectType.Player && map.Info.MinimumLevel > Level && !((PlayerObject)this).Character.Account.TempAdmin)
+                return "召唤的角色等级不能低于地图要求";
 
-            Cell cell = map != null ? map.GetCell(location) : null;
+            if (Race == ObjectType.Player && map.Info.MaximumLevel > 0 && map.Info.MaximumLevel < Level && !((PlayerObject)this).Character.Account.TempAdmin) 
+                return "召唤的角色等级不能高于地图要求";
 
-            if (cell == null || cell.Movements != null) return false;
+            Cell? cell = map?.GetCell(location);
+
+            if (cell == null || cell.Movements != null) return "召唤地点错误";
 
             if (leaveEffect)
                 Broadcast(new S.ObjectEffect { ObjectID = ObjectID, Effect = Effect.TeleportOut });
@@ -832,7 +835,7 @@ namespace Zircon.Server.Models
             Broadcast(new S.ObjectTurn { ObjectID = ObjectID, Direction = Direction, Location = CurrentLocation });
             Broadcast(new S.ObjectEffect { ObjectID = ObjectID, Effect = Effect.TeleportIn });
 
-            return true;
+            return string.Empty;
         }
         public virtual void AddAllObjects()
         {
