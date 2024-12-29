@@ -671,7 +671,11 @@ namespace Server.Envir
             if (GoldBar != null) return GoldBar;
 
             GoldBar = ItemInfoList.Binding.FirstOrDefault(x => x.ItemName == "金条");
-            if (GoldBar == default(ItemInfo)) GoldBar = null;
+            if (GoldBar == default(ItemInfo))
+            {
+                GoldBar = null;
+                Log($"没有找到 [金条] 道具");
+            }
             return GoldBar;
         }
         public static ItemInfo? GetGoldBrick()
@@ -679,7 +683,11 @@ namespace Server.Envir
             if (GoldBrick != null) return GoldBrick;
 
             GoldBrick = ItemInfoList.Binding.FirstOrDefault(x => x.ItemName == "金砖");
-            if (GoldBrick == default(ItemInfo)) GoldBrick = null;
+            if (GoldBrick == default(ItemInfo))
+            {
+                GoldBrick = null;
+                Log($"没有找到 [金砖] 道具");
+            }
             return GoldBrick;
         }
 
@@ -688,7 +696,11 @@ namespace Server.Envir
             if (GoldBox != null) return GoldBox;
 
             GoldBox = ItemInfoList.Binding.FirstOrDefault(x => x.ItemName == "金盒");
-            if (GoldBox == default(ItemInfo)) GoldBox = null;
+            if (GoldBox == default(ItemInfo))
+            {
+                GoldBox = null;
+                Log($"没有找到 [金盒] 道具");
+            }
             return GoldBox;
         }
         #endregion
