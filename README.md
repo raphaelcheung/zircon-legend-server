@@ -225,4 +225,9 @@ UseProxy=True
 主干处于持续开发状态，推荐拉取发布版本。<br/>
 <img src="Images/代码拉取.jpg" title="拉取代码"><br/>
 
+如果还是拉不下子模块，
+也可以去把【[ZirconLegend-Library](https://gitee.com/raphaelcheung/zircon-legend-library)】拉下来，
+然后移动到` Library `目录下。
+
+
 项目的编译依赖都已预设好，直接编译即可

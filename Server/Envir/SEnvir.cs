@@ -961,7 +961,7 @@ namespace Server.Envir
             bool changed = false;
 
             LinkedListNode<CharacterInfo>? node;
-            while ((node = character.RankingNode.Previous) != null)
+            while ((node = character.RankingNode?.Previous) != null)
             {
                 if (node.Value.Rebirth > character.Rebirth) break;
 

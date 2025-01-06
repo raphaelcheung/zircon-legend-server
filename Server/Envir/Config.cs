@@ -204,10 +204,10 @@ namespace Server.Envir
         public static TimeSpan AutoReviveDelay { get; set; }
         public static int 最高转生次数 { get; set; } = 2;
         public static int 转生基础等级 { get; set; } = 86;
-
         public static int 技能最高等级 { get; set; } = 6;
         public static int 技能高级阶段基础经验 { get; set; } = 5;
-
+        public static bool 道士技能强化 { get; set; } = false;
+        public static bool 转生死亡经验优化 { get; set; } = false;
 
         [ConfigSection("Monsters")]
         public static TimeSpan DeadDuration { get; set; }

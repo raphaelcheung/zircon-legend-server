@@ -174,6 +174,7 @@ namespace Zircon.Server.Models
         public HashSet<UserMagic> Magics = new HashSet<UserMagic>();
         public int SummonLevel { get; set; } = 0;
         public int SummonMagicLevel { get; set; } = 0;
+        public int SummonBase { get; set; } = 0;
 
         public int ViewRange
         {
@@ -757,7 +758,7 @@ namespace Zircon.Server.Models
 
             if (SummonLevel > 0)
             {
-                Stats[Stat.Health] += Stats[Stat.Health] * SummonLevel / live_rate;
+                Stats[Stat.Health] += Stats[Stat.Health] * SummonLevel / live_rate + SummonBase * SummonLevel * 2;
 
                 Stats[Stat.MinAC] += Stats[Stat.MinAC] * SummonLevel / live_rate;
                 Stats[Stat.MaxAC] += Stats[Stat.MaxAC] * SummonLevel / live_rate;
@@ -2730,8 +2731,6 @@ namespace Zircon.Server.Models
                 if (ePlayers.Count > 1)
                     exp += exp * 0.06M * ePlayers.Count; //6% per nearby member.
 
-
-
                 foreach (PlayerObject player in ePlayers)
                 {
                     decimal expfinal = exp * player.Level / totalLevels;
@@ -2848,7 +2847,6 @@ namespace Zircon.Server.Models
                     chance = (long)(int.MaxValue / (drop.Chance * players) * rate);
                 }
                 
-
                 UserDrop userDrop = owner.Character.Account.UserDrops.FirstOrDefault(x => x.Item == drop.Item);
 
                 if (userDrop == null)
@@ -2866,9 +2864,8 @@ namespace Zircon.Server.Models
                     userDrop.Progress += progress;
 
                 if (drop.PartOnly ||
-                    ((SEnvir.Random.Next() > chance ||
-                      (drop.Item.Effect != ItemEffect.Gold && owner.Character.Account.ItemBot)) &&
-                     ((long) userDrop.Progress <= userDrop.DropCount || drop.Item.Effect == ItemEffect.Gold)))
+                    ( (SEnvir.Random.Next() > chance || (drop.Item.Effect != ItemEffect.Gold && owner.Character.Account.ItemBot)) 
+                    && ((long) userDrop.Progress <= userDrop.DropCount || drop.Item.Effect == ItemEffect.Gold) ))
                 {
                     if (drop.Item.PartCount <= 1) continue;
 
@@ -2971,29 +2968,29 @@ namespace Zircon.Server.Models
                 while (amount > 0)
                 {
                     UserItem item;
-                    if (drop.Item.Effect == ItemEffect.Gold && amount > 1000000000)
-                    {
-                        var goldbox = SEnvir.GetGoldBox();
-                        item = SEnvir.CreateDropItem(goldbox ?? drop.Item);
+                    //if (drop.Item.Effect == ItemEffect.Gold && amount > 1000000000)
+                    //{
+                    //    var goldbox = SEnvir.GetGoldBox();
+                    //    item = SEnvir.CreateDropItem(goldbox ?? drop.Item);
 
-                        item.Count = 1;
-                        amount -= (goldbox?.Price ?? item.Count);
-                    }
-                    else if (drop.Item.Effect == ItemEffect.Gold && amount > 10000000)
-                    {
-                        item = SEnvir.CreateDropItem(drop.Item);
+                    //    item.Count = 1;
+                    //    amount -= (goldbox?.Price ?? item.Count);
+                    //}
+                    //else if (drop.Item.Effect == ItemEffect.Gold && amount > 10000000)
+                    //{
+                    //    item = SEnvir.CreateDropItem(drop.Item);
 
-                        item.Count = Math.Min(drop.Item.StackSize, amount);
-                        amount -= item.Count;
-                    }
-                    else if (drop.Item.Effect == ItemEffect.Gold && amount > 1000000)
-                    {
-                        item = SEnvir.CreateDropItem(drop.Item);
+                    //    item.Count = Math.Min(drop.Item.StackSize, amount);
+                    //    amount -= item.Count;
+                    //}
+                    //else if (drop.Item.Effect == ItemEffect.Gold && amount > 1000000)
+                    //{
+                    //    item = SEnvir.CreateDropItem(drop.Item);
 
-                        item.Count = Math.Min(drop.Item.StackSize, amount);
-                        amount -= item.Count;
-                    }
-                    else
+                    //    item.Count = Math.Min(drop.Item.StackSize, amount);
+                    //    amount -= item.Count;
+                    //}
+                    //else
                     {
                         item = SEnvir.CreateDropItem(drop.Item);
 

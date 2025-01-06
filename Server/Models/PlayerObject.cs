@@ -1595,7 +1595,7 @@ namespace Zircon.Server.Models
                             player.Level = value;
                             player.LevelUp();
                             SEnvir.Log($"[调整等级] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 调整目标=[{player.Character.CharacterName}：{old}=>{value}]");
-
+                            Connection.ReceiveChat($"{player.Character.CharacterName} 等级调整为：{value}", MessageType.System);
                         }
                         else if (GameMaster)
                         {
@@ -2161,6 +2161,21 @@ namespace Zircon.Server.Models
                         if (!Character.Account.TempAdmin) return;
                         ClearMemory(parts);
                         break;
+                    case "道士技能强化":
+                        if (!Character.Account.TempAdmin) return;
+
+                        Config.道士技能强化 = !Config.道士技能强化;
+                        Connection.ReceiveChat($"道士技能强化={Config.道士技能强化}", MessageType.System);
+                        break;
+                    case "内存统计":
+                        if (!Character.Account.TempAdmin) return;
+                        MemoryCount();
+                        break;
+                    case "死亡经验优化":
+                        if (!Character.Account.TempAdmin) return;
+                        Config.转生死亡经验优化 = !Config.转生死亡经验优化;
+                        Connection.ReceiveChat($"转生死亡经验优化={Config.转生死亡经验优化}", MessageType.System);
+                        break;
                 }
 
             }
@@ -2197,6 +2212,27 @@ namespace Zircon.Server.Models
                     }
                 }
             }
+        }
+
+        private void MemoryCount()
+        {
+            var datas = DBObject.GetCounters();
+            List<string> lines = new List<string>();
+            foreach (var key in datas.AllKeys)
+                lines.Add($"{key}：{datas.GetValues(key)?[0]}"); 
+
+
+            DateTime now = Time.Now.ToLocalTime();
+
+            string dir = "./datas/内存统计";
+
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
+            string path = $"{dir}/{now.ToString("yyyyMMdd-HHmmss")}.txt";
+            try { File.WriteAllLines(path, lines); }
+            catch(Exception ex) { SEnvir.Log(ex); }
+
+            Connection.ReceiveChat($"统计数据共 {datas.Count} 条，已写入：{path}", MessageType.System);
         }
         private void Recall(string[] parts)
         {
@@ -17719,9 +17755,9 @@ namespace Zircon.Server.Models
             if (Stats[Stat.Rebirth] > 0 && (LastHitter == null || LastHitter.Race != ObjectType.Player))
             {
                 //Level = Math.Max(Level - Stats[Stat.Rebirth] * 3, 1);
-                decimal expbonus = Experience;
+                decimal expbonus = Config.转生死亡经验优化 ? Experience / 2 : Experience;
                 Enqueue(new S.GainedExperience { Amount = -expbonus });
-                Experience = 0;
+                Experience -= expbonus;
 
                 if (expbonus > 0)
                 {
@@ -17737,17 +17773,30 @@ namespace Zircon.Server.Models
                     PlayerObject target = null;
                     if (targets.Count > 0)
                     {
-                        target = targets[SEnvir.Random.Next(targets.Count)]; 
+                        target = targets[SEnvir.Random.Next(targets.Count)];
 
-                        target.GainExperience(expbonus, false, int.MaxValue, false);
+                        if (Config.转生死亡经验优化)
+                        {
+                            target.Level++;
+                            target.LevelUp();
+                        }
+                        else
+                            target.GainExperience(expbonus, false, int.MaxValue, false);
                     }
 
                     string tmp;
                     //SEnvir.Broadcast(new S.Chat {Text = "{Name} has died and lost {expbonus:##,##0} Experience, {target?.Name ?? "No one"} has won the experience.", Type = MessageType.System});
                     if (target == null)
-                        tmp = string.Format("[{0}] 已经死亡并且失去了 {1:##,##0} 的经验, 没有任何人赢得该经验.", Name, expbonus);
+                        tmp = $"\"{Character.Rebirth}转玩家 [{Name}] 意外死亡失去了 {expbonus:##,##0} 的经验, 没有人赢得该经验.\"";
                     else
-                        tmp = string.Format("[{0}] 已经死亡并且失去了 {1:##,##0} 的经验, [{2}] 赢得了相应经验.", Name, expbonus, target.Name);
+                    {
+                        if (Config.转生死亡经验优化)
+                            tmp = $"{Character.Rebirth}转玩家 [{Name}] 意外死亡失去了 {expbonus:##,##0} 的经验, 幸运的 [{target.Name}] 得到了部分经验，直接突破当前等级.";
+                        else
+                            tmp = $"{Character.Rebirth}转玩家 [{Name}] 意外死亡失去了 {expbonus:##,##0} 的经验, 幸运的 [{target.Name}] 赢得了全部经验.";
+
+                    }
+
 
                     SEnvir.Broadcast(new S.Chat {Text = tmp, Type = MessageType.System});
                 }
@@ -18952,13 +19001,33 @@ namespace Zircon.Server.Models
                 LevelMagic(empowered);
             }
 
+            int sc = GetSC();
+            int value = sc + GetElementBySchool(magic.Info.School) * 2 + (Config.道士技能强化 ? sc * bonus / 100 : bonus);
+
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.Healing, magic.GetPower() + GetSC() + Stats[Stat.HolyAttack] * 2 + bonus);
+            buffStats.Values.Add(Stat.Healing, magic.GetPower() + value);
             buffStats.Values.Add(Stat.HealingCap, cap);
 
 
             ob.BuffAdd(BuffType.Heal, TimeSpan.FromSeconds(buffStats[Stat.Healing] / buffStats[Stat.HealingCap]), buffStats, false, false, TimeSpan.FromSeconds(1));
             LevelMagic(magic);
+        }
+        private int GetElementBySchool(MagicSchool school)
+        {
+            Stat ele = school switch 
+            { 
+                MagicSchool.Dark => Stat.DarkAttack,
+                MagicSchool.Phantom => Stat.PhantomAttack,
+                MagicSchool.Holy => Stat.HolyAttack,
+                MagicSchool.Fire => Stat.FireAttack,
+                MagicSchool.Lightning => Stat.LightningAttack,
+                MagicSchool.Wind => Stat.WindAttack,
+                MagicSchool.Ice => Stat.IceAttack,
+                _ => Stat.None,
+            };
+
+
+            return ele == Stat.None ? 0 : Stats[ele];
         }
         public void PoisonDustEnd(List<UserMagic> magics, MapObject ob, PoisonType type)
         {
@@ -18971,12 +19040,25 @@ namespace Zircon.Server.Models
                 if (Pets[i].Target == null)
                     Pets[i].Target = ob;
 
+            int sc = GetSC();
+            int ele = GetElementBySchool(magic.Info.School);
+            int duration = magic.GetPower() + sc + ele * 2;
 
-            int duration = magic.GetPower() + GetSC() + Stats[Stat.DarkAttack] * 2;
+            int value = magic.Level + 1;
+
+            if (Config.道士技能强化)
+            {
+                if (ob.Race != ObjectType.Player)
+                    value += sc / 10 + ele / 5;
+                else
+                    value += sc / 20 + ele / 10;
+            }
+            else
+                value += Level / 14;
 
             ob.ApplyPoison(new Poison
             {
-                Value = magic.Level + 1 + Level / 14,
+                Value = value,
                 Type = type,
                 Owner = this,
                 TickCount = duration / 2,
@@ -19057,9 +19139,13 @@ namespace Zircon.Server.Models
         {
             if (ob == null || ob.Node == null || !CanHelpTarget(ob)) return;
 
+            int value = 5 + magic.Level;
+
+            if (Config.道士技能强化 && ob is MonsterObject mon && mon.PetOwner != null)
+                value += GetSC() * magic.Level / 40;
 
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.MaxMR, 5 + magic.Level);
+            buffStats.Values.Add(Stat.MaxMR, value);
 
 
             if (stats[Stat.FireAffinity] > 0)
@@ -19120,8 +19206,13 @@ namespace Zircon.Server.Models
         {
             if (ob == null || ob.Node == null || !CanHelpTarget(ob)) return;
 
+            int value = 5 + magic.Level;
+
+            if (Config.道士技能强化 && ob is MonsterObject mon && mon.PetOwner != null)
+                value += GetSC() * magic.Level / 40;
+
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.MaxAC, 5 + magic.Level);
+            buffStats.Values.Add(Stat.MaxAC, value);
             buffStats.Values.Add(Stat.PhysicalResistance, 1);
 
             ob.BuffAdd(BuffType.Resilience, TimeSpan.FromSeconds((magic.GetPower() + GetSC() * 2)), buffStats, true, false, TimeSpan.Zero);
@@ -19134,54 +19225,63 @@ namespace Zircon.Server.Models
 
 
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.MaxMC, 5 + magic.Level);
-            buffStats.Values.Add(Stat.MaxSC, 5 + magic.Level);
+            int value = 5 + magic.Level;
+
+            if (Config.道士技能强化 && ob is MonsterObject mon && mon.PetOwner != null)
+            {
+                int sc = GetSC();
+                int ele = GetElementBySchool(magic.Info.School);
+                value += sc / 10 + ele / 5;
+            }
+
+            buffStats.Values.Add(Stat.MaxMC, value);
+            buffStats.Values.Add(Stat.MaxSC, value);
 
             if (stats[Stat.FireAffinity] > 0)
             {
-                buffStats[Stat.FireAttack] = 5 + magic.Level;
+                buffStats[Stat.FireAttack] = value;
                 buffStats[Stat.MaxMC] = 0;
                 buffStats[Stat.MaxSC] = 0;
             }
 
             if (stats[Stat.IceAffinity] > 0)
             {
-                buffStats[Stat.IceAttack] = 5 + magic.Level;
+                buffStats[Stat.IceAttack] = value;
                 buffStats[Stat.MaxMC] = 0;
                 buffStats[Stat.MaxSC] = 0;
             }
 
             if (stats[Stat.LightningAffinity] > 0)
             {
-                buffStats[Stat.LightningAttack] = 5 + magic.Level;
+                buffStats[Stat.LightningAttack] = value;
                 buffStats[Stat.MaxMC] = 0;
                 buffStats[Stat.MaxSC] = 0;
             }
 
             if (stats[Stat.WindAffinity] > 0)
             {
-                buffStats[Stat.WindAttack] = 5 + magic.Level;
+                buffStats[Stat.WindAttack] = value;
                 buffStats[Stat.MaxMC] = 0;
                 buffStats[Stat.MaxSC] = 0;
             }
 
             if (stats[Stat.HolyAffinity] > 0)
             {
-                buffStats[Stat.HolyAttack] = 5 + magic.Level;
+                buffStats[Stat.HolyAttack] = value;
                 buffStats[Stat.MaxMC] = 0;
                 buffStats[Stat.MaxSC] = 0;
             }
 
             if (stats[Stat.DarkAffinity] > 0)
             {
-                buffStats[Stat.DarkAttack] = 5 + magic.Level;
+                buffStats[Stat.DarkAttack] = value;
                 buffStats[Stat.MaxMC] = 0;
                 buffStats[Stat.MaxSC] = 0;
             }
 
             if (stats[Stat.PhantomAffinity] > 0)
             {
-                buffStats[Stat.PhantomAttack] = 5 + magic.Level;
+                buffStats[Stat.PhantomAttack] = value;
                 buffStats[Stat.MaxMC] = 0;
                 buffStats[Stat.MaxSC] = 0;
             }
@@ -19191,14 +19291,23 @@ namespace Zircon.Server.Models
 
             LevelMagic(magic);
         }
+
+
         public void BloodLustEnd(UserMagic magic, MapObject ob)
         {
             if (ob == null || ob.Node == null || !CanHelpTarget(ob)) return;
 
+            int value = 5 + magic.Level;
+
+            if (Config.道士技能强化 && ob is MonsterObject mon && mon.PetOwner != null)
+            {
+                int sc = GetSC();
+                int ele = GetElementBySchool(magic.Info.School);
+                value += sc / 10 + ele / 5;
+            }
+
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.MaxDC, 5 + magic.Level);
-
-
+            buffStats.Values.Add(Stat.MaxDC, value);
             ob.BuffAdd(BuffType.BloodLust, TimeSpan.FromSeconds((magic.GetPower() + GetSC() * 2)), buffStats, true, false, TimeSpan.Zero);
 
             LevelMagic(magic);
@@ -19409,6 +19518,7 @@ namespace Zircon.Server.Models
             ob.SummonLevel = magic.Level;
             ob.SummonMagicLevel = magic.Level;
             ob.TameTime = SEnvir.Now.AddDays(365);
+            ob.SummonBase = Config.道士技能强化 ? GetSC() + GetElementBySchool(magic.Info.School) * 2 : 0;
 
             if (Buffs.Any(x => x.Type == BuffType.StrengthOfFaith))
                 ob.Magics.Add(Magics[MagicType.StrengthOfFaith]);
