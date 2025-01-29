@@ -6,6 +6,29 @@ namespace Server.DBModels
     [UserObject]
     public sealed class UserItemStat : DBObject
     {
+        private static readonly LinkedList<UserItemStat> linkUserItems = new LinkedList<UserItemStat>();
+        public UserItemStat()
+        {
+            linkUserItems.AddLast(this);
+        }
+        ~UserItemStat()
+        {
+            linkUserItems.Remove(this);
+        }
+
+        //public static void ForEachSafe(Func<UserItemStat,int, bool> func)
+        //{
+        //    foreach (var item in linkUserItems)
+        //        if (item != null) func(item);
+        //}
+
+        public static void DeleteLink(UserItemStat item)
+        {
+            try { linkUserItems.Remove(item); }
+            catch { }
+        }
+
+
         [Association("AddedStats")]
         public UserItem Item
         {

@@ -32,44 +32,42 @@ namespace Zircon.Server.Models.Monsters
 
             LineAttack(2);
         }
+        protected void LineAttack(int distance) => this.LineAttack(distance, this.Direction);
 
-        protected void LineAttack(int distance)
+        protected void LineAttack(int distance, MirDirection direction)
         {
-            for (int i = 1; i <= distance; i++)
+            for (int distance1 = 1; distance1 <= distance; ++distance1)
             {
-                Point target = Functions.Move(CurrentLocation, Direction, i);
-
-                if (target == Target.CurrentLocation)
+                Point location = Functions.Move(this.CurrentLocation, this.Direction, distance1);
+                if (location == this.Target.CurrentLocation)
                 {
-                    ActionList.Add(new DelayedAction(
-                        SEnvir.Now.AddMilliseconds(400),
-                        ActionType.DelayAttack,
-                        Target,
-                        GetDC(),
-                        AttackElement));
+                    this.ActionList.Add(new DelayedAction(SEnvir.Now.AddMilliseconds(400.0), ActionType.DelayAttack, new object[3]
+                    {
+            (object) this.Target,
+            (object) this.GetDC(),
+            (object) this.AttackElement
+                    }));
                 }
                 else
                 {
-                    Cell cell = CurrentMap.GetCell(target);
-                    if (cell == null || cell.Objects == null)
-                        continue;
-
-                    foreach (MapObject ob in cell.Objects)
+                    Cell cell = this.CurrentMap.GetCell(location);
+                    if (cell?.Objects != null)
                     {
-                        if (!CanAttackTarget(ob)) continue;
-
-                        ActionList.Add(new DelayedAction(
-                            SEnvir.Now.AddMilliseconds(400),
-                            ActionType.DelayAttack,
-                            ob,
-                            GetDC(),
-                            AttackElement));
-
-                        break;
+                        foreach (MapObject ob in cell.Objects)
+                        {
+                            if (this.CanAttackTarget(ob))
+                            {
+                                this.ActionList.Add(new DelayedAction(SEnvir.Now.AddMilliseconds(400.0), ActionType.DelayAttack, new object[3]
+                                {
+                  (object) ob,
+                  (object) this.GetDC(),
+                  (object) this.AttackElement
+                                }));
+                                break;
+                            }
+                        }
                     }
                 }
-
-
             }
         }
     }

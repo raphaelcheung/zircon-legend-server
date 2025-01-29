@@ -25,16 +25,6 @@ namespace Server.DBModels
             }
         }
         private string _EMailAddress;
-
-        public string PasswordString
-        {
-            get { return Password.ToString(); }
-            set
-            {
-                byte[] psd = SEnvir.CreateHash(value);
-                Password = psd;
-            }
-        }
         
         public byte[] Password
         {

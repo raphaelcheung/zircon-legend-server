@@ -65,8 +65,10 @@ namespace Zircon.Server.Models
         public virtual int CurrentHP { get; set; }
         public virtual int CurrentMP { get; set; }
         
-        public bool Spawned, Dead, CoolEye, Activated;
+        public bool Spawned, Dead, CoolEye;
         public bool InSafeZone;
+
+        public bool Activated { get; set; }
 
         public DateTime FrostBiteImmunity;
 
@@ -976,8 +978,8 @@ namespace Zircon.Server.Models
 
         public void Despawn()
         {
-            if (Node == null)
-                throw new InvalidOperationException("Node is null, Object already Despawned");
+            //if (Node == null)
+            //    throw new InvalidOperationException("Node is null, Object already Despawned");
             
             CurrentMap = null;
             CurrentCell = null;
@@ -986,13 +988,13 @@ namespace Zircon.Server.Models
 
             //Clear Lists
 
-            Node.List.Remove(Node);
+            Node?.List?.Remove(Node);
             Node = null;
             
             if (Activated)
             {
                 Activated = false;
-                SEnvir.ActiveObjects.Remove(this);
+                SEnvir.ActiveObjects?.Remove(this);
             }
 
             OnDespawned();
@@ -1020,29 +1022,14 @@ namespace Zircon.Server.Models
 
         public virtual void CleanUp()
         {
-			if (ActionList != null)
-            ActionList.Clear();
-
-			if (SpellList != null)
-            SpellList.Clear();
-
-			if (Buffs != null)
-            Buffs.Clear();
-
-			if (NearByPlayers != null)
-            NearByPlayers.Clear();
-
-			if (SeenByPlayers != null)
-            SeenByPlayers.Clear();
-
-			if (DataSeenByPlayers != null)
-            DataSeenByPlayers.Clear();
-
-			if (PoisonList != null)
-            PoisonList.Clear();
-
-			if (GroupMembers != null)
-            GroupMembers.Clear();
+            ActionList?.Clear();
+            SpellList?.Clear();
+            Buffs?.Clear();
+            NearByPlayers?.Clear();
+            SeenByPlayers?.Clear();
+            DataSeenByPlayers?.Clear();
+            PoisonList?.Clear();
+            GroupMembers?.Clear();
         }
         public virtual void OnDespawned()
         {

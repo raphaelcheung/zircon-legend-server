@@ -47,10 +47,28 @@ if (Config.技能最高等级 < 0)
     Console.WriteLine($"[技能最高等级] 设置了无效值，恢复默认值 {Config.技能最高等级} ...");
 }
 
-if (Config.内存垃圾回收间隔多少分钟 < 0)
+if (Config.数据清理间隔分钟 < 0)
 {
-    Config.内存垃圾回收间隔多少分钟 = 0;
-    Console.WriteLine($"[内存垃圾回收间隔多少分钟] 设置了无效值，恢复默认值 {Config.内存垃圾回收间隔多少分钟} ...");
+    Config.数据清理间隔分钟 = 0;
+    Console.WriteLine($"[内存垃圾回收间隔多少分钟] 设置了无效值，恢复默认值 {Config.数据清理间隔分钟} ...");
+}
+
+if (Config.武器重置时每多少点属性保留一点 <= 0)
+{
+    Config.武器重置时每多少点属性保留一点 = 10;
+    Console.WriteLine($"[武器重置时每多少点属性保留一点] 设置了无效值，恢复默认值 {Config.武器重置时每多少点属性保留一点} ...");
+}
+
+if (Config.武器重置冷却分钟 < 0)
+{
+    Config.武器重置冷却分钟 = 1440;
+    Console.WriteLine($"[武器重置冷却分钟] 设置了无效值，恢复默认值 {Config.武器重置冷却分钟} ...");
+}
+
+if (Config.判断敏感词最大跳几个字符 < 0)
+{
+    Config.判断敏感词最大跳几个字符 = 2;
+    Console.WriteLine($"[判断敏感词最大跳几个字符] 设置了无效值，恢复默认值 {Config.判断敏感词最大跳几个字符} ...");
 }
 
 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
@@ -74,6 +92,7 @@ Task.Run(() =>
     stop = true;
 });
 
+SEnvir.LoadBlock();
 SEnvir.LoadClientHash();
 SEnvir.StartServer();
 

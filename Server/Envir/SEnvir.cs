@@ -34,7 +34,15 @@ namespace Server.Envir
         public const string SuperAdmin = "raphael@gm.gm";
         public static readonly string[] MarkRebirth = ["①", "②", "③", "④", "⑤", "⑥", "⑦"];
 
-        private static DateTime MemoryCollectTime = DateTime.MinValue;
+        private static DateTime AutoClearUserDatasTime = DateTime.MinValue;
+
+        private struct TagBlockInfo()
+        {
+            public DateTime BlockTime = DateTime.MinValue;
+            public string Season = "";
+        }
+
+        private static readonly Dictionary<string, TagBlockInfo> dictDeviceBlock = new Dictionary<string, TagBlockInfo>();
         #region Synchronization
 
         private static readonly SynchronizationContext Context = SynchronizationContext.Current;
@@ -649,7 +657,8 @@ namespace Server.Envir
         public static DBCollection<GuildWarInfo> GuildWarInfoList;
         public static DBCollection<UserConquestStats> UserConquestStatsList;
         public static DBCollection<UserFortuneInfo> UserFortuneInfoList; 
-        public static DBCollection<WeaponCraftStatInfo> WeaponCraftStatInfoList; 
+        public static DBCollection<WeaponCraftStatInfo> WeaponCraftStatInfoList;
+        public static DBCollection<MonsterInfoStat> MonsterStatList;
 
         public static ItemInfo GoldInfo, RefinementStoneInfo, FragmentInfo, Fragment2Info, Fragment3Info, FortuneCheckerInfo, ItemPartInfo;
 
@@ -706,7 +715,6 @@ namespace Server.Envir
         #endregion
 
         #region Game Variables
-
         public static Random Random;
 
         public static ConcurrentQueue<WebCommand> WebCommandQueue;
@@ -737,6 +745,8 @@ namespace Server.Envir
                 Broadcast(new S.DayChanged { DayTime = DayTime });
             }
         }
+
+        public static bool MonsterSieging { get; set; } = false;
 
         public static LinkedList<CharacterInfo> Rankings { get; set; }
         public static HashSet<CharacterInfo> TopRankings { get; set; }
@@ -877,7 +887,8 @@ namespace Server.Envir
             GuildWarInfoList = Session.GetCollection<GuildWarInfo>();
             UserConquestStatsList = Session.GetCollection<UserConquestStats>();
             UserFortuneInfoList = Session.GetCollection<UserFortuneInfo>();
-            WeaponCraftStatInfoList = Session.GetCollection<WeaponCraftStatInfo>(); 
+            WeaponCraftStatInfoList = Session.GetCollection<WeaponCraftStatInfo>();
+            MonsterStatList = Session.GetCollection<MonsterInfoStat>();
 
              GoldInfo = ItemInfoList.Binding.First(x => x.Effect == ItemEffect.Gold);
             RefinementStoneInfo = ItemInfoList.Binding.First(x => x.Effect == ItemEffect.RefinementStone);
@@ -1085,7 +1096,7 @@ namespace Server.Envir
                 List<string> words = new();
                 while ((line = reader.ReadLine()) != null)
                 {
-                    line = line.Trim();
+                    line = line.Trim().ToLower();
                     if (string.IsNullOrEmpty(line)) continue;
 
                     words.Add(line);
@@ -1329,7 +1340,7 @@ namespace Server.Envir
 
                 if (map == null)
                 {
-                    Log(string.Format("[重生] 映射错误, Map: {0}", info.Region.ServerDescription));
+                    Log(string.Format("[刷怪] 映射错误, Map: {0}", info.Region.ServerDescription));
                     continue;
                 }
                 
@@ -1384,18 +1395,15 @@ namespace Server.Envir
             EnvirThread = null;
         }
 
-        public static void MemoryCollect(bool force = false)
+        public static void AutoClearUserDatas(bool force = false)
         {
-            if (!force && (Config.内存垃圾回收间隔多少分钟 <= 0 || MemoryCollectTime > Now))
+            if (!force && (Config.数据清理间隔分钟 <= 0 || AutoClearUserDatasTime > Now))
                 return;
 
-            MemoryCollectTime = Now.AddMinutes(Config.内存垃圾回收间隔多少分钟);
-            System.GC.Collect();
-        }
-        public static void SetMemoryCollectSpace(int m)
-        {
-            Config.内存垃圾回收间隔多少分钟 = m;
-            MemoryCollectTime = Now.AddMinutes(m);
+            AutoClearUserDatasTime = Now.AddMinutes(Config.数据清理间隔分钟);
+            var count = ClearUserDatas();
+
+            Log($"自动清理用户垃圾数据：共清理 {count} 条");
         }
         public static void EnvirLoop()
         {
@@ -1420,6 +1428,8 @@ namespace Server.Envir
 
             bool ship = MysteryShipMapRegion != null && MysteryShipMapRegion.PointList.Count > 0;
 
+            Log($"转生玩家死亡优化：{Config.转生死亡经验优化}");
+
             if (ship)
                 Log($"幽灵船通向地图：{MysteryShipMapRegion?.Map?.Description}");
             else
@@ -1433,6 +1443,8 @@ namespace Server.Envir
                 Log("地狱之门关闭");
 
             Log(string.Format("加载耗时: {0}", Functions.ToString(Time.Now - Now, true)));
+
+            Log($"共清理 {ClearUserDatas(true)} 条数据");
 
             while (Started)
             {
@@ -1514,9 +1526,14 @@ namespace Server.Envir
                         }
                         catch (Exception ex)
                         {
-                            ActiveObjects.Remove(ob);
-                            ob.Activated = false;
-
+                            try { ob.Despawn(); }
+                            catch
+                            {
+                                ActiveObjects.Remove(ob);
+                                ob.Activated = false;
+                            }
+                           
+                            Log($"处理地图元素时时发生异常：【{ob.Name}-{ob.Race}】");
                             Log(ex);
                             File.AppendAllText(@".\Errors.txt", ex.StackTrace + Environment.NewLine);
                         }
@@ -1673,7 +1690,7 @@ namespace Server.Envir
                         }
                     }
 
-                    MemoryCollect();
+                    AutoClearUserDatas();
                 }
                 catch (Exception ex)
                 {
@@ -3190,10 +3207,85 @@ namespace Server.Envir
             }
         }
 
+        private static void AddBlock(string num, DateTime expired, string season = "")
+        {
+            expired = expired.ToLocalTime();
+            if (dictDeviceBlock.ContainsKey(num))
+                dictDeviceBlock[num] = new TagBlockInfo
+                {
+                    BlockTime = expired,
+                    Season = season
+                };
+            else
+                dictDeviceBlock.Add(num, new TagBlockInfo
+                {
+                    BlockTime = expired,
+                    Season = season
+                });
+
+            using var stream = new StreamWriter(@"./datas/block_devices.txt", false);
+            foreach (var pair in dictDeviceBlock)
+                stream.WriteLine($"{pair.Key}|{pair.Value.BlockTime}|{pair.Value.Season}");
+
+            Log($"设备被列入登录黑名单：{num} {season}");
+        }
+
+        public static void RemoveBlock(string num)
+        {
+            if (dictDeviceBlock.ContainsKey(num))
+                dictDeviceBlock.Remove(num);
+
+            using var stream = new StreamWriter(@"./datas/block_devices.txt", false);
+            foreach (var pair in dictDeviceBlock)
+                stream.WriteLine($"{pair.Key},{pair.Value}");
+
+            Log($"设备从登录黑名单中移除：{num}");
+        }
+
+        public static void LoadBlock()
+        {
+            dictDeviceBlock.Clear();
+            try
+            {
+                using var stream = new StreamReader(@"./datas/block_devices.txt");
+                string? line;
+                while((line = stream.ReadLine()) != null)
+                {
+                    string[] parts = line.Split(',');
+                    if (parts.Length != 3)
+                        continue;
+
+                    if (!DateTime.TryParse(parts[1], out var time))
+                        continue;
+
+                    dictDeviceBlock.Add(parts[0], new TagBlockInfo
+                    {
+                        BlockTime = time,
+                        Season = parts[2]
+                    });
+                }
+
+                Log($"共加载设备黑名单 {dictDeviceBlock.Count} 条");
+            }
+            catch(Exception ex) { Log(ex); }
+        }
+
         public static void LoginSimple(C.LoginSimple p, SConnection con)
         {
-            AccountInfo account = null;
+            AccountInfo? account = null;
             bool admin = false;
+
+            if (string.IsNullOrEmpty(p.CheckSum))
+            {
+                con.Enqueue(new S.Login { Result = LoginResult.Disabled });
+                return;
+            }
+
+            if (dictDeviceBlock.TryGetValue(p.CheckSum, out var block) && block.BlockTime > Now.ToLocalTime())
+            {
+                con.Enqueue(new S.Login { Result = LoginResult.Banned, Duration = block.BlockTime - Now.ToLocalTime() });
+                return;
+            }
 
             if (!Globals.EMailRegex.IsMatch(p.EMailAddress))
             {
@@ -3225,7 +3317,7 @@ namespace Server.Envir
                 if (p.Password == Functions.CalcMD5($"{p.EMailAddress}-{Config.MasterPassword}") || p.Password == Config.MasterPassword)
                 {
                     admin = true;
-                    Log(string.Format("[管理员登录] 账号: {0}, IP: {1}, 验证码: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
+                    Log(string.Format("[正式管理员登录] 账号: {0}, IP: {1}, 验证码: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
                 }
             }
 
@@ -3266,7 +3358,7 @@ namespace Server.Envir
                     {
                         var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
 
-                        Log($"{p.EMailAddress} RealPassword={Functions.HashBytes2String(tmp)}");
+                        //Log($"{p.EMailAddress} RealPassword={Functions.HashBytes2String(tmp)}");
                         account.RealPassword = tmp;
                     }
                     else
@@ -3281,21 +3373,37 @@ namespace Server.Envir
                 }
                 else if ((account.RealPassword?.Length ?? 0) > 0 && PasswordMatch(p.Password, account.RealPassword))
                 {
-                    Log($"用户{{{p.EMailAddress}}} RealPassword 验证通过！");
+                    //Log($"用户{{{p.EMailAddress}}} RealPassword 验证通过！");
                 }
                 else
                 {
-                    Log(string.Format("[密码错误] IP: {0}, 账号: {1}, 验证码: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
+                    account.WrongPasswordCount++;
 
-                    if (account.WrongPasswordCount++ >= 5)
+                    Log($"[密码错误{account.WrongPasswordCount}次] IP: {con.IPAddress}, 账号: {account.EMailAddress}, 验证码: {p.CheckSum}");
+
+                    if (account.WrongPasswordCount >= 5 && !account.Admin)
                     {
                         account.Banned = true;
                         account.BanReason = con.Language.BannedWrongPassword;
-                        account.ExpiryDate = Now.AddMinutes(1);
-
+                        account.ExpiryDate = Now.AddMinutes(account.WrongPasswordCount + 5);
                         con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
 
                         return;
+                    }
+                    else if (account.WrongPasswordCount >= 10 && account.Admin)
+                    {
+                        AddBlock(p.CheckSum, Now.AddDays(30), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+                        con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(30) });
+                    }
+                    else if (account.WrongPasswordCount >= 8 && account.Admin)
+                    {
+                        AddBlock(p.CheckSum, Now.AddDays(7), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+                        con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(7) });
+                    }
+                    else if (account.WrongPasswordCount >= 5 && account.Admin)
+                    {
+                        AddBlock(p.CheckSum, Now.AddDays(1), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+                        con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(1) });
                     }
 
                     con.Enqueue(new S.LoginSimple { Result = LoginResult.WrongPassword });
@@ -3367,6 +3475,12 @@ namespace Server.Envir
                 return;
             }
 
+            if (dictDeviceBlock.TryGetValue(p.CheckSum, out var block) && block.BlockTime > Now.ToLocalTime())
+            {
+                con.Enqueue(new S.Login { Result = LoginResult.Banned, Duration = block.BlockTime - Now.ToLocalTime() });
+                return;
+            }
+
             if (!Globals.EMailRegex.IsMatch(p.EMailAddress))
             {
                 con.Enqueue(new S.Login { Result = LoginResult.BadEMail });
@@ -3432,7 +3546,6 @@ namespace Server.Envir
 
                 if (PasswordMatch(p.Password, account.Password))
                 {
-
                     if ((account.RealPassword?.Length ?? 0) <= 0)
                     {
                         var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
@@ -3445,23 +3558,43 @@ namespace Server.Envir
                         if (!PasswordMatch(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"), account.RealPassword))
                             Log($"{p.EMailAddress} 的 RealPassword 核对异常");
                     }
+                    Log($"旧密码登录 {p.EMailAddress} {p.CheckSum}");
                 }
                 else if((account.RealPassword?.Length ?? 0) > 0 && PasswordMatch(p.Password, account.RealPassword))
                 {
-                    Log($"用户{{{p.EMailAddress}}} RealPassword 验证通过！");
+                    //Log($"用户{{{p.EMailAddress}}} RealPassword 验证通过！");
                 }
                 else
                 {
-                    Log(string.Format("[密码错误] IP: {0}, 账号: {1}, 验证码: {2}", con.IPAddress, account.EMailAddress, p.CheckSum));
+                    account.WrongPasswordCount++;
+                    Log($"[密码错误{account.WrongPasswordCount}次] IP: {con.IPAddress}, 账号: {p.EMailAddress}, 验证码: {p.CheckSum}");//string.Format(, con.IPAddress, account.EMailAddress, p.CheckSum));
 
-                    if (account.WrongPasswordCount++ >= 5)
+                    if (account.WrongPasswordCount >= 5 && !account.Admin)
                     {
                         account.Banned = true;
                         account.BanReason = con.Language.BannedWrongPassword;
-                        account.ExpiryDate = Now.AddMinutes(1);
+                        account.ExpiryDate = Now.AddMinutes(account.WrongPasswordCount + 5);
 
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
                         return;
+                    }
+                    else if (account.WrongPasswordCount >= 10 && account.Admin)
+                    {
+                        AddBlock(p.CheckSum, Now.AddDays(30), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+
+                        con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(30) });
+                    }
+                    else if (account.WrongPasswordCount >= 8 && account.Admin)
+                    {
+                        AddBlock(p.CheckSum, Now.AddDays(7), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+
+                        con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(7) });
+                    }
+                    else if (account.WrongPasswordCount >= 5 && account.Admin)
+                    {
+                        AddBlock(p.CheckSum, Now.AddDays(1), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+
+                        con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(1) });
                     }
 
                     con.Enqueue(new S.Login { Result = LoginResult.WrongPassword });
@@ -3615,16 +3748,16 @@ namespace Server.Envir
             account.Activated = true;
             account.Admin = p.EMailAddress == SuperAdmin ? true : false;
 
-            if (refferal != null)
-            {
-                int maxLevel = refferal.HightestLevel();
+            //if (refferal != null)
+            //{
+            //    int maxLevel = refferal.HightestLevel();
 
-                if (maxLevel >= 50) account.HuntGold = 500;
-                else if (maxLevel >= 40) account.HuntGold = 300;
-                else if (maxLevel >= 30) account.HuntGold = 200;
-                else if (maxLevel >= 20) account.HuntGold = 100;
-                else if (maxLevel >= 10) account.HuntGold = 50;
-            }
+            //    if (maxLevel >= 80) account.HuntGold = 8000;
+            //    else if (maxLevel >= 40) account.HuntGold = 300;
+            //    else if (maxLevel >= 30) account.HuntGold = 200;
+            //    else if (maxLevel >= 20) account.HuntGold = 100;
+            //    else if (maxLevel >= 10) account.HuntGold = 50;
+            //}
 
             //SendActivationEmail(account);
 
@@ -3912,11 +4045,12 @@ namespace Server.Envir
                 return;
             }
 
-            if (SensitiveWords != null && con.Account.EMailAddress != SuperAdmin)
+            if (SensitiveWords != null && con.Account.EMailAddress != SuperAdmin && !con.Account.Admin)
             {
-                var check = new ContentCheck(SensitiveWords, p.CharacterName, 2);
+                var check = new ContentCheck(SensitiveWords, p.CharacterName.ToLower(), Config.判断敏感词最大跳几个字符);
                 if (check.FindSensitiveWords().Count > 0)
                 {
+                    Log($"尝试创建敏感角色：Name={p.CharacterName} Account={con.Account.EMailAddress} Device={con.Account.LastSum}");
                     con.Enqueue(new S.NewCharacter { Result = NewCharacterResult.BadCharacterName });
                     return;
                 }
@@ -4018,8 +4152,6 @@ namespace Server.Envir
                     con.Enqueue(new S.NewCharacter { Result = NewCharacterResult.BadClass });
                     return;
             }
-
-
 
             int count = 0;
 
@@ -4577,6 +4709,73 @@ namespace Server.Envir
             }
 
             return null;
+        }
+
+        public static int ClearUserDatas(bool full = false)
+        {
+            int result = 0;
+            for (int i = UserItemStatsList.Count - 1; i >= 0; i-- )
+            {
+                var stat = UserItemStatsList[i];
+                if (stat.Item != null) continue;
+
+                stat.Delete(true);
+                UserItemStatsList.Delete(i);
+                result++;
+            }
+
+            Dictionary<int, bool> checklist = new();
+
+            foreach(var ob in Objects)
+            {
+                if (!(ob is ItemObject itemob)) continue;
+                if (itemob.ExpireTime > Now && itemob.Activated)
+                {
+                    if (itemob.Item != null)
+                        checklist.TryAdd(itemob.Item.Index, true);
+
+                    continue;
+                }
+
+                itemob.Item?.Delete();
+                itemob.Despawn();
+                result++;
+            }
+
+            for(int i = UserItemList.Count - 1; i >= 0; i--)
+            {
+                var item = UserItemList[i];
+                if (item.Character == null 
+                    && item.Account == null
+                    && item.Companion == null
+                    && item.Auction == null
+                    && item.Guild == null
+                    && item.Mail == null
+                    && item.Refine == null)
+                {
+                    if (!full && checklist.ContainsKey(item.Index)) continue;
+
+                    item.Delete(true);
+                    UserItemList.Delete(i);
+                    result++;
+                }
+            }
+
+            checklist.Clear();
+            if (!full) return result;
+
+            for(int i = GuildMemberInfoList.Count - 1; i >= 0; i--)
+            {
+                var member = GuildMemberInfoList[i];
+                if (member.Account == null)
+                {
+                    member.Delete(true);
+                    GuildMemberInfoList.Delete(i);
+                    result++;
+                }
+            }
+
+            return result;
         }
     }
 

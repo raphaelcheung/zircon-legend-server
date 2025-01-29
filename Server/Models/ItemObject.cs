@@ -8,6 +8,7 @@ using Server.Envir;
 using Zircon.Server.Models.Monsters;
 using System.Security.Principal;
 using System.Text;
+using System.Numerics;
 
 namespace Zircon.Server.Models
 {
@@ -18,7 +19,7 @@ namespace Zircon.Server.Models
 
         public DateTime ExpireTime { get; set; }
 
-        public UserItem Item { get; set; }
+        public UserItem? Item { get; set; }
         public List<CharacterInfo> OwnerList { get; } = new List<CharacterInfo>();
         public DateTime OwnerExpire { get; set; } = DateTime.MaxValue;
 
@@ -48,6 +49,8 @@ namespace Zircon.Server.Models
             if (SEnvir.Now > ExpireTime)
             {
                 Despawn();
+                Item?.Delete();
+                Item = null;
                 return;
             }
 
@@ -59,7 +62,7 @@ namespace Zircon.Server.Models
         {
             base.OnDespawned();
 
-            if (Item.UserTask != null)
+            if (Item?.UserTask != null)
             {
                 Item.UserTask.Objects.Remove(this);
                 Item.UserTask = null;
@@ -75,7 +78,7 @@ namespace Zircon.Server.Models
             base.OnSafeDespawn();
 
 
-            if (Item.UserTask != null)
+            if (Item?.UserTask != null)
             {
                 Item.UserTask.Objects.Remove(this);
                 Item.UserTask = null;
@@ -208,9 +211,10 @@ namespace Zircon.Server.Models
 
         public override bool CanBeSeenBy(PlayerObject ob)
         {
+            if (Item == null) return false;
             if (!Config.CanSeeOthersDropped && OwnerList.Count > 0 && !OwnerList.Contains(ob.Character)) return false;
 
-            if (Item.UserTask != null && Item.UserTask.Quest.Character != ob.Character) return false;
+            if ((Item.UserTask?.Quest?.Character ?? ob.Character) != ob.Character) return false;
 
             return base.CanBeSeenBy(ob);
         }

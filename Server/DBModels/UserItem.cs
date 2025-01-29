@@ -10,6 +10,7 @@ namespace Server.DBModels
     [UserObject]
     public sealed class UserItem : DBObject
     {
+
         public ItemInfo Info
         {
             get { return _Info; }

@@ -68,6 +68,23 @@ namespace Zircon.Server.Models
 
 
                         break;
+                    case SpellEffect.QierBian:
+                        if (this.Owner is MonsterObject owner3)
+                        {
+                            for (int index = this.CurrentCell.Objects.Count - 1; index >= 0; --index)
+                            {
+                                if (index < this.CurrentCell.Objects.Count)
+                                {
+                                    MapObject ob = this.CurrentCell.Objects[index];
+                                    if (owner3.CanAttackTarget(ob))
+                                    {
+                                        owner3.Attack(ob, 8000, Element.None);
+                                        owner3.Attack(ob, 8000, Element.None);
+                                    }
+                                }
+                            }
+                        }
+                        break;
                 }
 
                 Despawn();

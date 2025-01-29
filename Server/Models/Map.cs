@@ -47,6 +47,8 @@ namespace Zircon.Server.Models
         public List<NPCObject> NPCs { get; private set;}
         public HashSet<MapObject>[] OrderedObjects;
 
+        private readonly List<MonsterObject> Guards = new List<MonsterObject>();
+
         public DateTime LastProcess;
 
         public DateTime HalloweenEventTime, ChristmasEventTime;
@@ -98,7 +100,7 @@ namespace Zircon.Server.Models
             CreateGuards();
         }
 
-        private void CreateGuards()
+        public void CreateGuards()
         {
             foreach (GuardInfo info in Info.Guards)
             {
@@ -110,7 +112,17 @@ namespace Zircon.Server.Models
                     SEnvir.Log(string.Format("创建地图护卫失败:{0}, 位置: {1}, {2}", Info.Description, info.X, info.Y));
                     continue;
                 }
+
+                Guards.Add(mob);
             }
+        }
+
+        public void ClearGuards()
+        {
+            foreach(var guard in Guards)
+                guard.Despawn();
+
+            Guards.Clear();
         }
 
 

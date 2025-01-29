@@ -128,13 +128,15 @@ namespace Server.DBModels
         }
 
 
-        public ClientGuildMemberInfo ToClientInfo()
+        public ClientGuildMemberInfo? ToClientInfo()
         {
+            if ((Account?.Characters?.Count ?? 0) <= 0) return null;
+
             ClientGuildMemberInfo info = new ClientGuildMemberInfo
             {
                 Index = Index,
 
-                Name = Account?.LastCharacter?.CharacterName ?? "",
+                Name = Account.LastCharacter?.CharacterName ?? Account.Characters[0].CharacterName,
                 Rank = Rank,
                 DailyContribution = DailyContribution,
                 TotalContribution = TotalContribution,
@@ -147,7 +149,7 @@ namespace Server.DBModels
                 info.ObjectID = Account.Connection.Player.ObjectID;
             }
             else
-                info.Online = (Account?.Characters?.Count ?? 0) > 0 ? SEnvir.Now - Account.Characters.Max(x => x.LastLogin) : TimeSpan.MinValue;
+                info.Online = SEnvir.Now - Account.Characters.Max(x => x.LastLogin);
 
 
             return info;

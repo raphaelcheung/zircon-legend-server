@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using Library;
 using Library.Network;
+using Library.Network.ServerPackets;
 using Library.SystemModels;
 using Server.DBModels;
 using Server.Envir;
@@ -16,24 +17,30 @@ namespace Zircon.Server.Models
 {
     public class MonsterObject : MapObject
     {
-        private static uint[] arraySummonAttackLevel;
 
+        private struct SummonLevelSetting(uint tick, Color color)
+        {
+            public readonly uint Ticks = tick;
+            public readonly Color NameColor = color;
+        }
+
+        private static SummonLevelSetting[] arrSummonLevelSetting;
 
         private static void DefaultGrowUp()
         {
-            arraySummonAttackLevel = [
-                40,
-                40,
-                50,
-                50,
-                60,  //升到5级
-                60,
-                60,
-                80,
-                100,
-                100, //10级
-                120,
-                130, //12级
+            arrSummonLevelSetting = [
+                new SummonLevelSetting(40, Color.FromArgb(255, 180, 200, 200)),
+                new SummonLevelSetting(40, Color.FromArgb(255, 150, 200, 200)),
+                new SummonLevelSetting(50, Color.FromArgb(255, 120, 170, 200)),
+                new SummonLevelSetting(50, Color.FromArgb(255, 90, 140, 200)),
+                new SummonLevelSetting(60, Color.FromArgb(255, 60, 110, 200)),       // 5级
+                new SummonLevelSetting(60, Color.FromArgb(255, 30, 80, 200)),
+                new SummonLevelSetting(60, Color.FromArgb(255, 0, 50, 200)),
+                new SummonLevelSetting(80, Color.FromArgb(255, 0, 10, 200)),
+                new SummonLevelSetting(100, Color.FromArgb(255, 0, 0, 220)),
+                new SummonLevelSetting(100, Color.FromArgb(255, 0, 0, 255)),      // 10级
+                new SummonLevelSetting(120, Color.FromArgb(255, 120, 100, 180)),
+                new SummonLevelSetting(130, Color.FromArgb(255, 200, 170, 100)),
             ];
 
             SEnvir.Log($"召唤怪成长数值使用默认值.");
@@ -54,34 +61,63 @@ namespace Zircon.Server.Models
                     var reader = new StreamReader(stream);
                     if (reader != null)
                     {
-                        List<uint> list = new();
                         string? line;
+
+                        List<SummonLevelSetting> tmp = new List<SummonLevelSetting>();
                         while ((line = reader.ReadLine()) != null)
                         {
-                            if (!uint.TryParse(line, out var num))
+                            string[] parts = line.Trim().Split(' ');
+                            if (parts.Length != 2)
                             {
-                                SEnvir.Log($"加载召唤怪成长数据错误，未知的成长值：{line}");
+                                SEnvir.Log($"召唤怪成长数据格式不正确：{line}");
                                 DefaultGrowUp();
                                 return;
                             }
 
-                            list.Add(num);
+                            if (!uint.TryParse(parts[0], out uint exp))
+                            {
+                                SEnvir.Log($"召唤怪成长数据格式不正确：{line}");
+                                DefaultGrowUp();
+                                return;
+                            }
+
+                            string[] colors = parts[1].Split(",");
+                            if (colors.Length != 3)
+                            {
+                                SEnvir.Log($"召唤怪成长数据格式不正确：{line}");
+                                DefaultGrowUp();
+                                return;
+                            }
+
+                            if (!int.TryParse(colors[0], out int r) || !int.TryParse(colors[1], out int g) || !int.TryParse(colors[2], out int b))
+                            {
+                                SEnvir.Log($"召唤怪成长数据格式不正确：{line}");
+                                DefaultGrowUp();
+                                return;
+                            }
+
+                            tmp.Add(new SummonLevelSetting(exp, Color.FromArgb(255, r, g, b)));
                         }
 
-                        if (list.Count <= 0)
+                        if (tmp.Count <= 0)
                         {
                             SEnvir.Log($"召唤怪成长数据文件为空：{Config.SummonMonsterGrowUpFile}");
                             DefaultGrowUp();
                             return;
                         }
 
-                        arraySummonAttackLevel = list.ToArray();
+                        arrSummonLevelSetting = tmp.ToArray();
                         return;
                     }
 
                 }
             }
-            catch(Exception ex) { SEnvir.Log(ex); }
+            catch(Exception ex) 
+            { 
+                DefaultGrowUp(); 
+                SEnvir.Log($"加载召唤怪成长数据出现异常【{Config.SummonMonsterGrowUpFile}】，将使用默认数据"); 
+                SEnvir.Log(ex); 
+            }
 
             DefaultGrowUp();
         }
@@ -104,7 +140,8 @@ namespace Zircon.Server.Models
         public int DropSet;
         private int AttackTicks { get; set; } = 0;
 
-
+        public int QierbianMin = 3000;
+        public int QierbianRandom = 0;
         public MapObject Target
         {
             get { return _Target; }
@@ -121,6 +158,7 @@ namespace Zircon.Server.Models
         private MapObject _Target;
 
         public bool PlayerTagged { get; set; }
+        public bool Siege { get; set; } = false;
 
         public Dictionary<MonsterInfo, int> SpawnList = new Dictionary<MonsterInfo, int>();
         public bool Skeleton;
@@ -175,6 +213,8 @@ namespace Zircon.Server.Models
         public int SummonLevel { get; set; } = 0;
         public int SummonMagicLevel { get; set; } = 0;
         public int SummonBase { get; set; } = 0;
+        public int SummonCritical { get; set; } = 0;
+        public int SummonCriticalDamage { get; set; } = 0;
 
         public int ViewRange
         {
@@ -682,6 +722,36 @@ namespace Zircon.Server.Models
                     };
                 case 127:
                     return new JinchonDevil {MonsterInfo = monsterInfo, CastDelay = TimeSpan.FromSeconds(8), DeathCloudDurationMin =  2000, DeathCloudDurationRandom = 5000};
+
+
+
+                case 153:
+                    FireBird monster140 = new FireBird();
+                    monster140.MonsterInfo = monsterInfo;
+                    return (MonsterObject)monster140;
+                case 160:
+                    GardenSoldier monster146 = new GardenSoldier();
+                    monster146.MonsterInfo = monsterInfo;
+                    return (MonsterObject)monster146;
+                case 161:
+                    GardenDefender monster147 = new GardenDefender();
+                    monster147.MonsterInfo = monsterInfo;
+                    return (MonsterObject)monster147;
+                case 162:
+                    RedBlossom monster148 = new RedBlossom();
+                    monster148.MonsterInfo = monsterInfo;
+                    return (MonsterObject)monster148;
+                case 163:
+                    BlueBlossom monster149 = new BlueBlossom();
+                    monster149.MonsterInfo = monsterInfo;
+                    return (MonsterObject)monster149;
+                case 164:
+                    QitiandashengAI monster150 = new QitiandashengAI();
+                    monster150.MonsterInfo = monsterInfo;
+                    monster150.CastDelay = TimeSpan.FromSeconds(8.0);
+                    monster150.QierbianMin = 3000;
+                    monster150.QierbianRandom = 0;
+                    return (MonsterObject)monster150;
                 default:
                     return new MonsterObject { MonsterInfo = monsterInfo };
             }
@@ -691,7 +761,22 @@ namespace Zircon.Server.Models
             Stats = new Stats();
             Direction = (MirDirection)SEnvir.Random.Next(8);
         }
-         
+
+        public void QierBian(Point location)
+        {
+            bool flag = true;
+            foreach (Cell cell in CurrentMap.GetCells(location, 0, 2))
+            {
+                ActionList.Add(new DelayedAction(SEnvir.Now.AddMilliseconds(500.0), ActionType.DelayMagic, new object[4]
+                {
+                    MagicType.Qierbian,
+                    cell,
+                    flag,
+                    location
+                }));
+                flag = false;
+            }
+        }
         protected override void OnSpawned()
         {
             base.OnSpawned();
@@ -738,6 +823,8 @@ namespace Zircon.Server.Models
         }
         public override void RefreshStats()
         {
+            SummonLevel = Math.Min(arrSummonLevelSetting.Length - (Config.技能最高等级 - SummonMagicLevel), SummonLevel);
+
             base.RefreshStats();
 
             Stats.Clear();
@@ -777,6 +864,12 @@ namespace Zircon.Server.Models
 
                 Stats[Stat.Accuracy] += Stats[Stat.Accuracy]*SummonLevel / attack_rate;
                 Stats[Stat.Agility] += Stats[Stat.Agility]*SummonLevel / attack_rate;
+
+                Stats[Stat.CriticalChance] += SummonCritical * SummonLevel / 10;
+                Stats[Stat.CriticalDamage] += SummonCriticalDamage * SummonLevel / 10;
+                Stats[Stat.CritReduction] += Stats[Stat.CritReduction] * SummonLevel / 10;
+                Stats[Stat.JMCriticalDamage] += Stats[Stat.JMCriticalDamage] * SummonLevel / 10;
+                Stats[Stat.DamageReduction] += Stats[Stat.DamageReduction] * SummonLevel / 10;
             }
             
             
@@ -799,6 +892,7 @@ namespace Zircon.Server.Models
             {
                 Stats[Stat.MinDC] += Stats[Stat.MinDC] * PetOwner.Stats[Stat.PetDCPercent] / 100;
                 Stats[Stat.MaxDC] += Stats[Stat.MaxDC] * PetOwner.Stats[Stat.PetDCPercent] / 100;
+                Stats[Stat.Health] += Stats[Stat.Health] * PetOwner.Stats[Stat.PetHPPercent] / 100;
 
                 foreach (UserMagic magic in Magics)
                 {
@@ -945,19 +1039,22 @@ namespace Zircon.Server.Models
                         case MagicType.MonsterDeathCloud:
                             DeathCloudEnd((Cell)action.Data[1], (bool)action.Data[2], (Point)action.Data[3]);
                             break;
+                        case MagicType.Qierbian:
+                            QierbianEnd((Cell)action.Data[1], (bool)action.Data[2], (Point)action.Data[3]);
+                            break;
                     }
                     break;
             }
 
-            int limit_level = arraySummonAttackLevel.Count() - (5 - SummonMagicLevel);
-            if (limit_level >= arraySummonAttackLevel.Count()) limit_level = arraySummonAttackLevel.Count();
+            int limit_level = arrSummonLevelSetting.Count() - (Config.技能最高等级 - SummonMagicLevel);
+            if (limit_level >= arrSummonLevelSetting.Count()) limit_level = arrSummonLevelSetting.Count();
 
 
             if (PetOwner != null && SummonLevel < limit_level)
             {
                 AttackTicks++;
 
-                if (AttackTicks >= arraySummonAttackLevel[SummonLevel])
+                if (AttackTicks >= arrSummonLevelSetting[SummonLevel].Ticks)
                 {
                     AttackTicks = 0;
                     SummonLevel++;
@@ -1010,23 +1107,10 @@ namespace Zircon.Server.Models
                 NameColour = Color.Red;
             else if (SummonLevel > 0)
             {
-                switch(SummonLevel)
-                {
-                    case 1: NameColour = Color.FromArgb(255, 180, 200, 200); break;
-
-                    case 2: NameColour = Color.FromArgb(255, 150, 200, 200); break;
-                    case 3: NameColour = Color.FromArgb(255, 120, 170, 200); break;
-                    case 4: NameColour = Color.FromArgb(255, 90, 140, 200); break;
-                    case 5: NameColour = Color.FromArgb(255, 60, 110, 200); break;
-                    case 6: NameColour = Color.FromArgb(255, 30, 80, 200); break;
-                    case 7: NameColour = Color.FromArgb(255, 0, 50, 200); break;
-                    case 8: NameColour = Color.FromArgb(255, 0, 10, 200); break;
-                    case 9: NameColour = Color.FromArgb(255, 0, 0, 220); break;
-                    case 10: NameColour = Color.FromArgb(255, 0, 0, 255); break;
-                    case 11: NameColour = Color.FromArgb(255, 120, 100, 180); break;
-                    default:
-                        NameColour = Color.FromArgb(255, 200, 170, 100); break;
-                }
+                if (SummonLevel <= arrSummonLevelSetting.Length)
+                    NameColour = arrSummonLevelSetting[SummonLevel - 1].NameColor;
+                else
+                    NameColour = arrSummonLevelSetting[arrSummonLevelSetting.Length - 1].NameColor;
             }
         }
 
@@ -1772,7 +1856,6 @@ namespace Zircon.Server.Models
                 return 0;
             }
 
-
             damage = ob.Attacked(this, damage, element, true, IgnoreShield);
 
             if (damage <= 0) return damage;
@@ -1791,18 +1874,17 @@ namespace Zircon.Server.Models
                 foreach (UserMagic magic in Magics)
                     PetOwner.LevelMagic(magic);
 
-                int limit_level = arraySummonAttackLevel.Count() - (5 - SummonMagicLevel);
-                if (limit_level >= arraySummonAttackLevel.Count()) limit_level = arraySummonAttackLevel.Count();
+                int limit_level = arrSummonLevelSetting.Count() - (Config.技能最高等级 - SummonMagicLevel);
+                if (limit_level >= arrSummonLevelSetting.Count()) limit_level = arrSummonLevelSetting.Count();
 
                 if (SummonLevel < limit_level)
                 {
                     AttackTicks++;
 
-                    if (AttackTicks >= arraySummonAttackLevel[SummonLevel])
+                    if (AttackTicks >= arrSummonLevelSetting[SummonLevel].Ticks)
                     {
                         AttackTicks = 0;
                         SummonLevel++;
-
 
                         Color oldColour = NameColour;
                         RefreshStats();
@@ -1812,7 +1894,6 @@ namespace Zircon.Server.Models
                     }
                 }
             }
-
 
             if (PoisonType == PoisonType.None || SEnvir.Random.Next(PoisonRate) > 0) return damage;
 
@@ -1824,7 +1905,6 @@ namespace Zircon.Server.Models
                 TickFrequency = TimeSpan.FromSeconds(PoisonFrequency),
                 TickCount = PoisonTicks,
             });
-
 
             return damage;
         }
@@ -2027,6 +2107,7 @@ namespace Zircon.Server.Models
             List<MapObject> targets = GetTargets(CurrentMap, CurrentLocation, 20);
 
             if (targets.Count == 0) return;
+
 
             Point location = targets[SEnvir.Random.Next(targets.Count)].CurrentLocation;
 
@@ -2278,14 +2359,23 @@ namespace Zircon.Server.Models
         }
 
 
-        public void MassCyclone()
+        public void MassCyclone(MagicType type = MagicType.Cyclone, int chance = 30)
         {
             Direction = Functions.DirectionFromPoint(CurrentLocation, Target.CurrentLocation);
 
             List<uint> targetIDs = new List<uint>();
             List<Point> locations = new List<Point>();
 
-            Broadcast(new S.ObjectMagic { ObjectID = ObjectID, Direction = Direction, CurrentLocation = CurrentLocation, Cast = true, Type = MagicType.Cyclone, Targets = targetIDs, Locations = locations });
+            Broadcast(new S.ObjectMagic 
+            { 
+                ObjectID = ObjectID, 
+                Direction = Direction, 
+                CurrentLocation = CurrentLocation, 
+                Cast = true, 
+                Type = type, 
+                Targets = targetIDs, 
+                Locations = locations 
+            });
 
             UpdateAttackTime();
 
@@ -2294,7 +2384,7 @@ namespace Zircon.Server.Models
             {
                 if (cell.Objects == null)
                 {
-                    if (SEnvir.Random.Next(30) == 0)
+                    if (SEnvir.Random.Next(chance) == 0)
                         locations.Add(cell.Location);
 
                     continue;
@@ -2439,8 +2529,6 @@ namespace Zircon.Server.Models
 
             PlayerObject player;
 
-            
-
             switch (attacker.Race)
             {
                 case ObjectType.Player:
@@ -2476,6 +2564,8 @@ namespace Zircon.Server.Models
             for (int i = 0; i < attacker.Stats[Stat.Rebirth]; i++)
                 power = (int)(power * 1.5F);
 
+            power -= power * Stats[Stat.DamageReduction] / 100;
+            power += power * attacker.Stats[Stat.DamageAdd] / 100;
 
             BuffInfo buff = Buffs.FirstOrDefault(x => x.Type == BuffType.MagicShield);
 
@@ -2484,19 +2574,14 @@ namespace Zircon.Server.Models
 
             power -= power * Stats[Stat.MagicShield] / 100;
 
-            if (SEnvir.Random.Next(100) < attacker.Stats[Stat.CriticalChance] && canCrit && power > 0)
+            if (SEnvir.Random.Next(100) < attacker.Stats[Stat.CriticalChance] - Stats[Stat.CritReduction] && canCrit && power > 0)
             {
-                power += power + (power * attacker.Stats[Stat.CriticalDamage] / 100);
+                power += power + power * (attacker.Stats[Stat.CriticalDamage] - Stats[Stat.JMCriticalDamage]) / 100;
                 Critical();
             }
 
-
-
             ChangeHP(-power);
             
-
-
-
             if (Dead) return power;
             
             if (CanAttackTarget(attacker)&& PetOwner == null || Target == null)
@@ -2520,17 +2605,25 @@ namespace Zircon.Server.Models
 
         public override void Die()
         {
-            base.Die();
+            if (MonsterInfo.IsBoss && MonsterInfo.Level == 250 && EXPOwner != null)
+            {
+                string msg = $"[{SEnvir.Now:HH:mm:ss}] {CurrentMap.Info.Description}的【{MonsterInfo.MonsterName}】被绝世高手【{EXPOwner.Name}】击杀";
+                foreach (var con in SEnvir.Connections)
+                    con.ReceiveChat(msg, MessageType.Announcement);
+            }
 
+            base.Die();
 
             YieldReward();
 
 			if (Master != null)
-            Master.MinionList.Remove(this);
+                Master.MinionList.Remove(this);
+
             Master = null;
 
 			if (PetOwner != null)
-            PetOwner.Pets.Remove(this);
+                PetOwner.Pets.Remove(this);
+
             PetOwner = null;
 
             for (int i = MinionList.Count - 1; i >= 0; i--)
@@ -2724,6 +2817,7 @@ namespace Zircon.Server.Models
                         exp /= ExtraExperienceRate;
 
                     EXPOwner.GainExperience(exp, PlayerTagged, Level);
+                    OnYieldReward(EXPOwner);
                 }
             }
             else
@@ -2739,6 +2833,7 @@ namespace Zircon.Server.Models
                         expfinal /= ExtraExperienceRate;
 
                     player.GainExperience(expfinal, PlayerTagged, Level);
+                    OnYieldReward(player);
                 }
             }
 
@@ -2786,7 +2881,7 @@ namespace Zircon.Server.Models
         {
             rate *= 1M + owner.Stats[Stat.DropRate] / 100M;
 
-            rate *= 1M + (MonsterInfo.IsBoss ? Config.Boss掉落倍率 : owner.Stats[Stat.BaseDropRate]) / 100M;
+            rate *= 1M + (MonsterInfo.IsBoss && MonsterInfo.Level == 250 ? Config.Boss掉落倍率 : owner.Stats[Stat.BaseDropRate]) / 100M;
 
             if (PetOwner == null && CurrentMap != null)
                 rate *= 1 + MapDropRate / 100M;
@@ -2873,15 +2968,12 @@ namespace Zircon.Server.Models
                             ? chance
                             : (chance * drop.Item.PartCount))) continue;
 
-
                     result = true;
-
 
                     UserItem item = SEnvir.CreateDropItem(SEnvir.ItemPartInfo);
 
                     item.AddStat(Stat.ItemIndex, drop.Item.Index, StatSource.Added);
                     item.StatsChanged();
-
 
                     item.IsTemporary = true;
 
@@ -3050,10 +3142,8 @@ namespace Zircon.Server.Models
                             }
                     }
 
-
                     if (Config.MonsterDropProtectionDuration > 0)
                         ob.OwnerExpire = SEnvir.Now.AddSeconds(Config.MonsterDropProtectionDuration);
-
 
                     ob.Spawn(CurrentMap.Info, cell.Location);
 
@@ -3210,7 +3300,167 @@ namespace Zircon.Server.Models
 
             Drops[owner.Character.Account] = drops;
         }
-        
+        public void QierbianEnd(Cell cell, bool visible, Point displaylocation)
+        {
+            if (cell == null)
+                return;
+            SpellObject spellObject = new SpellObject();
+            spellObject.DisplayLocation = displaylocation;
+            spellObject.TickCount = 1;
+            spellObject.TickTime = SEnvir.Now.AddMilliseconds((double)(QierbianMin / 2 + SEnvir.Random.Next(QierbianRandom)));
+            spellObject.Owner = (MapObject)this;
+            spellObject.Effect = SpellEffect.QierBian;
+            spellObject.Visible = visible;
+            spellObject.Spawn(cell.Map.Info, cell.Location);
+        }
+        public virtual void LineAoE(
+            int distance,
+            int min,
+            int max,
+            MagicType magic,
+            Element element,
+            MirDirection dir)
+        {
+            Direction = Functions.DirectionFromPoint(CurrentLocation, Target.CurrentLocation);
+            List<uint> uintList = new List<uint>();
+            List<Point> pointList = new List<Point>();
+
+            Broadcast((Packet)new ObjectMagic()
+            {
+                ObjectID = ObjectID,
+                Direction = Direction,
+                CurrentLocation = CurrentLocation,
+                Cast = true,
+                Type = magic,
+                Targets = uintList,
+                Locations = pointList
+            });
+
+            UpdateAttackTime();
+
+            for (int i = min; i <= max; ++i)
+            {
+                MirDirection mirDirection = Functions.ShiftDirection(Direction, i);
+                if (magic == MagicType.LightningBeam || magic == MagicType.BlowEarth)
+                    pointList.Add(Functions.Move(CurrentLocation, mirDirection, distance));
+                
+                for (int distance1 = 1; distance1 <= distance; ++distance1)
+                {
+                    Point location = Functions.Move(CurrentLocation, mirDirection, distance1);
+                    Cell cell1 = CurrentMap.GetCell(location);
+
+                    if (cell1 != null)
+                    {
+                        if (magic != MagicType.LightningBeam && magic != MagicType.BlowEarth)
+                            pointList.Add(cell1.Location);
+
+                        if (cell1.Objects != null)
+                        {
+                            foreach (MapObject ob in cell1.Objects)
+                            {
+                                if (CanAttackTarget(ob))
+                                    ActionList.Add(new DelayedAction(SEnvir.Now.AddMilliseconds((double)(500 + distance1 * 75)), ActionType.DelayAttack, new object[3]
+                                    {
+                                        ob,
+                                        GetDC(),
+                                        element
+                                    }));
+                            }
+                        }
+
+                        switch (mirDirection)
+                        {
+                            case MirDirection.Up:
+                            case MirDirection.Right:
+                            case MirDirection.Down:
+                            case MirDirection.Left:
+                                Cell cell2 = CurrentMap.GetCell(Functions.Move(location, Functions.ShiftDirection(mirDirection, -2)));
+                                if (cell2?.Objects != null)
+                                {
+                                    foreach (MapObject ob in cell2.Objects)
+                                    {
+                                        if (CanAttackTarget(ob))
+                                            ActionList.Add(new DelayedAction(SEnvir.Now.AddMilliseconds((double)(500 + distance1 * 75)), ActionType.DelayAttack, new object[3]
+                                            {
+                                                ob,
+                                                (GetDC() / 2),
+                                                element
+                                            }));
+                                    }
+                                }
+                                
+                                Cell cell3 = CurrentMap.GetCell(Functions.Move(location, Functions.ShiftDirection(mirDirection, 2)));
+                                
+                                if (cell3?.Objects != null)
+                                {
+                                    using (List<MapObject>.Enumerator enumerator = cell3.Objects.GetEnumerator())
+                                    {
+                                        while (enumerator.MoveNext())
+                                        {
+                                            MapObject current = enumerator.Current;
+                                            if (CanAttackTarget(current))
+                                                ActionList.Add(new DelayedAction(SEnvir.Now.AddMilliseconds((double)(500 + distance1 * 75)), ActionType.DelayAttack, new object[3]
+                                                {
+                                                    current,
+                                                    (GetDC() / 2),
+                                                    element
+                                                }));
+                                        }
+                                        break;
+                                    }
+                                }
+                                else
+                                    break;
+                            case MirDirection.UpRight:
+                            case MirDirection.DownRight:
+                            case MirDirection.DownLeft:
+                            case MirDirection.UpLeft:
+                                Cell cell4 = CurrentMap.GetCell(Functions.Move(location, Functions.ShiftDirection(mirDirection, -1)));
+                               
+                                if (cell4?.Objects != null)
+                                {
+                                    foreach (MapObject ob in cell4.Objects)
+                                    {
+                                        if (CanAttackTarget(ob))
+                                            ActionList.Add(new DelayedAction(SEnvir.Now.AddMilliseconds((double)(500 + distance1 * 75)), ActionType.DelayAttack, new object[3]
+                                            {
+                                                ob,
+                                                (GetDC() / 2),
+                                                element
+                                            }));
+                                    }
+                                }
+
+                                Cell cell5 = CurrentMap.GetCell(Functions.Move(location, Functions.ShiftDirection(mirDirection, 1)));
+                                
+                                if (cell5?.Objects != null)
+                                {
+                                    using (List<MapObject>.Enumerator enumerator = cell5.Objects.GetEnumerator())
+                                    {
+                                        while (enumerator.MoveNext())
+                                        {
+                                            MapObject current = enumerator.Current;
+                                            if (CanAttackTarget(current))
+                                                ActionList.Add(new DelayedAction(SEnvir.Now.AddMilliseconds((double)(500 + distance1 * 75)), ActionType.DelayAttack, new object[3]
+                                                {
+                                                    current,
+                                                    (GetDC() / 2),
+                                                    element
+                                                }));
+                                        }
+                                        break;
+                                    }
+                                }
+                                else
+                                    break;
+                        }
+                    }
+                }
+            }
+        }
+        public virtual void OnYieldReward(PlayerObject player)
+        {
+        }
         public virtual void Turn(MirDirection direction)
         {
             if (!CanMove) return;

@@ -5,7 +5,9 @@ using Library.SystemModels;
 using MirDB;
 using Server.DBModels;
 using Server.Envir;
+using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics.Metrics;
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -50,8 +52,6 @@ namespace Zircon.Server.Models
         public DateTime AutoTime { get; private set; }
         public bool[] setConfArr = new bool[60];
         public List<AutoFightConfig> AutoFights { get; private set; } = new List<AutoFightConfig>();
-
-
 
         public override int CurrentHP
         {
@@ -1571,48 +1571,10 @@ namespace Zircon.Server.Models
 
                     case "等级":
                     case "LEVEL":
-                        if (Character.Account.TempAdmin)
-                        {
-                            if (parts.Length < 3)
-                            {
-                                if (parts.Length < 2) return;
-
-                                if (!int.TryParse(parts[1], out value) || value < 0) return;
-
-                                player = this;
-                            }
-                            else
-                            {
-                                if (!int.TryParse(parts[2], out value) || value < 0) return;
-
-                                player = SEnvir.GetPlayerByCharacter(parts[1]);
-                            }
-
-                            if (player == null) return;
-
-                            var old = player.Level;
-
-                            player.Level = value;
-                            player.LevelUp();
-                            SEnvir.Log($"[调整等级] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 调整目标=[{player.Character.CharacterName}：{old}=>{value}]");
-                            Connection.ReceiveChat($"{player.Character.CharacterName} 等级调整为：{value}", MessageType.System);
-                        }
-                        else if (GameMaster)
-                        {
-                            if (parts.Length >= 3) return;
-                            if (!int.TryParse(parts[1], out value) || value < 0 || value >= 100) return;
-
-                            var old = Level;
-                            Level = value;
-                            LevelUp();
-
-                            SEnvir.Log($"[调整等级] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 调整目标=[{Character.CharacterName}：{old}=>{value}]");
-
-                        }
-                        else return;
-
-
+                        ChangeLevel(parts);
                         break;
+
+                    case "传送":
                     case "GOTO":
                         if (!Character.Account.Admin) return;
                         if (parts.Length < 2) return;
@@ -2043,41 +2005,7 @@ namespace Zircon.Server.Models
                     case "在线角色":
                     case "CHARACTERONLINE":
                         if (!Character.Account.Admin) return;
-
-                        StringBuilder msg = new StringBuilder();
-                        counter = 0;
-                        int total = 0;
-                        int index = 0;
-
-                        foreach (var conn in SEnvir.Connections)
-                            if (conn.Player != null) total++;
-
-
-                        foreach(var conn in SEnvir.Connections)
-                        {
-                            if (conn.Player == null || conn.Account == null || conn.Account.EMailAddress == SEnvir.SuperAdmin) continue;
-
-                            if (msg.Length <= 0)
-                                msg.Append(conn.Player.Name);
-                            else
-                                msg.Append($"、{conn.Player.Name}");
-
-                            counter++;
-                            if (counter >= 50)
-                            {
-                                Connection.ReceiveChat($"在线角色[{index}-{index+50}/{total}]：{msg.ToString()}", MessageType.System);
-                                counter = 0;
-                                index += 50;
-                            }
-                        }
-
-                        if (counter > 0)
-                            if (index > 0)
-                                Connection.ReceiveChat($"在线角色[{index}-{index + counter}/{total}]：{msg.ToString()}", MessageType.System);
-                            else
-                                Connection.ReceiveChat($"当前在线角色：{msg.ToString()}", MessageType.System);
-
-                        msg.Clear();
+                        OnlineCharacter();
                         break;
 
                     case "管理":
@@ -2105,12 +2033,19 @@ namespace Zircon.Server.Models
                         SEnvir.LoadClientHash();
                         Connection.ReceiveChat("更新清单已刷新！", MessageType.System);
                         break;
-                    //case "怪物攻城":
-                    //    if (!Character.Account.TempAdmin) return;
-                    //    if (parts.Length < 2) return;
-
-                    //    break;
-
+                    case "怪物攻城":
+                        if (!Character.Account.TempAdmin) return;
+                        MonsterSiege(parts);
+                        break;
+                    case "开启怪物攻城":
+                    case "开始怪物攻城":
+                        if (!Character.Account.TempAdmin) return;
+                        BeginMonsterSiege();
+                        break;
+                    case "结束怪物攻城":
+                        if (!Character.Account.TempAdmin) return;
+                        EndMonsterSiege();
+                        break;
                     case "屏蔽物品掉落":
                         if (!Character.Account.TempAdmin || !GameMaster) return;
                         if (!BlockDrop(parts)) return;
@@ -2121,7 +2056,6 @@ namespace Zircon.Server.Models
 
                         SEnvir.SaveSystem();
                         Connection.ReceiveChat($"服务器数据库已保存", MessageType.System);
-
                         break;
 
                     case "监控在线":
@@ -2157,9 +2091,10 @@ namespace Zircon.Server.Models
                         if (!Character.Account.TempAdmin) return;
                         ClearDeletedCharacters(parts);
                         break;
-                    case "内存清理":
+                    case "清理内存":
                         if (!Character.Account.TempAdmin) return;
-                        ClearMemory(parts);
+                        //ClearMemory(parts);
+                        Connection.ReceiveChat($"共清理 {SEnvir.ClearUserDatas(true)} 条数据", MessageType.System);
                         break;
                     case "道士技能强化":
                         if (!Character.Account.TempAdmin) return;
@@ -2176,8 +2111,19 @@ namespace Zircon.Server.Models
                         Config.转生死亡经验优化 = !Config.转生死亡经验优化;
                         Connection.ReceiveChat($"转生死亡经验优化={Config.转生死亡经验优化}", MessageType.System);
                         break;
+                    case "角色关联":
+                        if (!Character.Account.Admin) return;
+                        SameDeviceCharacter(parts);
+                        break;
+                    case "找怪物":
+                        if (!Character.Account.Admin) return;
+                        FindMonster(parts);
+                        break;
+                    case "怪物数值":
+                        if (!Character.Account.TempAdmin) return;
+                        EditMonsterStats(parts);
+                        break;
                 }
-
             }
             else if (text.StartsWith("#"))
             {
@@ -2213,7 +2159,371 @@ namespace Zircon.Server.Models
                 }
             }
         }
+        private void EndMonsterSiege()
+        {
+            if (!SEnvir.MonsterSieging)
+            {
+                Connection.ReceiveChat("怪物攻城尚未开启", MessageType.System);
+                return;
+            }
 
+            SEnvir.MonsterSieging = false;
+
+            List<MonsterObject> list = new();
+            foreach(var ob in SEnvir.Objects)
+            {
+                if (!(ob is MonsterObject mon) || !mon.Siege) continue;
+                list.Add(mon);
+            }
+
+            foreach (var mon in list)
+                mon.Despawn();
+
+            CurrentMap.CreateGuards();
+            Connection.ReceiveChat($"共清理攻城怪物 {list.Count} 只", MessageType.System);
+            list.Clear();
+
+            foreach (var con in SEnvir.Connections)
+                con.ReceiveChat($"在各位英雄的英勇奋战下，成功击退了魔物大军，守护了【{CurrentMap.Info.Description}】！", MessageType.System);
+        }
+        private void BeginMonsterSiege()
+        {
+            if (SEnvir.MonsterSieging)
+            {
+                Connection.ReceiveChat("不能重复开启", MessageType.System);
+                return;
+            }
+
+            SEnvir.MonsterSieging = true;
+            CurrentMap.ClearGuards();
+            foreach (var con in SEnvir.Connections)
+                con.ReceiveChat($"魔物大军兵临城下，勇士们速来【{CurrentMap.Info.Description}】集结，守护家园！", MessageType.System);
+        }
+        private void ChangeStat(MonsterInfo mon, Stat stat, int amount)
+        {
+            MonsterInfoStat? monstat = mon.MonsterInfoStats.FirstOrDefault(x => x.Stat == stat);
+            if (monstat == null)
+            {
+                monstat = SEnvir.MonsterStatList.CreateNewObject();
+                monstat.Stat = stat;
+                monstat.Amount = amount;
+                monstat.Monster = mon;
+                monstat.CreateBindings();
+                return;
+            }
+
+            monstat.Amount = amount;
+        }
+        private int GetMonStat(MonsterInfo mon, Stat stat)
+        {
+            MonsterInfoStat? monstat = mon.MonsterInfoStats.FirstOrDefault(x => x.Stat == stat);
+            if (monstat == null) return 0;
+            return monstat.Amount;
+        }
+        private void EditMonsterStats(string[] parts)
+        {
+            if (parts.Length < 2) return;
+
+            var mon = SEnvir.MonsterInfoList.Binding.FirstOrDefault(x => x.MonsterName == parts[1]);
+            if (mon == null)
+            {
+                Connection.ReceiveChat($"找不到指定怪物 {parts[1]}", MessageType.System);
+                return;
+            }
+
+            if (parts.Length == 2)
+            {
+                StringBuilder sb = new($"{mon.MonsterName}：");
+                int min = 0, max = 0;
+
+                min = GetMonStat(mon, Stat.Health);
+                sb.Append($"HP={min} ");
+
+                min = GetMonStat(mon, Stat.MinAC);
+                max = GetMonStat(mon, Stat.MaxAC);
+                sb.Append($"AC={min}-{max} ");
+
+                min = GetMonStat(mon, Stat.MinMR);
+                max = GetMonStat(mon, Stat.MaxMR);
+                sb.Append($"MR={min}-{max} ");
+
+                min = GetMonStat(mon, Stat.MinDC);
+                max = GetMonStat(mon, Stat.MaxDC);
+                sb.Append($"DC={min}-{max}");
+
+                Connection.ReceiveChat(sb.ToString(), MessageType.System);
+                return;
+            }
+
+            #region 检查有效性
+            for (int i = 2; i < parts.Length; i++)
+            {
+                var tmp = parts[i].Split('=');
+                if (tmp.Length != 2)
+                {
+                    Connection.ReceiveChat($"参数解析失败：{parts[i]}", MessageType.System);
+                    return;
+                }
+
+                int min, max;
+                switch(tmp[0].ToLower())
+                {
+                    case "mr":
+                        tmp = tmp[1].Split(',');
+                        if (tmp.Length != 2) goto default;
+                        if (!int.TryParse(tmp[0], out min) || !int.TryParse(tmp[1], out max))
+                            goto default;
+                        break;
+                    case "ac":
+                        tmp = tmp[1].Split(',');
+                        if (tmp.Length != 2) goto default;
+                        if (!int.TryParse(tmp[0], out min) || !int.TryParse(tmp[1], out max))
+                            goto default;
+                        break;
+                    case "dc":
+                        tmp = tmp[1].Split(',');
+                        if (tmp.Length != 2) goto default;
+                        if (!int.TryParse(tmp[0], out min) || !int.TryParse(tmp[1], out max))
+                            goto default;
+                        break;
+                    case "hp":
+                        if (!int.TryParse(tmp[0], out min) || !int.TryParse(tmp[1], out max))
+                            goto default;
+                        break;
+                    default:
+                        Connection.ReceiveChat($"参数解析失败：{parts[i]}", MessageType.System);
+                        return;
+                }
+            }
+            #endregion
+
+            for (int i = 2; i < parts.Length; i++)
+            {
+                var tmp = parts[i].Split('=');
+                int min, max;
+                MonsterInfoStat? stat;
+
+                switch (tmp[0].ToLower())
+                {
+                    case "mr":
+                        tmp = tmp[1].Split(',');
+                        min = int.Parse(tmp[0]);
+                        max = int.Parse(tmp[1]);
+                        ChangeStat(mon, Stat.MinMR, min);
+                        ChangeStat(mon, Stat.MaxMR, max);
+                        break;
+                    case "ac":
+                        tmp = tmp[1].Split(',');
+                        min = int.Parse(tmp[0]);
+                        max = int.Parse(tmp[1]);
+                        ChangeStat(mon, Stat.MinAC, min);
+                        ChangeStat(mon, Stat.MaxAC, max);
+                        break;
+                    case "dc":
+                        tmp = tmp[1].Split(',');
+                        min = int.Parse(tmp[0]);
+                        max = int.Parse(tmp[1]);
+                        ChangeStat(mon, Stat.MinDC, min);
+                        ChangeStat(mon, Stat.MaxDC, max);
+                        break;
+                    case "hp":
+                        min = int.Parse(tmp[1]);
+                        ChangeStat(mon, Stat.Health, min);
+                        break;
+                }
+            }
+
+            Connection.ReceiveChat($"{mon.MonsterName} 修改成功", MessageType.System);
+        }
+        private void FindMonster(string[] parts)
+        {
+            if (parts.Length != 2) return;
+
+
+            foreach(var ob in SEnvir.ActiveObjects)
+            {
+                if (!(ob is MonsterObject mon)) continue;
+                if (mon.MonsterInfo.MonsterName != parts[1]) continue;
+
+                if (mon.CurrentMap.Info.Index == CurrentMap.Info.Index && Functions.InRange(mon.CurrentLocation, CurrentLocation, 10))
+                    continue;
+
+                Teleport(mon.CurrentMap, mon.CurrentLocation);
+                return;
+            }
+
+            Connection.ReceiveChat($"没有找到其他地区的【{parts[1]}】", MessageType.System);
+        }
+        private void MonsterSiege(string[] parts)
+        {
+            if (parts.Length < 3) return;
+
+            var mon = SEnvir.MonsterInfoList.Binding.FirstOrDefault(x => x.MonsterName == parts[1]);
+            if (mon == null)
+            {
+                Connection.ReceiveChat($"找不到指定怪物 {parts[1]}", MessageType.System);
+                return;
+            }
+
+            if (!SEnvir.MonsterSieging && mon.IsBoss)
+            {
+                Connection.ReceiveChat("未开启攻城战，不能创建怪物领袖", MessageType.System);
+                return;
+            }
+
+            if (!int.TryParse(parts[2], out int amount) || amount <= 0 || amount > 500)
+            {
+                Connection.ReceiveChat($"无效的怪物数量 {parts[2]}", MessageType.System);
+                return;
+            }
+
+            int range = 5;
+            if (parts.Length > 3 && int.TryParse(parts[3], out var _range) && _range > 0)
+                range = _range;
+
+            int count = 0;
+
+            for (int i = 0; i < amount; i++)
+            {
+                MonsterObject monob = MonsterObject.GetMonster(mon);
+                monob.Spawn(CurrentMap.Info, CurrentMap.GetRandomLocation(CurrentLocation, range));
+                monob.Siege = true;
+                count++;
+            }
+
+            Connection.ReceiveChat($"成功创建 {mon.MonsterName}x{count}", MessageType.System);
+        }
+        private void OnlineCharacter()
+        {
+            StringBuilder msg = new StringBuilder();
+            int counter = 0;
+            int total = 0;
+            int index = 0;
+
+            foreach (var conn in SEnvir.Connections)
+                if (conn.Player != null) total++;
+
+
+            foreach (var conn in SEnvir.Connections)
+            {
+                if (conn.Player == null || conn.Account == null || conn.Account.EMailAddress == SEnvir.SuperAdmin) continue;
+
+                if (msg.Length <= 0)
+                    msg.Append(conn.Player.Name);
+                else
+                    msg.Append($"、{conn.Player.Name}");
+
+                counter++;
+                if (counter >= 50)
+                {
+                    Connection.ReceiveChat($"在线角色[{index}-{index + 50}/{total}]：{msg.ToString()}", MessageType.System);
+                    counter = 0;
+                    index += 50;
+                }
+            }
+
+            if (counter > 0)
+                if (index > 0)
+                    Connection.ReceiveChat($"在线角色[{index}-{index + counter}/{total}]：{msg.ToString()}", MessageType.System);
+                else
+                    Connection.ReceiveChat($"当前在线角色：{msg.ToString()}", MessageType.System);
+
+            msg.Clear();
+        }
+        private void ChangeLevel(string[] parts)
+        {
+            PlayerObject player;
+            int value;
+
+            if (Character.Account.TempAdmin)
+            {
+                if (parts.Length < 3)
+                {
+                    if (parts.Length < 2) return;
+
+                    if (!int.TryParse(parts[1], out value) || value < 0) return;
+
+                    player = this;
+                }
+                else
+                {
+                    if (!int.TryParse(parts[2], out value) || value < 0) return;
+
+                    player = SEnvir.GetPlayerByCharacter(parts[1]);
+                }
+
+                if (player == null) return;
+
+                var old = player.Level;
+
+                player.Level = value;
+                player.LevelUp();
+                SEnvir.Log($"[调整等级] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 调整目标=[{player.Character.CharacterName}：{old}=>{value}]");
+                Connection.ReceiveChat($"{player.Character.CharacterName} 等级调整为：{value}", MessageType.System);
+            }
+            else if (GameMaster)
+            {
+                if (parts.Length >= 3) return;
+                if (!int.TryParse(parts[1], out value) || value < 0 || value >= 100) return;
+
+                var old = Level;
+                Level = value;
+                LevelUp();
+
+                SEnvir.Log($"[调整等级] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 调整目标=[{Character.CharacterName}：{old}=>{value}]");
+            }
+        }
+        private void SameDeviceCharacter(string[] parts)
+        {
+            StringBuilder sb = new();
+
+            if (parts.Length < 2)
+            {
+                Dictionary<string, List<string>> dict = new();
+                foreach(var con in SEnvir.Connections)
+                {
+                    if (con.Account == null || con.Player?.Character == null) continue;
+
+                    if (dict.TryGetValue(con.Account.LastSum, out var list))
+                        list.Add(con.Player.Character.CharacterName);
+                    else
+                        dict.Add(con.Account.LastSum, new List<string> { con.Player.Character.CharacterName });
+                }
+
+                foreach(var pair in dict)
+                {
+                    if (pair.Value.Count <= 0) continue;
+
+                    foreach (var item in pair.Value)
+                    {
+                        if (sb.Length > 0) sb.Append($"、{item}");
+                        else sb.Append(item);
+                    }
+
+                    Connection.ReceiveChat($"{pair.Key}：{sb.ToString()}", MessageType.System);
+                    sb.Clear();
+                }
+
+                return;
+            }
+
+            var player = SEnvir.GetPlayerByCharacter(parts[1]);
+
+            if (player?.Character?.Account == null)
+            {
+                Connection.ReceiveChat($"角色不存在或已离线：{parts[1]}", MessageType.System);
+                return;
+            }
+
+            foreach (var conn in SEnvir.Connections)
+            {
+                if (conn?.Player?.Character?.Account?.LastSum == player.Character.Account.LastSum
+                    && conn != Connection)
+                    sb.Append(sb.Length <= 0 ? conn.Player.Name : $"、{conn.Player.Name}");
+            }
+
+            Connection.ReceiveChat($"关联角色：{sb.ToString()}", MessageType.System);
+        }
         private void MemoryCount()
         {
             var datas = DBObject.GetCounters();
@@ -2319,21 +2629,6 @@ namespace Zircon.Server.Models
             }
 
             Character.GroupRecallTime = SEnvir.Now.AddMinutes(3);
-        }
-        private void ClearMemory(string[] parts)
-        {
-            if (parts.Length < 2)
-            {
-                Connection.ReceiveChat("正在清理内存 ...", MessageType.System);
-                SEnvir.MemoryCollect(true);
-                Connection.ReceiveChat("内存清理完毕", MessageType.System);
-                return;
-            }
-
-            if (!int.TryParse(parts[1], out int m) || m < 0) return;
-
-            SEnvir.SetMemoryCollectSpace(m);
-            Connection.ReceiveChat($"内存垃圾回收间隔：{m} 分钟", MessageType.System);
         }
         private void ClearDeletedCharacters(string[] parts)
         {
@@ -3205,7 +3500,7 @@ namespace Zircon.Server.Models
             }
 
             Stats[Stat.AttackSpeed] += Math.Min(3, Level / 15);
-
+            Stats[Stat.MagicSpeed] += Math.Min(3, Level / 15);
             Stats[Stat.FireResistance] = Math.Min(5, Stats[Stat.FireResistance]);
             Stats[Stat.IceResistance] = Math.Min(5, Stats[Stat.IceResistance]);
             Stats[Stat.LightningResistance] = Math.Min(5, Stats[Stat.LightningResistance]);
@@ -3214,6 +3509,10 @@ namespace Zircon.Server.Models
             Stats[Stat.DarkResistance] = Math.Min(5, Stats[Stat.DarkResistance]);
             Stats[Stat.PhantomResistance] = Math.Min(5, Stats[Stat.PhantomResistance]);
             Stats[Stat.PhysicalResistance] = Math.Min(5, Stats[Stat.PhysicalResistance]);
+
+            Stats[Stat.AttackSpeed] = Math.Min(16, Stats[Stat.AttackSpeed]);
+            Stats[Stat.MagicSpeed] = Math.Min(16, Stats[Stat.MagicSpeed]);
+            Stats[Stat.PetHPPercent] += 10 * Stats[Stat.Rebirth];
 
 
             Stats[Stat.Comfort] = Math.Min(20, Stats[Stat.Comfort]);
@@ -4398,25 +4697,18 @@ namespace Zircon.Server.Models
                 switch (link.GridType)
                 {
                     case GridType.Inventory:
-                        if (!InSafeZone && !Character.Account.TempAdmin)
+                        fromArray = Inventory;
+                        break;
+                    case GridType.Storage:
+                        if (!InSafeZone && !Character.Account.Admin)
                         {
                             Connection.ReceiveChat(Connection.Language.MailSendSafeZone, MessageType.System);
                             return;
                         }
-                        fromArray = Inventory;
-                        break;
-                    case GridType.Storage:
                         fromArray = Storage;
                         break;
                     case GridType.CompanionInventory:
                         if (Companion == null) return;
-
-                        if (!InSafeZone && !Character.Account.TempAdmin)
-                        {
-                            Connection.ReceiveChat(Connection.Language.MailSendSafeZone, MessageType.System);
-                            return;
-                        }
-
                         fromArray = Companion.Inventory;
                         break;
                     default:
@@ -4499,11 +4791,15 @@ namespace Zircon.Server.Models
             mail.HasItem = mail.Items.Count > 0;
 
             if (account.Connection != null && account.Connection.Player != null)
+            {
                 account.Connection.Enqueue(new S.MailNew
                 {
                     Mail = mail.ToClientInfo(),
                     ObserverPacket = false,
                 });
+
+                Connection.ReceiveChat($"邮件已送达【{p.Recipient}】", MessageType.System);
+            }
         }
 
         #endregion
@@ -4692,9 +4988,9 @@ namespace Zircon.Server.Models
                 MailInfo mail = SEnvir.MailInfoList.CreateNewObject();
 
                 mail.Account = Character.Account;
-                mail.Subject = "Listing Cancelled";
-                mail.Message = string.Format("You canceled your sale of '{0}{1}' and was not able to collect the item.", item.Info.ItemName, item.Count == 1 ? "" : "x" + item.Count);
-                mail.Sender = "Market Place";
+                mail.Subject = "取消寄售";
+                mail.Message = string.Format("你取消了 '{0}{1}' 的寄售.", item.Info.ItemName, item.Count == 1 ? "" : "x" + item.Count);
+                mail.Sender = "商城";
                 item.Mail = mail;
                 item.Slot = 0;
                 mail.HasItem = true;
@@ -4819,8 +5115,8 @@ namespace Zircon.Server.Models
 
             long tax = (long)(cost * Globals.MarketPlaceTax);
 
-            mail.Subject = "Listing Sale";
-            mail.Sender = "Market Place";
+            mail.Subject = "寄售物品售出";
+            mail.Sender = "商城";
 
             ItemInfo itemInfo = item.Info;
             int partIndex = item.Stats[Stat.ItemIndex];
@@ -4832,13 +5128,13 @@ namespace Zircon.Server.Models
             else
                 itemName = item.Info.ItemName;
 
-            mail.Message = "You have sold an item\n\n" +
-                           string.Format("Buyer: {0}\n", Name) +
-                           string.Format("Item: {0} x{1}\n", itemName, p.Count) +
-                           string.Format("Price: {0:#,##0} each\n", info.Price) +
-                           string.Format("Sub Total: {0:#,##0}\n\n", cost) +
-                           string.Format("Tax: {0:#,##0} ({1:p0})\n\n", tax, Globals.MarketPlaceTax) +
-                           string.Format("Total: {0:#,##0}", cost - tax);
+            mail.Message = "你寄售的物品成功售出\n\n" +
+                           string.Format("购买者: {0}\n", Name) +
+                           string.Format("物品: {0}x{1}\n", itemName, p.Count) +
+                           string.Format("价格: 每件 {0:#,##0}\n", info.Price) +
+                           string.Format("小计: {0:#,##0}\n\n", cost) +
+                           string.Format("扣税: {0:#,##0} ({1:p0})\n\n", tax, Globals.MarketPlaceTax) +
+                           string.Format("共计: {0:#,##0}", cost - tax);
 
             UserItem gold = SEnvir.CreateFreshItem(SEnvir.GoldInfo);
             gold.Count = (long)(cost - tax);
@@ -4865,9 +5161,9 @@ namespace Zircon.Server.Models
 
                 mail.Account = Character.Account;
 
-                mail.Subject = "Item Purchase";
-                mail.Sender = "Market Place";
-                mail.Message = string.Format("You purshased '{0}{1}' and was not able to collect the item.", itemName, item.Count == 1 ? "" : "x" + item.Count);
+                mail.Subject = "购买物品";
+                mail.Sender = "商城";
+                mail.Message = string.Format("你成功购买了 '{0}{1}'.", itemName, item.Count == 1 ? "" : "x" + item.Count);
 
                 item.Mail = mail;
                 item.Slot = 0;
@@ -5633,15 +5929,24 @@ namespace Zircon.Server.Models
             memberInfo.Permission = GuildInvitation.Character.Account.GuildMember.Guild.DefaultPermission;
 
 
+            var info = memberInfo.ToClientInfo();
+            if (info == null)
+            {
+                memberInfo.Delete();
+                Connection.ReceiveChat($"加入行会时出现了内部错误，请反馈给管理员", MessageType.System);
+                return;
+            }
+
+            S.GuildUpdate update = memberInfo.Guild.GetUpdatePacket();
+            update.Members.Add(info);
+
             SendGuildInfo();
             Connection.ReceiveChat(string.Format(Connection.Language.GuildJoinWelcome, GuildInvitation.Name), MessageType.System);
 
             Broadcast(new S.GuildChanged { ObjectID = ObjectID, GuildName = memberInfo.Guild.GuildName, GuildRank = memberInfo.Rank });
             AddAllObjects();
 
-            S.GuildUpdate update = memberInfo.Guild.GetUpdatePacket();
 
-            update.Members.Add(memberInfo.ToClientInfo());
 
             foreach (GuildMemberInfo member in memberInfo.Guild.Members)
             {
@@ -5775,6 +6080,14 @@ namespace Zircon.Server.Models
             memberInfo.JoinDate = SEnvir.Now;
             memberInfo.Permission = SEnvir.StarterGuild.DefaultPermission;
 
+            var info = memberInfo.ToClientInfo();
+            if (info == null)
+            {
+                memberInfo.Delete();
+                Connection.ReceiveChat($"加入新人行会时出现了内部错误，请反馈给管理员", MessageType.System);
+                return;
+            }
+
             SendGuildInfo();
 
             Connection.ReceiveChat(string.Format(Connection.Language.GuildJoinWelcome, memberInfo.Guild.GuildName), MessageType.System);
@@ -5784,7 +6097,7 @@ namespace Zircon.Server.Models
 
             S.GuildUpdate update = memberInfo.Guild.GetUpdatePacket();
 
-            update.Members.Add(memberInfo.ToClientInfo());
+            update.Members.Add(info);
 
             foreach (GuildMemberInfo member in memberInfo.Guild.Members)
             {
@@ -6404,7 +6717,10 @@ namespace Zircon.Server.Models
                                 duration += buff.RemainingTime;
 
                             Stats stats = new Stats(item.Info.Stats);
-                            stats.Values.Add(Stat.Duration, 0);
+                            if (stats.Values.ContainsKey(Stat.Duration))
+                                stats.Values[Stat.Duration] = 0;
+                            else
+                                stats.Values.Add(Stat.Duration, 0);
 
                             BuffAdd(BuffType.Redemption, duration, stats, false, false, TimeSpan.Zero);
 
@@ -7038,6 +7354,8 @@ namespace Zircon.Server.Models
 
                     if (item.Info.Effect != ItemEffect.ElixirOfPurification || UseItemTime < SEnvir.Now)
                         UseItemTime = SEnvir.Now.AddMilliseconds(item.Info.Durability);
+                    else if(item.Info.Shape == 29)
+                        UseItemTime = SEnvir.Now.AddMilliseconds(500);
                     else
                         UseItemTime = UseItemTime.AddMilliseconds(item.Info.Durability);
 
@@ -11703,7 +12021,7 @@ namespace Zircon.Server.Models
                         break;
                     case RefineType.Reset:
                         weapon.Level = 1;
-                        weapon.ResetCoolDown = SEnvir.Now.AddDays(14);
+                        weapon.ResetCoolDown = SEnvir.Now.AddMinutes(Config.武器重置冷却分钟);
 
                         Stat element;
                         weapon.MergeRefineElements(out element);
@@ -11716,37 +12034,40 @@ namespace Zircon.Server.Models
                             int amount = stat.Amount / 5;
 
                             stat.Delete();
-                            weapon.AddStat(stat.Stat, amount, StatSource.Enhancement);
+
+                            if (Config.武器重置保留五分之一属性)
+                                weapon.AddStat(stat.Stat, amount, StatSource.Enhancement);
                         }
 
-                        for (int i = weapon.AddedStats.Count - 1; i >= 0; i--)
-                        {
-                            UserItemStat stat = weapon.AddedStats[i];
-                            if (stat.StatSource != StatSource.Enhancement) continue;
-
-                            switch (stat.Stat)
+                        if (Config.武器重置保留五分之一属性)
+                            for (int i = weapon.AddedStats.Count - 1; i >= 0; i--)
                             {
-                                case Stat.MaxDC:
-                                case Stat.MaxMC:
-                                case Stat.MaxSC:
-                                    stat.Amount = Math.Min(stat.Amount, 200);
-                                    break;
-                                case Stat.FireAttack:
-                                case Stat.LightningAttack:
-                                case Stat.IceAttack:
-                                case Stat.WindAttack:
-                                case Stat.DarkAttack:
-                                case Stat.HolyAttack:
-                                case Stat.PhantomAttack:
-                                    stat.Amount = Math.Min(stat.Amount, 200);
-                                    break;
-                                case Stat.EvasionChance:
-                                case Stat.BlockChance:
-                                    stat.Amount = Math.Min(stat.Amount, 10);
-                                    break;
-                            }
+                                UserItemStat stat = weapon.AddedStats[i];
+                                if (stat.StatSource != StatSource.Enhancement) continue;
 
-                        }
+                                switch (stat.Stat)
+                                {
+                                    case Stat.MaxDC:
+                                    case Stat.MaxMC:
+                                    case Stat.MaxSC:
+                                        stat.Amount = Math.Min(stat.Amount, 200);
+                                        break;
+                                    case Stat.FireAttack:
+                                    case Stat.LightningAttack:
+                                    case Stat.IceAttack:
+                                    case Stat.WindAttack:
+                                    case Stat.DarkAttack:
+                                    case Stat.HolyAttack:
+                                    case Stat.PhantomAttack:
+                                        stat.Amount = Math.Min(stat.Amount, 200);
+                                        break;
+                                    case Stat.EvasionChance:
+                                    case Stat.BlockChance:
+                                        stat.Amount = Math.Min(stat.Amount, 10);
+                                        break;
+                                }
+
+                            }
 
                         break;
                 }
@@ -15557,7 +15878,7 @@ namespace Zircon.Server.Models
                                 BuffAdd(BuffType.TheNewBeginning, TimeSpan.FromMinutes(1), new Stats { [Stat.TheNewBeginning] = buff.Stats[Stat.TheNewBeginning] - 1 }, false, false, TimeSpan.Zero);
                         }*/
 
-                    for (int i = 1; i <= 2; i++)
+                    for (int i = 1; i <= (magic.Level >= 5 ? 3 : 2); i++)
                     {
                         location = Functions.Move(CurrentLocation, p.Direction, i);
                         Cell cell = CurrentMap.GetCell(location);
@@ -15650,7 +15971,6 @@ namespace Zircon.Server.Models
                 case MagicType.Renounce:
                 case MagicType.JudgementOfHeaven:
                 case MagicType.MirrorImage:
-
                 case MagicType.Heal:
                 case MagicType.Invisibility:
                 case MagicType.MagicResistance:
@@ -15665,7 +15985,6 @@ namespace Zircon.Server.Models
                 case MagicType.LifeSteal:
                 case MagicType.SummonShinsu:
                 case MagicType.StrengthOfFaith:
-
                 case MagicType.PoisonousCloud:
                 case MagicType.DarkConversion:
                     break;
@@ -15674,13 +15993,11 @@ namespace Zircon.Server.Models
                     break;
             }
 
-
             if (cast)
             {
                 Enqueue(new S.MagicCooldown { InfoIndex = magic.Info.Index, Delay = magic.Info.Delay });
                 magic.Cooldown = SEnvir.Now.AddMilliseconds(magic.Info.Delay);
             }
-
 
             Direction = ob == null || ob == this ? p.Direction : Functions.DirectionFromPoint(CurrentLocation, ob.CurrentLocation);
 
@@ -15688,6 +16005,55 @@ namespace Zircon.Server.Models
                 RegenTime = SEnvir.Now + RegenDelay;
             ActionTime = SEnvir.Now + Globals.CastTime;
             MagicTime = SEnvir.Now + Globals.MagicDelay;
+
+            #region 施法速度
+
+            switch (magic.Info.Magic)
+            {
+                case MagicType.Defiance:
+                case MagicType.Might:
+                case MagicType.ReflectDamage:
+
+                case MagicType.Repulsion:
+                case MagicType.ElectricShock:
+                case MagicType.Teleportation:
+                case MagicType.GeoManipulation:
+                case MagicType.MagicShield:
+                case MagicType.Renounce:
+                case MagicType.JudgementOfHeaven:
+                case MagicType.MirrorImage:
+                case MagicType.FrostBite:
+                case MagicType.Heal:
+                case MagicType.Invisibility:
+                case MagicType.MagicResistance:
+                case MagicType.MassInvisibility:
+                case MagicType.Resilience:
+                case MagicType.ElementalSuperiority:
+                case MagicType.MassHeal:
+                case MagicType.BloodLust:
+                case MagicType.Resurrection:
+                case MagicType.Transparency:
+                case MagicType.CelestialLight:
+                case MagicType.LifeSteal:
+                case MagicType.SummonSkeleton:
+                case MagicType.SummonShinsu:
+                case MagicType.SummonJinSkeleton:
+                case MagicType.StrengthOfFaith:
+                case MagicType.SummonDemonicCreature:
+
+                case MagicType.PoisonousCloud:
+                case MagicType.Cloak:
+                case MagicType.SummonPuppet:
+                case MagicType.ChangeOfSeasons:
+                case MagicType.TheNewBeginning:
+                case MagicType.DarkConversion:
+                case MagicType.Evasion:
+                case MagicType.RagingWind:
+                    int _ = Stats[Stat.MagicSpeed] * 21;
+                    MagicTime -= TimeSpan.FromMilliseconds((double)_);
+                    break;
+            }
+            #endregion
 
             if (BagWeight > Stats[Stat.BagWeight])
                 MagicTime += Globals.MagicDelay;
@@ -16405,7 +16771,7 @@ namespace Zircon.Server.Models
 
             int psnRate = 200;
 
-            if (ob.Level >= 250)
+            if (ob.Level >= 100)
                 psnRate = 2000;
 
             if (SEnvir.Random.Next(psnRate) < Stats[Stat.ParalysisChance] || hasSeismicSlam)
@@ -16507,6 +16873,7 @@ namespace Zircon.Server.Models
             int power = 0;
             UserMagic asteroid = null;
 
+
             foreach (UserMagic magic in magics)
             {
                 switch (magic.Info.Magic)
@@ -16598,12 +16965,20 @@ namespace Zircon.Server.Models
                     case MagicType.ImprovedExplosiveTalisman:
                         element = Element.Dark;
                         power += magic.GetPower() + GetSC();
-                        //power += power;
+
+                        if (Magics.TryGetValue(MagicType.ExplosiveTalisman, out var explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
+
                         break;
                     case MagicType.EvilSlayer:
+                        element = Element.Holy;
+                        power += magic.GetPower() + GetSC();
+                        break;
                     case MagicType.GreaterEvilSlayer:
                         element = Element.Holy;
                         power += magic.GetPower() + GetSC();
+                        if (Magics.TryGetValue(MagicType.EvilSlayer, out var evil) && Level >= evil.Info.NeedLevel1)
+                            power += evil.GetPower();
                         break;
                     case MagicType.SummonPuppet:
                         element = Element.Fire;
@@ -16812,7 +17187,7 @@ namespace Zircon.Server.Models
                     power -= power * ob.Stats[Stat.HolyResistance] / 10;
                     break;
                 case Element.Dark:
-                    power += GetElementPower(ob.Race, Stat.DarkAttack) * 2;
+                    power += GetElementPower(ob.Race, Stat.DarkAttack) * 3;
                     power -= power * ob.Stats[Stat.DarkResistance] / 10;
                     break;
                 case Element.Phantom:
@@ -16837,7 +17212,7 @@ namespace Zircon.Server.Models
 
             int psnRate = 100;
 
-            if (ob.Level >= 250)
+            if (ob.Level >= 100)
                 psnRate = 1000;
             if (SEnvir.Random.Next(psnRate) < Stats[Stat.ParalysisChance])
             {
@@ -17002,8 +17377,6 @@ namespace Zircon.Server.Models
                 }
             }
 
-
-
             CombatTime = SEnvir.Now;
 
             if (attacker.Race == ObjectType.Player)
@@ -17022,7 +17395,10 @@ namespace Zircon.Server.Models
             for (int i = 0; i < attacker.Stats[Stat.Rebirth]; i++)
                 power = (int)(power * 1.2F);
 
-            if (SEnvir.Random.Next(100) < attacker.Stats[Stat.CriticalChance] && canCrit)
+            power -= power * Stats[Stat.DamageReduction] / 100;
+            power += power * attacker.Stats[Stat.DamageAdd] / 100;
+
+            if (SEnvir.Random.Next(100) < (attacker.Stats[Stat.CriticalChance] - Stats[Stat.CritReduction])&& canCrit)
             {
                 if (!canReflect)
                     power = (int)(power * 1.2F);
@@ -18176,6 +18552,23 @@ namespace Zircon.Server.Models
 
             return SEnvir.Random.Next(min, max + 1);
         }
+
+        public int GetElementPower(ObjectType race, MagicSchool school)
+        {
+            Stat ele = school switch
+            {
+                MagicSchool.Dark => Stat.DarkAttack,
+                MagicSchool.Phantom => Stat.PhantomAttack,
+                MagicSchool.Holy => Stat.HolyAttack,
+                MagicSchool.Fire => Stat.FireAttack,
+                MagicSchool.Lightning => Stat.LightningAttack,
+                MagicSchool.Wind => Stat.WindAttack,
+                MagicSchool.Ice => Stat.IceAttack,
+                _ => Stat.None,
+            };
+
+            return GetElementPower(race, ele);
+        }
         public int GetElementPower(ObjectType race, Stat element)
         {
             if (race != ObjectType.Player) return Stats[element];
@@ -18992,6 +19385,13 @@ namespace Zircon.Server.Models
             UserMagic empowered;
             int bonus = 0;
             int cap = 30;
+            int power = magic.GetPower();
+
+            if (Config.道士技能强化 
+                && magic.Info.Magic ==  MagicType.MassHeal 
+                && Magics.TryGetValue(MagicType.Heal, out var heal) 
+                && Level >= heal.Info.NeedLevel1)
+                power += heal.GetPower();
 
             if (Magics.TryGetValue(MagicType.EmpoweredHealing, out empowered) && Level >= empowered.Info.NeedLevel1)
             {
@@ -19002,10 +19402,14 @@ namespace Zircon.Server.Models
             }
 
             int sc = GetSC();
-            int value = sc + GetElementBySchool(magic.Info.School) * 2 + (Config.道士技能强化 ? sc * bonus / 100 : bonus);
+            int ele = GetElementBySchool(magic.Info.School);
+            int value = sc + ele * 2 + (Config.道士技能强化 ? sc * bonus / 100 : bonus);
+
+            if (Config.道士技能强化)
+                cap += sc / 7 + ele / 2 + magic.Level * 3;
 
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.Healing, magic.GetPower() + value);
+            buffStats.Values.Add(Stat.Healing, power + power * Level / 80 + value + value * magic.Level / 4);
             buffStats.Values.Add(Stat.HealingCap, cap);
 
 
@@ -19047,12 +19451,7 @@ namespace Zircon.Server.Models
             int value = magic.Level + 1;
 
             if (Config.道士技能强化)
-            {
-                if (ob.Race != ObjectType.Player)
-                    value += sc / 10 + ele / 5;
-                else
-                    value += sc / 20 + ele / 10;
-            }
+                value += magic.Level + sc / 5 + ele / 2;
             else
                 value += Level / 14;
 
@@ -19084,19 +19483,25 @@ namespace Zircon.Server.Models
         {
             if (ob == null || ob.Node == null || !CanHelpTarget(ob)) return;
 
+            var sc = GetSC();
+            var ele = GetElementBySchool(magic.Info.School);
+            var value = (sc + ele * 2) * (magic.Level + 1) / (ob.Race == ObjectType.Player ? 200 : 100);
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.LifeSteal, 4 + (magic.Level) * 2);
-
-
-            ob.BuffAdd(BuffType.LifeSteal, TimeSpan.FromSeconds(magic.GetPower() + GetSC() + Stats[Stat.DarkAttack] * 2), buffStats, true, false, TimeSpan.Zero);
+            buffStats.Values.Add(Stat.LifeSteal, 3 + Math.Max(magic.Level * 2 + 1, value));
+            ob.BuffAdd(BuffType.LifeSteal, TimeSpan.FromSeconds(magic.GetPower()), buffStats, true, false, TimeSpan.Zero);
 
             LevelMagic(magic);
         }
         public void StrengthOfFaithEnd(UserMagic magic)
         {
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.DCPercent, (magic.Level + 1) * -20);
-            buffStats.Values.Add(Stat.PetDCPercent, (magic.Level + 1) * 30);
+
+            var sc = GetSC();
+            var ele = GetElementBySchool(magic.Info.School);
+            int value =  magic.Level * 10 + (sc / 7 + ele / 2);
+            
+            buffStats.Values.Add(Stat.DCPercent, value >= 100 ? -100 : -value);
+            buffStats.Values.Add(Stat.PetDCPercent, value * 7 / 4);
 
             BuffAdd(BuffType.StrengthOfFaith, TimeSpan.FromSeconds(magic.GetPower()), buffStats, true, false, TimeSpan.Zero);
 
@@ -19141,11 +19546,12 @@ namespace Zircon.Server.Models
 
             int value = 5 + magic.Level;
 
-            if (Config.道士技能强化 && ob is MonsterObject mon && mon.PetOwner != null)
-                value += GetSC() * magic.Level / 40;
+            if (Config.道士技能强化)
+                value += GetSC() * magic.Level / 30;
 
             Stats buffStats = new Stats();
             buffStats.Values.Add(Stat.MaxMR, value);
+            buffStats.Values.Add(Stat.MinMR, value / 2);
 
 
             if (stats[Stat.FireAffinity] > 0)
@@ -19208,11 +19614,12 @@ namespace Zircon.Server.Models
 
             int value = 5 + magic.Level;
 
-            if (Config.道士技能强化 && ob is MonsterObject mon && mon.PetOwner != null)
-                value += GetSC() * magic.Level / 40;
+            if (Config.道士技能强化)
+                value += GetSC() * magic.Level / 30;
 
             Stats buffStats = new Stats();
             buffStats.Values.Add(Stat.MaxAC, value);
+            buffStats.Values.Add(Stat.MinAC, value / 2);
             buffStats.Values.Add(Stat.PhysicalResistance, 1);
 
             ob.BuffAdd(BuffType.Resilience, TimeSpan.FromSeconds((magic.GetPower() + GetSC() * 2)), buffStats, true, false, TimeSpan.Zero);
@@ -19227,15 +19634,17 @@ namespace Zircon.Server.Models
             Stats buffStats = new Stats();
             int value = 5 + magic.Level;
 
-            if (Config.道士技能强化 && ob is MonsterObject mon && mon.PetOwner != null)
+            if (Config.道士技能强化)
             {
                 int sc = GetSC();
                 int ele = GetElementBySchool(magic.Info.School);
-                value += sc / 10 + ele / 5;
+                value += sc / 7 + ele / 2;
             }
 
             buffStats.Values.Add(Stat.MaxMC, value);
             buffStats.Values.Add(Stat.MaxSC, value);
+            buffStats.Values.Add(Stat.MinMC, value / 2);
+            buffStats.Values.Add(Stat.MinSC, value / 2);
 
             if (stats[Stat.FireAffinity] > 0)
             {
@@ -19297,17 +19706,18 @@ namespace Zircon.Server.Models
         {
             if (ob == null || ob.Node == null || !CanHelpTarget(ob)) return;
 
-            int value = 5 + magic.Level;
+            int value = 1 + magic.Level * 3;
 
-            if (Config.道士技能强化 && ob is MonsterObject mon && mon.PetOwner != null)
+            if (Config.道士技能强化)
             {
                 int sc = GetSC();
                 int ele = GetElementBySchool(magic.Info.School);
-                value += sc / 10 + ele / 5;
+                value += sc / 7 + ele / 2;
             }
 
             Stats buffStats = new Stats();
             buffStats.Values.Add(Stat.MaxDC, value);
+            buffStats.Values.Add(Stat.MinDC, value / 2);
             ob.BuffAdd(BuffType.BloodLust, TimeSpan.FromSeconds((magic.GetPower() + GetSC() * 2)), buffStats, true, false, TimeSpan.Zero);
 
             LevelMagic(magic);
@@ -19339,15 +19749,15 @@ namespace Zircon.Server.Models
 
             pet.ChangeHP(-damage * 75 / 100);
 
-            int damagePvE = damage * magic.GetPower() / 100 + GetSC() * 3;
-            int damagePvP = damage * magic.GetPower() / 100 + GetSC() * 3;
+            int damagePvE = damage * magic.GetPower() / 120 + GetSC() * 3;
+            int damagePvP = damage * magic.GetPower() / 220 + GetSC() * 5;
+
 
             if (stats != null && stats.GetAffinityValue(Element.Phantom) > 0)
             {
-                damagePvE += GetElementPower(ObjectType.Monster, Stat.PhantomAttack) * 8;
-                damagePvP += GetElementPower(ObjectType.Player, Stat.PhantomAttack) * 8;
+                damagePvE += GetElementPower(ObjectType.Monster, magic.Info.School) * 8;
+                damagePvP += GetElementPower(ObjectType.Player, magic.Info.School) * 12;
             }
-
 
             foreach (MapObject target in targets)
             {
@@ -19504,21 +19914,34 @@ namespace Zircon.Server.Models
                 return;
             }
 
-            if (Pets.Count >= 2) return;
+            if (Pets.Count >= 2)
+            {
+                Connection.ReceiveChat($"召唤不死系宝宝不能超过【2】只", MessageType.System);
+                return;
+            }
 
             ob = MonsterObject.GetMonster(info);
 
             ob.PetOwner = this;
             Pets.Add(ob);
 
+            int mon_lvl = magic.Level;
+            if ((magic.Info.Magic == MagicType.SummonJinSkeleton || magic.Info.Magic == MagicType.SummonShinsu)
+                && Magics.TryGetValue(MagicType.SummonSkeleton, out var skeleton)
+                && skeleton.Level > 0)
+                mon_lvl += skeleton.Level;
+
             if (ob.Master != null)
-            ob.Master.MinionList.Remove(ob);
+                ob.Master.MinionList.Remove(ob);
+
             ob.Master = null;
             ob.Magics.Add(magic);
-            ob.SummonLevel = magic.Level;
+            ob.SummonLevel = mon_lvl;
             ob.SummonMagicLevel = magic.Level;
             ob.TameTime = SEnvir.Now.AddDays(365);
             ob.SummonBase = Config.道士技能强化 ? GetSC() + GetElementBySchool(magic.Info.School) * 2 : 0;
+            ob.SummonCritical = Config.道士技能强化 ? Stats[Stat.CriticalChance] : 0;
+            ob.SummonCriticalDamage = Config.道士技能强化 ? Stats[Stat.CriticalDamage] : 0;
 
             if (Buffs.Any(x => x.Type == BuffType.StrengthOfFaith))
                 ob.Magics.Add(Magics[MagicType.StrengthOfFaith]);

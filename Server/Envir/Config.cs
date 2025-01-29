@@ -22,7 +22,7 @@ namespace Server.Envir
             MasterPassword = "REDACTED";
             ReleaseDate = new DateTime(2017, 12, 22, 18, 00, 00, DateTimeKind.Utc);
             TestServer = false;
-            StarterGuildName = "Starter Guild";
+            StarterGuildName = "新人行会";
             EasterEventEnd = new DateTime(2018, 04, 09, 00, 00, 00, DateTimeKind.Utc);
             HalloweenEventEnd = new DateTime(2018, 11, 07, 00, 00, 00, DateTimeKind.Utc);
             ChristmasEventEnd = new DateTime(2019, 01, 03, 00, 00, 00, DateTimeKind.Utc);
@@ -81,11 +81,11 @@ namespace Server.Envir
             DeadDuration = TimeSpan.FromMinutes(1);
             HarvestDuration = TimeSpan.FromMinutes(5);
             MysteryShipRegionIndex = 0;
-            DropDuration = TimeSpan.FromMinutes(60);
+            DropDuration = TimeSpan.FromMinutes(5);
             DropDistance = 5;
             DropLayers = 5;
             TorchRate = 10;
-            SpecialRepairDelay = TimeSpan.FromHours(8);
+            SpecialRepairDelay = TimeSpan.FromHours(4);
             MaxLuck = 7;
             MaxCurse = -10;
             CurseRate = 20;
@@ -132,7 +132,7 @@ namespace Server.Envir
         public static int 单次请求排名拉取的数量不超过多少个 { get; set; } = 20;
         public static string 地狱之门关联地图名称 { get; set; } = "赤龙城入口";
         public static string 异界之门关联地图名称 { get; set; } = "神舰入口";
-        public static int 内存垃圾回收间隔多少分钟 { get; set; } = 5;
+        public static int 数据清理间隔分钟 { get; set; } = 60 * 10;
         public static byte 判断敏感词最大跳几个字符 { get; set; } = 2;
 
         [ConfigSection("Control")]
@@ -240,6 +240,9 @@ namespace Server.Envir
         public static int 武器重置等待分钟 { get; set; } = 60 * 24;
         public static int 武器精炼最大几率基数 { get; set; } = 90;
         public static int 武器精炼几率基数 { get; set; } = 60;
+        public static int 武器重置冷却分钟 { get; set; } = 1440;
+        public static bool 武器重置保留五分之一属性 { get; set; } = false;
+        public static int 武器重置时每多少点属性保留一点 { get; set; } = 10;
 
         [ConfigSection("Rates")]
         public static int ExperienceRate { get; set; }
