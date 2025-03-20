@@ -218,6 +218,7 @@ namespace Server.Envir
         public static int DropLowestEquipmentsExcludeWeapon { get; set; } = 0;
         public static int DropLowestWeapon { get; set; } = 0;
         public static string SummonMonsterGrowUpFile { get; set; } = "";
+        public static uint 道具呼唤的怪物存活分钟 { get; set; } = 30;
 
         [ConfigSection("Items")]
         public static TimeSpan DropDuration { get; set; }

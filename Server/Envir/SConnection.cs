@@ -20,6 +20,7 @@ using System.Text;
 
 namespace Server.Envir
 {
+
     public sealed class SConnection : BaseConnection
     {
         private static int SessionCount;

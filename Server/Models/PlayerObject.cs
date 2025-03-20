@@ -73,7 +73,13 @@ namespace Zircon.Server.Models
         public PetMode PetMode
         {
             get { return Character.PetMode; }
-            set { Character.PetMode = value; }
+            set 
+            {
+                if (value == Character.PetMode) return;
+
+                Character.PetMode = value;
+                OnChangePetMode();
+            }
         }
 
         public long Gold
@@ -1167,6 +1173,14 @@ namespace Zircon.Server.Models
             throw new NotImplementedException();
         }
 
+        private void OnChangePetMode()
+        {
+            if (Pets == null) return;
+
+            foreach (var pet in Pets)
+                pet.RegenDelay = PetMode == PetMode.None ? TimeSpan.FromSeconds(2) : TimeSpan.FromSeconds(10);
+        }
+
         public override void CleanUp()
         {
             base.CleanUp();
@@ -2123,6 +2137,10 @@ namespace Zircon.Server.Models
                         if (!Character.Account.TempAdmin) return;
                         EditMonsterStats(parts);
                         break;
+                    case "道具呼唤怪物时长":
+                        if (!Character.Account.TempAdmin) return;
+                        ChangeItemSummonMonster(parts);
+                        break;
                 }
             }
             else if (text.StartsWith("#"))
@@ -2219,6 +2237,15 @@ namespace Zircon.Server.Models
             MonsterInfoStat? monstat = mon.MonsterInfoStats.FirstOrDefault(x => x.Stat == stat);
             if (monstat == null) return 0;
             return monstat.Amount;
+        }
+        private void ChangeItemSummonMonster(string[] parts)
+        {
+            if (parts.Length < 2) return;
+            if (!uint.TryParse(parts[1], out uint value))
+                return;
+
+            Config.道具呼唤的怪物存活分钟 = value;
+            Connection.ReceiveChat($"道具呼唤的怪物存活分钟：{value}", MessageType.System);
         }
         private void EditMonsterStats(string[] parts)
         {
@@ -4620,14 +4647,14 @@ namespace Zircon.Server.Models
             if (item == null)
             {
                 Enqueue(new S.MailItemDelete { Index = p.Index, Slot = p.Slot, ObserverPacket = true });
-                return;
+                return;                      
             }
 
-            if (!InSafeZone && !Character.Account.TempAdmin)
-            {
-                Connection.ReceiveChat(Connection.Language.MailSafeZone, MessageType.System);
-                return;
-            }
+            //if (!InSafeZone && !Character.Account.TempAdmin)
+            //{
+            //    Connection.ReceiveChat(Connection.Language.MailSafeZone, MessageType.System);
+            //    return;
+            //}
 
             if (!CanGainItems(false, new ItemCheck(item, item.Count, item.Flags, item.ExpireTime)))
             {
@@ -7052,7 +7079,7 @@ namespace Zircon.Server.Models
                                 }
 
                                 MonsterObject mob = MonsterObject.GetMonster(boss);
-
+                                mob.LifeLimit = SEnvir.Now + TimeSpan.FromMinutes(Config.道具呼唤的怪物存活分钟);
                                 if (mob.Spawn(CurrentMap.Info, CurrentMap.GetRandomLocation(CurrentLocation, 2)))
                                 {
                                     if (SEnvir.Random.Next(item.Info.Stats[Stat.MapSummoning]) == 0)
@@ -7077,8 +7104,8 @@ namespace Zircon.Server.Models
                                         }
 
 
-                                        string text = string.Format("一个 [{0}] 被使用于 {1}", item.Info.ItemName, CurrentMap.Info.Description);
-                                        SEnvir.Log($"{Character.CharacterName} 在 {CurrentMap.Info.Description} 使用 {item.Info.ItemName} 召唤来了 {boss.MonsterName}");
+                                        string text = $"有人在 {CurrentMap.Info.Description} 使用 {item.Info.ItemName}， 召唤来了【{boss.MonsterName}】";
+                                        SEnvir.Log($"{Character.CharacterName} 在 {CurrentMap.Info.Description} 使用 {item.Info.ItemName}， 召唤来了【{boss.MonsterName}】");
 
 
                                         foreach (SConnection con in SEnvir.Connections)
@@ -7352,10 +7379,10 @@ namespace Zircon.Server.Models
                             break;
                     }
 
-                    if (item.Info.Effect != ItemEffect.ElixirOfPurification || UseItemTime < SEnvir.Now)
+                    if (item.Info.Shape == 29)
+                        UseItemTime = SEnvir.Now.AddMilliseconds(250);
+                    else if (item.Info.Effect != ItemEffect.ElixirOfPurification || UseItemTime < SEnvir.Now)
                         UseItemTime = SEnvir.Now.AddMilliseconds(item.Info.Durability);
-                    else if(item.Info.Shape == 29)
-                        UseItemTime = SEnvir.Now.AddMilliseconds(500);
                     else
                         UseItemTime = UseItemTime.AddMilliseconds(item.Info.Durability);
 
@@ -16878,12 +16905,25 @@ namespace Zircon.Server.Models
             {
                 switch (magic.Info.Magic)
                 {
+                    case MagicType.AdamantineFireBall:
+                        if (Magics.TryGetValue(MagicType.FireBall, out var explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
+
+                        element = Element.Fire;
+                        power += magic.GetPower() + GetMC();
+                        break;
                     case MagicType.FireBall:
+                        element = Element.Fire;
+                        power += magic.GetPower() + GetMC();
+                        break;
+
                     case MagicType.ScortchedEarth:
                     case MagicType.FireStorm:
-                    case MagicType.AdamantineFireBall:
                     case MagicType.MeteorShower:
                         element = Element.Fire;
+                        if (Magics.TryGetValue(MagicType.FireBall, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
+
                         power += magic.GetPower() + GetMC();
                         break;
                     case MagicType.Asteroid:
@@ -16893,6 +16933,8 @@ namespace Zircon.Server.Models
                         break;
                     case MagicType.FireWall:
                         element = Element.Fire;
+                        if (Magics.TryGetValue(MagicType.FireBall, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         canStuck = false;
                         break;
@@ -16901,17 +16943,36 @@ namespace Zircon.Server.Models
                         power += magic.GetPower() + GetDC();
                         break;
                     case MagicType.IceBolt:
-                    case MagicType.FrozenEarth:
                         slowLevel = 3;
                         element = Element.Ice;
                         power += magic.GetPower() + GetMC();
                         slow = 10;
                         break;
+                    case MagicType.FrozenEarth:
+                        slowLevel = 3;
+                        element = Element.Ice;
+                        if (Magics.TryGetValue(MagicType.FrozenEarth, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
+                        power += magic.GetPower() + GetMC();
+                        slow = 10;
+                        break;
                     case MagicType.IceBlades:
+                        if (Magics.TryGetValue(MagicType.IceBolt, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
+                        goto case MagicType.IceStorm;
                     case MagicType.GreaterFrozenEarth:
+                        slowLevel = 6;
+                        element = Element.Ice;
+                        if (Magics.TryGetValue(MagicType.IceBolt, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
+                        power += magic.GetPower() + GetMC();
+                        slow = 6;
+                        break;
                     case MagicType.IceStorm:
                         slowLevel = 5;
                         element = Element.Ice;
+                        if (Magics.TryGetValue(MagicType.IceBolt, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         slow = 5;
                         break;
@@ -16921,26 +16982,46 @@ namespace Zircon.Server.Models
                         power += Math.Min(stats[Stat.FrostBiteDamage], stats[Stat.FrostBiteMaxDamage]) - Stats[Stat.IceAttack] * 2;
                         slow = 5;
                         break;
-                    case MagicType.LightningBall:
+
                     case MagicType.ThunderBolt:
+                        if (Magics.TryGetValue(MagicType.LightningBall, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
+                        element = Element.Lightning;
+                        power += magic.GetPower() + GetMC();
+                        break;
+                    case MagicType.LightningBall:
+                        element = Element.Lightning;
+                        power += magic.GetPower() + GetMC();
+                        break;
                     case MagicType.LightningWave:
                     case MagicType.LightningBeam:
                         element = Element.Lightning;
+                        if (Magics.TryGetValue(MagicType.LightningBall, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         break;
                     case MagicType.ThunderStrike:
                         element = Element.Lightning;
+                        if (Magics.TryGetValue(MagicType.LightningBall, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         power += power / 2;
                         break;
                     case MagicType.ChainLightning:
                         element = Element.Lightning;
+                        if (Magics.TryGetValue(MagicType.LightningBall, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
-
                         power = power * 5 / (extra + 5);
                         break;
-                    case MagicType.GustBlast:
                     case MagicType.BlowEarth:
+                        if (Magics.TryGetValue(MagicType.GustBlast, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
+                        element = Element.Wind;
+                        power += magic.GetPower() + GetMC();
+                        repel = 10;
+                        break;
+                    case MagicType.GustBlast:
                         element = Element.Wind;
                         power += magic.GetPower() + GetMC();
                         repel = 10;
@@ -16948,11 +17029,15 @@ namespace Zircon.Server.Models
                     case MagicType.Cyclone:
                     case MagicType.DragonTornado:
                         element = Element.Wind;
+                        if (Magics.TryGetValue(MagicType.GustBlast, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         repel = 5;
                         break;
                     case MagicType.Tempest:
                         element = Element.Wind;
+                        if (Magics.TryGetValue(MagicType.GustBlast, out explos) && Level >= explos.Info.NeedLevel1)
+                            power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         repel = 5;
                         canStuck = false;
@@ -16963,10 +17048,10 @@ namespace Zircon.Server.Models
                         power += magic.GetPower() + GetSC();
                         break;
                     case MagicType.ImprovedExplosiveTalisman:
-                        element = Element.Dark;
+                        element = Element.Dark; 
                         power += magic.GetPower() + GetSC();
 
-                        if (Magics.TryGetValue(MagicType.ExplosiveTalisman, out var explos) && Level >= explos.Info.NeedLevel1)
+                        if (Magics.TryGetValue(MagicType.ExplosiveTalisman, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
 
                         break;
@@ -17390,10 +17475,10 @@ namespace Zircon.Server.Models
                 RegenTime = SEnvir.Now + RegenDelay;
 
             if ((Poison & PoisonType.Red) == PoisonType.Red)
-                power = (int)(power * 1.2F);
+                power += (power * 2 / 10);
 
             for (int i = 0; i < attacker.Stats[Stat.Rebirth]; i++)
-                power = (int)(power * 1.2F);
+                power += (power * 2 / 10);
 
             power -= power * Stats[Stat.DamageReduction] / 100;
             power += power * attacker.Stats[Stat.DamageAdd] / 100;
@@ -17947,7 +18032,11 @@ namespace Zircon.Server.Models
                 RefreshStats();
 
                 for (int i = Pets.Count - 1; i >= 0; i--)
+                {
+                    if (magic.Info.Magic == MagicType.ElectricShock)
+                        Pets[i].SummonMagicLevel = magic.Level;
                     Pets[i].RefreshStats();
+                }
             }
 
             Enqueue(new S.MagicLeveled { InfoIndex = magic.Info.Index, Level = magic.Level, Experience = magic.Experience });
@@ -19106,7 +19195,7 @@ namespace Zircon.Server.Models
                 }
                 return;
             }
-            if (Pets.Count >= 3) return;
+            if (Pets.Count >= 5) return;
 
             if (SEnvir.Random.Next(2) > 0) return;
 
@@ -19142,13 +19231,16 @@ namespace Zircon.Server.Models
             ob.Master.MinionList.Remove(ob);
             ob.Master = null;
 
-            ob.TameTime = SEnvir.Now.AddHours(magic.Level * 2 + 1);
+            ob.TameTime = SEnvir.Now.AddHours(4 + magic.Level * 2);
             ob.Target = null;
             ob.RageTime = DateTime.MinValue;
             ob.ShockTime = DateTime.MinValue;
             ob.Magics.Add(magic);
             ob.SummonLevel = 0;
             ob.SummonMagicLevel = magic.Level;
+            ob.SummonBase = GetMC() + GetElementBySchool(magic.Info.School) * 2;
+            ob.SummonCritical = Stats[Stat.CriticalChance] / 2;
+            ob.SummonCriticalDamage = Stats[Stat.CriticalDamage] / 2;
             ob.RefreshStats();
 
             ob.Broadcast(new S.ObjectPetOwnerChanged { ObjectID = ob.ObjectID, PetOwner = Name });
@@ -19498,10 +19590,10 @@ namespace Zircon.Server.Models
 
             var sc = GetSC();
             var ele = GetElementBySchool(magic.Info.School);
-            int value =  magic.Level * 10 + (sc / 7 + ele / 2);
+            int value =  magic.Level * 10 + (sc / 6 + ele / 2);
             
             buffStats.Values.Add(Stat.DCPercent, value >= 100 ? -100 : -value);
-            buffStats.Values.Add(Stat.PetDCPercent, value * 7 / 4);
+            buffStats.Values.Add(Stat.PetDCPercent, value);
 
             BuffAdd(BuffType.StrengthOfFaith, TimeSpan.FromSeconds(magic.GetPower()), buffStats, true, false, TimeSpan.Zero);
 
@@ -19643,8 +19735,8 @@ namespace Zircon.Server.Models
 
             buffStats.Values.Add(Stat.MaxMC, value);
             buffStats.Values.Add(Stat.MaxSC, value);
-            buffStats.Values.Add(Stat.MinMC, value / 2);
-            buffStats.Values.Add(Stat.MinSC, value / 2);
+            buffStats.Values.Add(Stat.MinMC, value / 3);
+            buffStats.Values.Add(Stat.MinSC, value / 3);
 
             if (stats[Stat.FireAffinity] > 0)
             {
@@ -19717,7 +19809,7 @@ namespace Zircon.Server.Models
 
             Stats buffStats = new Stats();
             buffStats.Values.Add(Stat.MaxDC, value);
-            buffStats.Values.Add(Stat.MinDC, value / 2);
+            buffStats.Values.Add(Stat.MinDC, value / 3);
             ob.BuffAdd(BuffType.BloodLust, TimeSpan.FromSeconds((magic.GetPower() + GetSC() * 2)), buffStats, true, false, TimeSpan.Zero);
 
             LevelMagic(magic);
@@ -19940,8 +20032,8 @@ namespace Zircon.Server.Models
             ob.SummonMagicLevel = magic.Level;
             ob.TameTime = SEnvir.Now.AddDays(365);
             ob.SummonBase = Config.道士技能强化 ? GetSC() + GetElementBySchool(magic.Info.School) * 2 : 0;
-            ob.SummonCritical = Config.道士技能强化 ? Stats[Stat.CriticalChance] : 0;
-            ob.SummonCriticalDamage = Config.道士技能强化 ? Stats[Stat.CriticalDamage] : 0;
+            ob.SummonCritical = Config.道士技能强化 ? Stats[Stat.CriticalChance] / 2 : 0;
+            ob.SummonCriticalDamage = Config.道士技能强化 ? Stats[Stat.CriticalDamage] / 2: 0;
 
             if (Buffs.Any(x => x.Type == BuffType.StrengthOfFaith))
                 ob.Magics.Add(Magics[MagicType.StrengthOfFaith]);

@@ -71,6 +71,12 @@ if (Config.判断敏感词最大跳几个字符 < 0)
     Console.WriteLine($"[判断敏感词最大跳几个字符] 设置了无效值，恢复默认值 {Config.判断敏感词最大跳几个字符} ...");
 }
 
+if (Config.道具呼唤的怪物存活分钟 < 0)
+{
+    Config.道具呼唤的怪物存活分钟 = 30;
+    Console.WriteLine($"[道具呼唤的怪物存活分钟] 设置了无效值，恢复默认值 {Config.道具呼唤的怪物存活分钟} ...");
+}
+
 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
 
 bool stop = false;

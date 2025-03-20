@@ -252,7 +252,7 @@ namespace Zircon.Server.Models
                             damage += poison.Value;
 
                             for (int x = 0; x < poison.Owner.Stats[Stat.Rebirth]; x++)
-                                damage = (int)(damage * 1.5F);
+                                damage += (damage / 2);
                         }
                         
                         infection = true;

@@ -55,17 +55,19 @@
 
 ## 服务器部署
 
-### 下载运营数据
+### 下载运行依赖的数据文件
 
 包含了地图数据比较大，压缩之后仍然有近 800Mb，因此只能放在网盘中。
 
-【[百度网盘](https://pan.baidu.com/s/1OMkb834cOtxF8KIrlJMKRQ?pwd=h1bv)】
+【[百度网盘](https://pan.baidu.com/s/1dKrpu6G4p4klMVOIMuhOdA?pwd=j1rm)】
 
-如果嫌百度网盘太慢，这份运营数据我也保存到了 QQ 群文件中，【[QQ群：915941142](https://qm.qq.com/q/JeoJOJ4z4e)】
+由于网盘总被和谐，这份运行依赖数据我也保存到了 QQ 群文件中，【[QQ群：915941142](https://qm.qq.com/q/JeoJOJ4z4e)】
 
 内置账号： **zrf@zrf.zrf、raphael@gm.gm** ，密码均为  **123456** ， 可直接登录游玩。
 
 其中  **raphael@gm.gm**  为管理员账号，包含了三个管理员角色 **raphael01、raphael02、raphael03** 管理员密码为  **123456** 。
+
+你也可以把` user.db `删除，直接新建账号  **raphael@gm.gm**  会默认具备管理员权限。
 
 去版本 [发布页面](https://gitee.com/raphaelcheung/zircon-legend-server/releases) 下载最新的服务器配置文件` Server.ini `，根据需要修改服务器 IP 以及端口。
 

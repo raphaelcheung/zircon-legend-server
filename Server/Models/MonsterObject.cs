@@ -241,6 +241,7 @@ namespace Zircon.Server.Models
         public override bool CanMove {get{return base.CanMove && (Poison & PoisonType.Silenced) != PoisonType.Silenced && MoveDelay > 0 && (PetOwner == null || PetOwner.PetMode == PetMode.Both || PetOwner.PetMode == PetMode.Move || PetOwner.PetMode == PetMode.PvP);}}
         public override bool CanAttack { get { return base.CanAttack && (Poison & PoisonType.Silenced) != PoisonType.Silenced && AttackDelay > 0 && (PetOwner == null || PetOwner.PetMode == PetMode.Both || PetOwner.PetMode == PetMode.Attack || PetOwner.PetMode == PetMode.PvP); } }
 
+        public DateTime LifeLimit { get; set; } = DateTime.MinValue;
 
         public static MonsterObject GetMonster(MonsterInfo monsterInfo)
         {
@@ -832,16 +833,13 @@ namespace Zircon.Server.Models
 
             ApplyBonusStats();
 
-            MoveDelay = MonsterInfo.MoveDelay * (48 - SummonLevel) / 48;
+            MoveDelay = MonsterInfo.MoveDelay * (36 - SummonLevel) / 36;
 
-            if (MonsterInfo.Undead)
-                AttackDelay = MonsterInfo.AttackDelay * (36 - SummonLevel) / 36;
-            else
-                AttackDelay = MonsterInfo.AttackDelay * (48 - SummonLevel) / 48;
-            //if (AttackDelay < 400) AttackDelay = 400;
+            AttackDelay = MonsterInfo.AttackDelay * (36 - SummonLevel) / 36;
+            AttackDelay = Math.Max(400, AttackDelay);
 
             int live_rate = MonsterInfo.Undead ? 5 : 10;
-            int attack_rate = MonsterInfo.Undead ? 7 : 10;
+            int attack_rate = MonsterInfo.Undead ? 6 : 10;
 
             if (SummonLevel > 0)
             {
@@ -1085,6 +1083,12 @@ namespace Zircon.Server.Models
                 }
             }
 
+            if (LifeLimit > DateTime.MinValue && SEnvir.Now > LifeLimit)
+            {
+                Despawn();
+                return;
+            }
+
             if (Target == null || Target.Node == null || Target.Dead || Target.CurrentMap != CurrentMap || !Functions.InRange(CurrentLocation, Target.CurrentLocation, Config.MaxViewRange) ||
 	               ((Poison & PoisonType.Abyss) == PoisonType.Abyss && !Functions.InRange(CurrentLocation, Target.CurrentLocation, ViewRange)) || !CanAttackTarget(Target))
 	                Target = null;
@@ -1204,7 +1208,7 @@ namespace Zircon.Server.Models
 
             if (CurrentHP >= Stats[Stat.Health]) return;
 
-            int regen = (int) Math.Max(1, Stats[Stat.Health]*0.02F); //2% every 10 seconds aprox
+            int regen = Math.Max(1, Stats[Stat.Health] * 2 / 100); //2% every 10 seconds aprox
 
             ChangeHP(regen);
         }
@@ -2559,10 +2563,10 @@ namespace Zircon.Server.Models
             }
 
             if ((Poison & PoisonType.Red) == PoisonType.Red)
-                power = (int)(power * 1.2F);
+                power += (power * 2 / 10);
 
             for (int i = 0; i < attacker.Stats[Stat.Rebirth]; i++)
-                power = (int)(power * 1.5F);
+                power += (power / 2);
 
             power -= power * Stats[Stat.DamageReduction] / 100;
             power += power * attacker.Stats[Stat.DamageAdd] / 100;
