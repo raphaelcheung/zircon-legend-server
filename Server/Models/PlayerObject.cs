@@ -1444,14 +1444,16 @@ namespace Zircon.Server.Models
 
                         int result = SEnvir.Random.Next(count) + 1;
 
-
                         foreach (PlayerObject member in GroupMembers)
                             member.Connection.ReceiveChat(string.Format(member.Connection.Language.DiceRoll, Name, result, count), MessageType.Group);
+
                         break;
+
+                    case "属性提取":
                     case "EXTRACTORLOCK":
                         ExtractorLock = !ExtractorLock;
 
-                        Connection.ReceiveChat(ExtractorLock ? "Extraction Enabled" : "Extraction Locked", MessageType.System);
+                        Connection.ReceiveChat(ExtractorLock ? "属性提取 启用" : "属性提取 锁定", MessageType.System);
                         break;
 
                     case "宠物技能3":
@@ -2850,6 +2852,7 @@ namespace Zircon.Server.Models
             {
                 account.BanReason = "";
                 account.ExpiryDate = DateTime.MinValue;
+                account.WrongPasswordCount = 0;
 
                 foreach (var ch in account.Characters)
                     if (!ch.Deleted)
@@ -7135,10 +7138,10 @@ namespace Zircon.Server.Models
 
                             if (!ExtractorLock)
                             {
-                                Connection.ReceiveChat("提取功能已被锁定，请输入 @ExtractorLock 并重试", MessageType.System);
+                                Connection.ReceiveChat("属性提取功能已被锁定，请输入 @属性提取 并重试", MessageType.System);
 
                                 foreach (SConnection con in Connection.Observers)
-                                    con.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
+                                    con.ReceiveChat("属性提取功能被锁定，请键入 @属性提取 并重试", MessageType.System);
                                 return;
                             }
 
@@ -7207,10 +7210,10 @@ namespace Zircon.Server.Models
                             }
                             if (!ExtractorLock)
                             {
-                                Connection.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
+                                Connection.ReceiveChat("属性提取功能被锁定，请键入 @属性提取 并重试", MessageType.System);
 
                                 foreach (SConnection con in Connection.Observers)
-                                    con.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
+                                    con.ReceiveChat("属性提取功能被锁定，请键入 @属性提取 并重试", MessageType.System);
                                 return;
                             }
 
@@ -7256,10 +7259,10 @@ namespace Zircon.Server.Models
                             }
                             if (!ExtractorLock)
                             {
-                                Connection.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
+                                Connection.ReceiveChat("属性提取功能被锁定，请键入 @属性提取 并重试", MessageType.System);
 
                                 foreach (SConnection con in Connection.Observers)
-                                    con.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
+                                    con.ReceiveChat("属性提取功能被锁定，请键入 @属性提取 并重试", MessageType.System);
                                 return;
                             }
 
@@ -7333,10 +7336,10 @@ namespace Zircon.Server.Models
                             }
                             if (!ExtractorLock)
                             {
-                                Connection.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
+                                Connection.ReceiveChat("属性提取功能被锁定，请键入 @属性提取 并重试", MessageType.System);
 
                                 foreach (SConnection con in Connection.Observers)
-                                    con.ReceiveChat("提取功能被锁定，请键入 @ExtractorLock 并重试", MessageType.System);
+                                    con.ReceiveChat("属性提取功能被锁定，请键入 @属性提取 并重试", MessageType.System);
                                 return;
                             }
 
@@ -11842,6 +11845,7 @@ namespace Zircon.Server.Models
             chance += ore / 2000;
             chance += items / 6;
             chance += quality * 25;
+            maxChance += quality;
 
             maxChance = Math.Min(100, maxChance);
             chance = Math.Min(maxChance, chance);
@@ -11966,7 +11970,7 @@ namespace Zircon.Server.Models
 
             if (info == null) return;
 
-            if (SEnvir.Now < info.RetrieveTime && !Character.Account.TempAdmin)
+            if (SEnvir.Now < info.RetrieveTime && !Character.Account.Admin)
             {
                 Connection.ReceiveChat(Connection.Language.NPCRefineNotReady, MessageType.System);
 
@@ -14331,6 +14335,9 @@ namespace Zircon.Server.Models
             List<MapObject> possibleTargets;
             Point location;
             BuffInfo buff;
+
+            bool isFire = magic.Info.School == MagicSchool.Fire;
+
             switch (p.Type)
             {
                 #region Warrior
@@ -14464,7 +14471,7 @@ namespace Zircon.Server.Models
                     targets.Add(ob.ObjectID);
 
                     ActionList.Add(new DelayedAction(
-                        SEnvir.Now.AddMilliseconds(500 + Functions.Distance(CurrentLocation, ob.CurrentLocation) * 48),
+                        SEnvir.Now.AddMilliseconds((500 + Functions.Distance(CurrentLocation, ob.CurrentLocation) * 48) * (isFire ? 2 : 3) / 3),
                         ActionType.DelayMagic,
                         new List<UserMagic> { magic },
                         ob));
@@ -14548,7 +14555,7 @@ namespace Zircon.Server.Models
                         locations.Add(cell.Location);
 
                         ActionList.Add(new DelayedAction(
-                            SEnvir.Now.AddMilliseconds(800),
+                            SEnvir.Now.AddMilliseconds(800 * (isFire ? 2 : 3) / 3),
                             ActionType.DelayMagic,
                             new List<UserMagic> { magic },
                             cell,
@@ -14561,13 +14568,13 @@ namespace Zircon.Server.Models
                             case MirDirection.Down:
                             case MirDirection.Left:
                                 ActionList.Add(new DelayedAction(
-                                    SEnvir.Now.AddMilliseconds(800),
+                                    SEnvir.Now.AddMilliseconds(800 * (isFire ? 2 : 3) / 3),
                                     ActionType.DelayMagic,
                                     new List<UserMagic> { magic },
                                     CurrentMap.GetCell(Functions.Move(location, Functions.ShiftDirection(p.Direction, -2))),
                                     false));
                                 ActionList.Add(new DelayedAction(
-                                    SEnvir.Now.AddMilliseconds(800),
+                                    SEnvir.Now.AddMilliseconds(800 * (isFire ? 2 : 3) / 3),
                                     ActionType.DelayMagic,
                                     new List<UserMagic> { magic },
                                     CurrentMap.GetCell(Functions.Move(location, Functions.ShiftDirection(p.Direction, 2))),
@@ -14578,13 +14585,13 @@ namespace Zircon.Server.Models
                             case MirDirection.DownLeft:
                             case MirDirection.UpLeft:
                                 ActionList.Add(new DelayedAction(
-                                    SEnvir.Now.AddMilliseconds(800),
+                                    SEnvir.Now.AddMilliseconds(800 * (isFire ? 2 : 3) / 3),
                                     ActionType.DelayMagic,
                                     new List<UserMagic> { magic },
                                     CurrentMap.GetCell(Functions.Move(location, Functions.ShiftDirection(p.Direction, 1))),
                                     false));
                                 ActionList.Add(new DelayedAction(
-                                    SEnvir.Now.AddMilliseconds(800),
+                                    SEnvir.Now.AddMilliseconds(800 * (isFire ? 2 : 3) / 3),
                                     ActionType.DelayMagic,
                                     new List<UserMagic> { magic },
                                     CurrentMap.GetCell(Functions.Move(location, Functions.ShiftDirection(p.Direction, -1))),
@@ -14794,7 +14801,7 @@ namespace Zircon.Server.Models
                     foreach (Cell cell in cells)
                     {
                         ActionList.Add(new DelayedAction(
-                            SEnvir.Now.AddMilliseconds(500),
+                            SEnvir.Now.AddMilliseconds(500 * (isFire ? 2 : 3) / 3),
                             ActionType.DelayMagic,
                             new List<UserMagic> { magic },
                             cell));
@@ -14816,16 +14823,14 @@ namespace Zircon.Server.Models
                     foreach (Cell cell in cells)
                     {
                         ActionList.Add(new DelayedAction(
-                            SEnvir.Now.AddMilliseconds(1200),
+                            SEnvir.Now.AddMilliseconds(1200 * 2 / 3),
                             ActionType.DelayMagic,
                             new List<UserMagic> { magic },
                             cell));
                     }
 
-
                     if (Magics.TryGetValue(MagicType.FireWall, out augMagic) && augMagic.Info.NeedLevel1 > Level)
                         augMagic = null;
-
 
                     if (augMagic != null)
                     {
@@ -14847,20 +14852,17 @@ namespace Zircon.Server.Models
 
                         foreach (Cell cell in cells)
                         {
-
                             if (Math.Abs(cell.Location.X - p.Location.X) + Math.Abs(cell.Location.Y - p.Location.Y) >= 3) continue;
 
 
                             ActionList.Add(new DelayedAction(
-                                SEnvir.Now.AddMilliseconds(2250),
+                                SEnvir.Now.AddMilliseconds(2250 * 2 / 3),
                                 ActionType.DelayMagic,
                                 new List<UserMagic> { augMagic },
                                 cell,
                                 power));
                         }
                     }
-
-
 
                     break;
                 case MagicType.DragonTornado:
@@ -15028,7 +15030,7 @@ namespace Zircon.Server.Models
                     {
                         targets.Add(target.ObjectID);
                         ActionList.Add(new DelayedAction(
-                            SEnvir.Now.AddMilliseconds(500 + Functions.Distance(CurrentLocation, target.CurrentLocation) * 48),
+                            SEnvir.Now.AddMilliseconds((500 + Functions.Distance(CurrentLocation, target.CurrentLocation) * 48) * 2 / 3),
                             ActionType.DelayMagic,
                             magics,
                             target));
@@ -16031,7 +16033,23 @@ namespace Zircon.Server.Models
             if (Stats[Stat.Comfort] < 15)
                 RegenTime = SEnvir.Now + RegenDelay;
             ActionTime = SEnvir.Now + Globals.CastTime;
-            MagicTime = SEnvir.Now + Globals.MagicDelay;
+
+            switch(p.Type)
+            {
+                case MagicType.FireBall:
+                case MagicType.AdamantineFireBall:
+                case MagicType.ScortchedEarth:
+                case MagicType.FireWall:
+                case MagicType.FireStorm:
+                case MagicType.MeteorShower:
+                case MagicType.Asteroid:
+                    MagicTime = SEnvir.Now + Globals.FireMagicDelay;
+                    break;
+                default:
+                    MagicTime = SEnvir.Now + Globals.MagicDelay;
+                    break;
+            }
+            
 
             #region 施法速度
 
@@ -17336,25 +17354,25 @@ namespace Zircon.Server.Models
             switch (ob.Race)
             {
                 case ObjectType.Player:
-                    /*   if (slow > 0 && SEnvir.Random.Next(slow) == 0 && Level > ob.Level)
-                       {
-                           TimeSpan duration = TimeSpan.FromSeconds(3 + SEnvir.Random.Next(3));
-                           if (ob.Race == ObjectType.Monster)
-                           {
-                               slowLevel *= 2;
-                               duration += duration;
-                           }
+                    if (slow > 0 && SEnvir.Random.Next(slow) == 0 && Level > ob.Level)
+                    {
+                        TimeSpan duration = TimeSpan.FromSeconds(3 + SEnvir.Random.Next(3));
+                        if (ob.Race == ObjectType.Monster)
+                        {
+                            slowLevel *= 2;
+                            duration += duration;
+                        }
 
 
-                           ob.ApplyPoison(new Poison
-                           {
-                               Type = PoisonType.Slow,
-                               Value = slowLevel,
-                               TickCount = 1,
-                               TickFrequency = duration,
-                               Owner = this,
-                           });*/
-                    /*
+                        ob.ApplyPoison(new Poison
+                        {
+                            Type = PoisonType.Slow,
+                            Value = slowLevel,
+                            TickCount = 1,
+                            TickFrequency = duration,
+                            Owner = this,
+                        });
+                    }
 
                     if (repel > 0 && ob.CurrentMap == CurrentMap && Level  > ob.Level && SEnvir.Random.Next(repel) == 0)
                     {
@@ -17369,7 +17387,7 @@ namespace Zircon.Server.Models
                                 if (ob.Pushed(Functions.ShiftDirection(dir, i * -rotation), 1) > 0) break;
                             }
                         }
-                    }*/
+                    }
                     break;
                 case ObjectType.Monster:
                     if (slow > 0 && SEnvir.Random.Next(slow) == 0 && !((MonsterObject) ob).MonsterInfo.IsBoss)
@@ -19228,7 +19246,8 @@ namespace Zircon.Server.Models
             Pets.Add(ob);
 
             if (ob.Master != null)
-            ob.Master.MinionList.Remove(ob);
+                ob.Master.MinionList.Remove(ob);
+
             ob.Master = null;
 
             ob.TameTime = SEnvir.Now.AddHours(4 + magic.Level * 2);

@@ -870,8 +870,8 @@ namespace Zircon.Server.Models
                 Stats[Stat.DamageReduction] += Stats[Stat.DamageReduction] * SummonLevel / 10;
             }
             
-            
-            Stats[Stat.CriticalChance] = 1;
+            if (Stats[Stat.CriticalChance] < 1)
+                Stats[Stat.CriticalChance] = 1;
 
             if (Buffs.Any(x => x.Type == BuffType.MagicWeakness))
             {
@@ -1280,6 +1280,11 @@ namespace Zircon.Server.Models
             if (Target != null)
             {
                 if (!CanMove && !CanAttack && Visible) return;
+                if (Functions.Distance(PetOwner.CurrentLocation, Target.CurrentLocation) > Config.MaxViewRange)
+                {
+                    Target = null;
+                    return;
+                }
             }
             else
             {
@@ -1306,6 +1311,8 @@ namespace Zircon.Server.Models
                         Cell cell = CurrentMap.Cells[x, y];
 
                         if (cell == null || cell.Objects == null) continue;
+
+                        if (Functions.Distance(PetOwner.CurrentLocation, new Point(x, y)) > Config.MaxViewRange) continue;
 
                         foreach (MapObject ob in cell.Objects)
                         {

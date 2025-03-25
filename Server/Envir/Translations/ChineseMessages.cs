@@ -67,7 +67,7 @@ namespace Server.Envir.Translations
             Expired = "你的 {0} 已经过期。";
             CannotTownTeleport= "无法在此地图上进行回城传送。";
             CannotRandomTeleport= "无法在此地图上进行随机传送。";
-            ConnotResetCompanionSkill= "要使用 {0} 请输入 '@EnableLevel{1}'";
+            ConnotResetCompanionSkill= "要使用 {0} 请输入 '@宠物技能{1}'";
             LearnBookFailed= "修炼技能失败，书籍没有包含你缺少的页面。";
             LearnBookSuccess= "恭喜，你成功修炼技能 {0}。";
             LearnBook4Failed= "你的技能 {0} 经验有所增加。";
