@@ -4726,9 +4726,10 @@ namespace Server.Envir
 
             Dictionary<int, bool> checklist = new();
 
-            foreach(var ob in Objects)
+            var list = Objects.ToList();
+            for(int i = list.Count - 1; i >= 0; i--)
             {
-                if (!(ob is ItemObject itemob)) continue;
+                if (!(list[i] is ItemObject itemob)) continue;
                 if (itemob.ExpireTime > Now && itemob.Activated)
                 {
                     if (itemob.Item != null)
@@ -4742,7 +4743,9 @@ namespace Server.Envir
                 result++;
             }
 
-            for(int i = UserItemList.Count - 1; i >= 0; i--)
+            list.Clear();
+
+            for (int i = UserItemList.Count - 1; i >= 0; i--)
             {
                 var item = UserItemList[i];
                 if (item.Character == null 

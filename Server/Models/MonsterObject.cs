@@ -226,7 +226,7 @@ namespace Zircon.Server.Models
         public int PoisonTicks = 5;
         public int PoisonFrequency = 2;
 
-        public bool IgnoreShield;
+        public bool IgnoreShield { get; set; }
 
         public bool EasterEventMob, HalloweenEventMob, ChristmasEventMob;
 
@@ -1312,7 +1312,7 @@ namespace Zircon.Server.Models
 
                         if (cell == null || cell.Objects == null) continue;
 
-                        if (Functions.Distance(PetOwner.CurrentLocation, new Point(x, y)) > Config.MaxViewRange) continue;
+                        if (PetOwner != null && Functions.Distance(PetOwner.CurrentLocation, new Point(x, y)) > Config.MaxViewRange) continue;
 
                         foreach (MapObject ob in cell.Objects)
                         {

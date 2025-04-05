@@ -2066,7 +2066,10 @@ namespace Zircon.Server.Models
                         if (!Character.Account.TempAdmin || !GameMaster) return;
                         if (!BlockDrop(parts)) return;
                         break;
-
+                    case "批量屏蔽掉落":
+                        if (!Character.Account.TempAdmin) return;
+                        if (!BatchBlockDrop(parts)) return;
+                        break;
                     case "保存数据库":
                         if (!Character.Account.TempAdmin) return;
 
@@ -2143,6 +2146,10 @@ namespace Zircon.Server.Models
                         if (!Character.Account.TempAdmin) return;
                         ChangeItemSummonMonster(parts);
                         break;
+                    case "修正道具":
+                        if (!Character.Account.TempAdmin) return;
+                        ReviseItems(parts);
+                        break;
                 }
             }
             else if (text.StartsWith("#"))
@@ -2178,6 +2185,11 @@ namespace Zircon.Server.Models
                     }
                 }
             }
+        }
+
+        private void ReviseItems(string[] parts)
+        {
+
         }
         private void EndMonsterSiege()
         {
@@ -2904,6 +2916,28 @@ namespace Zircon.Server.Models
             SEnvir.AddRanking(chara);
             Connection.ReceiveChat($"{chara.CharacterName} 该角色已恢复误删", MessageType.System);
             SEnvir.Log($"[恢复误删] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 恢复账号={chara.Account.EMailAddress} 恢复角色=[{chara.CharacterName}({chara.Level}级{Functions.GetEnumDesc(chara.Gender)}{Functions.GetEnumDesc(chara.Class)})]");
+
+            return true;
+        }
+        private bool BatchBlockDrop(string[] parts)
+        {
+            if (parts.Length < 2) return false;
+            bool hit = false;
+            int count = 0;
+
+            foreach(var item in SEnvir.ItemInfoList.Binding)
+            {
+                if (!hit && item.ItemName != parts[1]) continue;
+
+                hit = true;
+                item.BlockMonsterDrop = true;
+                count++;
+            }
+
+            if (hit)
+                Connection.ReceiveChat($"共屏蔽 {count} 条物品的掉落", MessageType.System);
+            else
+                Connection.ReceiveChat($"没有找到这个道具", MessageType.System);
 
             return true;
         }
@@ -14471,7 +14505,7 @@ namespace Zircon.Server.Models
                     targets.Add(ob.ObjectID);
 
                     ActionList.Add(new DelayedAction(
-                        SEnvir.Now.AddMilliseconds((500 + Functions.Distance(CurrentLocation, ob.CurrentLocation) * 48) * (isFire ? 2 : 3) / 3),
+                        SEnvir.Now.AddMilliseconds(500 + Functions.Distance(CurrentLocation, ob.CurrentLocation) * 48 * (isFire ? 3 : 6) / 6),
                         ActionType.DelayMagic,
                         new List<UserMagic> { magic },
                         ob));
@@ -14796,7 +14830,7 @@ namespace Zircon.Server.Models
                     }
 
                     locations.Add(p.Location);
-                    cells = CurrentMap.GetCells(p.Location, 0, 1);
+                    cells = CurrentMap.GetCells(p.Location, 0, p.Type == MagicType.LightningWave ? 2 : 1);
 
                     foreach (Cell cell in cells)
                     {
@@ -15078,8 +15112,8 @@ namespace Zircon.Server.Models
                 case MagicType.ThunderStrike:
 
                     ob = null;
-
-                    cells = CurrentMap.GetCells(CurrentLocation, 0, 6);
+ 
+                    cells = CurrentMap.GetCells(CurrentLocation, 0, 4 + magic.Level);
                     foreach (Cell cell in cells)
                     {
                         if (cell.Objects == null)
@@ -15092,7 +15126,9 @@ namespace Zircon.Server.Models
 
                         foreach (MapObject target in cell.Objects)
                         {
-                            if (SEnvir.Random.Next(2) > 0) continue;
+                            if (magic.Level <= 0 && SEnvir.Random.Next(2) > 0) continue;
+                            if (magic.Level > 0 && SEnvir.Random.Next(2 + magic.Level / 2) > magic.Level / 2) continue;
+
                             if (!CanAttackTarget(target)) continue;
 
                             targets.Add(target.ObjectID);
@@ -17539,7 +17575,7 @@ namespace Zircon.Server.Models
                     Enqueue(new S.BuffTime { Index = buff.Index, Time = buff.RemainingTime });
                 }
 
-                power -= power * (Stats[Stat.MagicShield] + GetMC() / 2 + Stats[Stat.PhantomAttack]) / (100 + GetMC() / 2 + Stats[Stat.PhantomAttack]);
+                power -= power * Stats[Stat.MagicShield] / 100;
             }
 
 
@@ -19390,11 +19426,15 @@ namespace Zircon.Server.Models
             if (Buffs.Any(x => x.Type == BuffType.MagicShield)) return;
 
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.MagicShield, magic.GetPower());
 
-            
+            var ele = GetElementBySchool(magic.Info.School);
+            var mc = GetMC();
 
-            BuffAdd(BuffType.MagicShield, TimeSpan.FromSeconds(30 + magic.Level * 20 + GetMC() / 2 + Stats[Stat.PhantomAttack] * 2), buffStats, true, false, TimeSpan.Zero);
+            var value = (magic.GetPower() + mc / 2 + ele) * 100 / (100 + mc / 2 + ele);
+
+            buffStats.Values.Add(Stat.MagicShield, value); 
+
+            BuffAdd(BuffType.MagicShield, TimeSpan.FromSeconds(30 + magic.Level * 20 + mc / 2 + ele * 2), buffStats, true, false, TimeSpan.Zero);
 
             LevelMagic(magic);
         }
@@ -20465,14 +20505,21 @@ namespace Zircon.Server.Models
 
             foreach (CharacterBeltLink link in Character.BeltLinks)
             {
+                if (link == null) continue;
+
                 try
                 {
-                    if (link.LinkItemIndex > 0 && Inventory.FirstOrDefault(delegate (UserItem x) { return x.Index == link.LinkItemIndex; }) == null)
+                    if (link.LinkItemIndex > 0 && Inventory.FirstOrDefault(x => x.Index == link.LinkItemIndex) == null)
                         link.LinkItemIndex = -1;
 
                     blinks.Add(link.ToClientInfo());
                 }
-                catch(Exception ex) { SEnvir.Log(ex.Message);SEnvir.Log(ex.StackTrace); }
+                catch(Exception ex) 
+                { 
+                    SEnvir.Log(ex.Message); 
+                    if (!string.IsNullOrEmpty(ex.StackTrace))
+                        SEnvir.Log(ex.StackTrace); 
+                }
             }
 
             List<ClientAutoPotionLink> alinks = new List<ClientAutoPotionLink>();
