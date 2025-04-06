@@ -2150,6 +2150,10 @@ namespace Zircon.Server.Models
                         if (!Character.Account.TempAdmin) return;
                         ReviseItems(parts);
                         break;
+                    case "调整怪物种族":
+                        if (!Character.Account.TempAdmin) return;
+                        EditMonsterRace(parts);
+                        break;
                 }
             }
             else if (text.StartsWith("#"))
@@ -2186,7 +2190,38 @@ namespace Zircon.Server.Models
                 }
             }
         }
+        private void EditMonsterRace(string[] parts)
+        {
+            if (parts.Length < 4) return;
 
+            if (!bool.TryParse(parts[3], out var value))
+                return;
+
+            var mon = SEnvir.MonsterInfoList.Binding.FirstOrDefault(x => x.MonsterName == parts[1]);
+            if (mon == null)
+            {
+                Connection.ReceiveChat($"找不到指定怪物 {parts[1]}", MessageType.System);
+                return;
+            }
+
+            var prop = typeof(MonsterInfo).GetProperty(parts[2]);
+            if (prop == null)
+            {
+                Connection.ReceiveChat($"没有这个属性 {parts[2]}", MessageType.System);
+                return;
+            }
+
+            try 
+            { 
+                prop.SetValue(mon, value);
+                Connection.ReceiveChat($"成功设置 {mon.MonsterName}：{parts[2]}={value}", MessageType.System);
+            }
+            catch (Exception e)
+            {
+                SEnvir.Log(e);
+                Connection.ReceiveChat($"设置 {mon.MonsterName}：{parts[2]}={value} 时发生异常：{e.Message}", MessageType.System);
+            }
+        }
         private void ReviseItems(string[] parts)
         {
 
@@ -19423,7 +19458,7 @@ namespace Zircon.Server.Models
 
         public void MagicShieldEnd(UserMagic magic)
         {
-            if (Buffs.Any(x => x.Type == BuffType.MagicShield)) return;
+            //if (Buffs.Any(x => x.Type == BuffType.MagicShield)) return;
 
             Stats buffStats = new Stats();
 
