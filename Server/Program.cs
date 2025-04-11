@@ -77,6 +77,12 @@ if (Config.道具呼唤的怪物存活分钟 < 0)
     Console.WriteLine($"[道具呼唤的怪物存活分钟] 设置了无效值，恢复默认值 {Config.道具呼唤的怪物存活分钟} ...");
 }
 
+if (Config.宠物不追击距离玩家多少格以外的敌人 <= 0)
+{
+    Config.宠物不追击距离玩家多少格以外的敌人 = 10;
+    Console.WriteLine($"[宠物不追击距离玩家多少格以外的敌人] 设置了无效值，恢复默认值 {Config.宠物不追击距离玩家多少格以外的敌人} ...");
+}
+
 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
 
 bool stop = false;
@@ -100,6 +106,7 @@ Task.Run(() =>
 
 SEnvir.LoadBlock();
 SEnvir.LoadClientHash();
+SEnvir.LoadRebirthInfo();
 SEnvir.StartServer();
 
 while(!stop) Thread.Sleep(100);

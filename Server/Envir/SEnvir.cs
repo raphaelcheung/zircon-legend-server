@@ -32,10 +32,27 @@ namespace Server.Envir
     public static class SEnvir
     {
         public const string SuperAdmin = "raphael@gm.gm";
-        public static readonly string[] MarkRebirth = ["①", "②", "③", "④", "⑤", "⑥", "⑦"];
+
+        public static TagRebirthInfo[] s_RebirthInfoList =
+        [
+            new ("", Color.White),
+            new ("①", Color.DeepPink),
+            new ("②", Color.DeepPink),
+            new ("③", Color.DeepPink),
+            new ("④", Color.DeepPink),
+            new ("⑤", Color.DeepPink),
+            new ("⑥", Color.DeepPink),
+            new ("⑦", Color.DeepPink),
+
+        ];
 
         private static DateTime AutoClearUserDatasTime = DateTime.MinValue;
 
+        public struct TagRebirthInfo(string mark, Color color)
+        {
+            public string Mark = mark;
+            public Color NameColor = color;
+        }
         private struct TagBlockInfo()
         {
             public DateTime BlockTime = DateTime.MinValue;
@@ -3241,7 +3258,68 @@ namespace Server.Envir
 
             Log($"设备从登录黑名单中移除：{num}");
         }
+        public static void LoadRebirthInfo()
+        {
+            if (string.IsNullOrEmpty(Config.转生标识设置文件))
+            {
+                Log($"配置项 [转生标识设置文件] 为空，使用默认转生标识");
+                return;
+            }
 
+            if (!File.Exists(Config.转生标识设置文件))
+            {
+                Log($"配置项 [转生标识设置文件] 指向的文件不存在，使用默认转生标识设置");
+                return;
+            }
+
+            int limit = Config.最高转生次数 + 1;
+            List<TagRebirthInfo> result = new();
+
+            int loaded = 0;
+            var lines = File.ReadAllLines(Config.转生标识设置文件);
+            foreach(var line in lines)
+            {
+                var parts1 = line.Trim().Split(' ');
+                var mark = "";
+                
+
+                if (parts1 == null || parts1.Length <= 0)
+                    continue;
+
+                string colorStr = parts1[0];
+
+                if (parts1.Length >= 2)
+                {
+                    mark = parts1[0];
+                    colorStr = parts1[1];
+                }
+
+                var parts2 = colorStr.Split(',');
+                if (parts2.Length != 3 
+                    || !int.TryParse(parts2[0], out var r)
+                    || !int.TryParse(parts2[1], out var g)
+                    || !int.TryParse(parts2[2], out var b))
+                {
+                    Log($"{Config.转生标识设置文件} 中的格式错误，使用默认转生标识设置");
+                    return;
+                }
+
+                try { result.Add(new TagRebirthInfo(mark, Color.FromArgb(255, r, g, b))); }
+                catch
+                {
+                    Log($"{Config.转生标识设置文件} 中的格式错误，使用默认转生标识设置");
+                    return;
+                }
+            }
+
+            if (result.Count < limit)
+            {
+                Log($"{Config.转生标识设置文件} 中的转生设置少于允许的最大转生次数，使用默认转生标识设置");
+                return;
+            }
+
+            s_RebirthInfoList = result.ToArray();
+        }
         public static void LoadBlock()
         {
             dictDeviceBlock.Clear();
@@ -4684,7 +4762,7 @@ namespace Server.Envir
                     Class = info.Class,
                     Experience = info.Experience,
                     Level = info.Level,
-                    Name = $"{info.CharacterName} {(info.Rebirth > 0 && info.Rebirth <= MarkRebirth.Length ? MarkRebirth[info.Rebirth - 1] : "")}",
+                    Name = $"{info.CharacterName} {(info.Rebirth > 0 && info.Rebirth <= s_RebirthInfoList.Length ? s_RebirthInfoList[info.Rebirth].Mark : "")}",
                     Online = info.Player != null,
                     Observable = gm,
                 });

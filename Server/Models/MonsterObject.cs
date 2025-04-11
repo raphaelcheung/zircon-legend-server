@@ -1280,7 +1280,7 @@ namespace Zircon.Server.Models
             if (Target != null)
             {
                 if (!CanMove && !CanAttack && Visible) return;
-                if (Functions.Distance(PetOwner.CurrentLocation, Target.CurrentLocation) > Config.MaxViewRange)
+                if (PetOwner != null && Functions.Distance(PetOwner.CurrentLocation, Target.CurrentLocation) > Config.宠物不追击距离玩家多少格以外的敌人)
                 {
                     Target = null;
                     return;

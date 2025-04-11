@@ -118,7 +118,7 @@ namespace Server.Envir.Translations
             ConsignGuildFundsGuild= "你不能使用公会资金在市场上交易，因为你不是公会成员。";
             ConsignGuildFundsPermission= "你不能使用公会资金在市场上交易，因为你没有权限。";
             ConsignGuildFundsCost= "你的公会买不起这些东西。";
-            ConsignGuildFundsUsed= "{0} used {1:#,##0} gold of guild funds to consign {2} x{3} for {4} each.";
+            ConsignGuildFundsUsed= "{0} 使用 {1:#,##0} 帮会金币采购了 {2} x{3} 用于 {4}.";
             ConsignCost= "你无法支付购买这些物品的费用。";
             ConsignComplete= "物品注册成功。";
             ConsignAlreadySold = "物品已被售出。";
@@ -127,7 +127,7 @@ namespace Server.Envir.Translations
             ConsignBuyGuildFundsGuild= "你不能使用公会金在商人处购买，因为你不是公会成员。";
             ConsignBuyGuildFundsPermission= "你不能使用公会金在市场上购买，因为你没有权限。";
             ConsignBuyGuildFundsCost= "你的公会无力支付购买这些物品的费用。";
-            ConsignBuyGuildFundsUsed= "{0} used {1:#,##0} gold of guild funds to buy {2} x{3}.";
+            ConsignBuyGuildFundsUsed= "{0} 使用 {1:#,##0} 帮会金币采购了 {2} x{3}.";
             ConsignBuyCost= "你买不起这么多物品。";
             StoreNotAvailable= "购买失败，该物品当前不可购买。";
             StoreNeedSpace= "你背包空间不足，无法购买物品。";
@@ -191,7 +191,7 @@ namespace Server.Envir.Translations
             GroupRecallDelay= "你还需等待 {0} 才能召唤组员。";
             GroupRecallMap= "这个地图不能使用组员召唤";
             GroupRecallNotAllowed = "你没有接受组员召唤。";
-            GroupRecallMemberNotAllowed= "{0} 接受了组员召唤。";
+            GroupRecallMemberNotAllowed= "{0} 没有接受组员召唤。";
             GroupRecallFromMap= "你在这个地图无法接受组员召唤。";
             GroupRecallMemberFromMap= "{0} 无法从这个地图接受组员召唤。";
             TradeAlreadyTrading = "你已经在和其他人做交易。";

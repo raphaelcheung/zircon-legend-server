@@ -202,12 +202,12 @@ namespace Server.Envir
         public static TimeSpan PvPCurseDuration { get; set; } 
         public static int PvPCurseRate { get; set; } 
         public static TimeSpan AutoReviveDelay { get; set; }
-        public static int 最高转生次数 { get; set; } = 2;
+        public static int 最高转生次数 { get; set; } = 0;
         public static int 转生基础等级 { get; set; } = 86;
         public static int 技能最高等级 { get; set; } = 6;
         public static int 技能高级阶段基础经验 { get; set; } = 5;
-        public static bool 道士技能强化 { get; set; } = false;
         public static bool 转生死亡经验优化 { get; set; } = false;
+        public static string 转生标识设置文件 { get; set; } = "";
 
         [ConfigSection("Monsters")]
         public static TimeSpan DeadDuration { get; set; }
@@ -219,6 +219,7 @@ namespace Server.Envir
         public static int DropLowestWeapon { get; set; } = 0;
         public static string SummonMonsterGrowUpFile { get; set; } = "";
         public static uint 道具呼唤的怪物存活分钟 { get; set; } = 30;
+        public static uint 宠物不追击距离玩家多少格以外的敌人 { get; set; } = 10;
 
         [ConfigSection("Items")]
         public static TimeSpan DropDuration { get; set; }
