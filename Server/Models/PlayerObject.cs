@@ -16541,6 +16541,7 @@ namespace Zircon.Server.Models
 
             bool hasStone = Equipment[(int) EquipmentSlot.Amulet] != null ? Equipment[(int) EquipmentSlot.Amulet].Info.ItemType == ItemType.DarkStone : false;
             bool ignoreDenfense = false;
+            int destroySheildChance = 0;
 
             for (int i = magics.Count - 1; i >= 0; i--)
             {
@@ -16554,6 +16555,7 @@ namespace Zircon.Server.Models
                         break;
                     case MagicType.FlamingSword:
                         power = power * magic.GetPower() / 100;
+                        destroySheildChance = 20 + magic.Level * 4;
                         break;
                     case MagicType.DragonRise:
                         power = power * magic.GetPower() / 100;
@@ -16567,6 +16569,7 @@ namespace Zircon.Server.Models
                         {
                             power = power * magic.GetPower() / 100;
                             ignoreDenfense = true;
+                            destroySheildChance = 5 + magic.Level;
                         }
                         break;
 
@@ -16812,6 +16815,26 @@ namespace Zircon.Server.Models
                 ActionList.Add(new DelayedAction(SEnvir.Now.AddMilliseconds(300), ActionType.DelayedAttackDamage, ob, power, element, true, true, ob.Stats[Stat.MagicShield] == 0, true));
             }
 
+            if (destroySheildChance > 0)
+            {
+                var buff = Buffs.FirstOrDefault(x => x.Type == BuffType.MagicShield);
+
+                if (buff != null && SEnvir.Random.Next(100) < destroySheildChance)
+                {
+                    buff.RemainingTime = TimeSpan.Zero;
+                    Enqueue(new S.BuffTime { Index = buff.Index, Time = buff.RemainingTime });
+                }
+                else if (buff == null)
+                {
+                    buff = Buffs.FirstOrDefault(x => x.Type == BuffType.CelestialLight);
+                    if (buff != null && SEnvir.Random.Next(100) < destroySheildChance)
+                    {
+                        buff.RemainingTime = TimeSpan.Zero;
+                        Enqueue(new S.BuffTime { Index = buff.Index, Time = buff.RemainingTime });
+                    }
+                }
+            }
+
             if (karmaDamage > 0)
                 damage += ob.Attacked(this, karmaDamage, Element.None, false, true, false);
 
@@ -16986,54 +17009,49 @@ namespace Zircon.Server.Models
 
             foreach (UserMagic magic in magics)
             {
+                var ele = SEnvir.GetElementsFromSchool(magic.Info.School);
+                if (ele != Element.None)
+                    element = ele;
+
                 switch (magic.Info.Magic)
                 {
                     case MagicType.AdamantineFireBall:
                         if (Magics.TryGetValue(MagicType.FireBall, out var explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
 
-                        element = Element.Fire;
                         power += magic.GetPower() + GetMC();
                         break;
                     case MagicType.FireBall:
-                        element = Element.Fire;
                         power += magic.GetPower() + GetMC();
                         break;
-
                     case MagicType.ScortchedEarth:
                     case MagicType.FireStorm:
                     case MagicType.MeteorShower:
-                        element = Element.Fire;
                         if (Magics.TryGetValue(MagicType.FireBall, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
 
                         power += magic.GetPower() + GetMC();
                         break;
                     case MagicType.Asteroid:
-                        element = Element.Fire;
                         asteroid = magic;
                         canStuck = false;
                         break;
                     case MagicType.FireWall:
-                        element = Element.Fire;
                         if (Magics.TryGetValue(MagicType.FireBall, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         canStuck = false;
                         break;
                     case MagicType.HellFire:
-                        element = Element.Fire;
                         power += magic.GetPower() + GetDC();
                         break;
                     case MagicType.IceBolt:
                         slowLevel = 3;
-                        element = Element.Ice;
                         power += magic.GetPower() + GetMC();
                         slow = 10;
                         break;
                     case MagicType.FrozenEarth:
                         slowLevel = 3;
-                        element = Element.Ice;
                         if (Magics.TryGetValue(MagicType.FrozenEarth, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
@@ -17045,7 +17063,6 @@ namespace Zircon.Server.Models
                         goto case MagicType.IceStorm;
                     case MagicType.GreaterFrozenEarth:
                         slowLevel = 6;
-                        element = Element.Ice;
                         if (Magics.TryGetValue(MagicType.IceBolt, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
@@ -17053,7 +17070,6 @@ namespace Zircon.Server.Models
                         break;
                     case MagicType.IceStorm:
                         slowLevel = 5;
-                        element = Element.Ice;
                         if (Magics.TryGetValue(MagicType.IceBolt, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
@@ -17061,7 +17077,6 @@ namespace Zircon.Server.Models
                         break;
                     case MagicType.FrostBite:
                         slowLevel = 5;
-                        element = Element.Ice;
                         power += Math.Min(stats[Stat.FrostBiteDamage], stats[Stat.FrostBiteMaxDamage]) - Stats[Stat.IceAttack] * 2;
                         slow = 5;
                         break;
@@ -17069,29 +17084,24 @@ namespace Zircon.Server.Models
                     case MagicType.ThunderBolt:
                         if (Magics.TryGetValue(MagicType.LightningBall, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
-                        element = Element.Lightning;
                         power += magic.GetPower() + GetMC();
                         break;
                     case MagicType.LightningBall:
-                        element = Element.Lightning;
                         power += magic.GetPower() + GetMC();
                         break;
                     case MagicType.LightningWave:
                     case MagicType.LightningBeam:
-                        element = Element.Lightning;
                         if (Magics.TryGetValue(MagicType.LightningBall, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         break;
                     case MagicType.ThunderStrike:
-                        element = Element.Lightning;
                         if (Magics.TryGetValue(MagicType.LightningBall, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         power += power / 2;
                         break;
                     case MagicType.ChainLightning:
-                        element = Element.Lightning;
                         if (Magics.TryGetValue(MagicType.LightningBall, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
@@ -17100,25 +17110,21 @@ namespace Zircon.Server.Models
                     case MagicType.BlowEarth:
                         if (Magics.TryGetValue(MagicType.GustBlast, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
-                        element = Element.Wind;
                         power += magic.GetPower() + GetMC();
                         repel = 10;
                         break;
                     case MagicType.GustBlast:
-                        element = Element.Wind;
                         power += magic.GetPower() + GetMC();
                         repel = 10;
                         break;
                     case MagicType.Cyclone:
                     case MagicType.DragonTornado:
-                        element = Element.Wind;
                         if (Magics.TryGetValue(MagicType.GustBlast, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         repel = 5;
                         break;
                     case MagicType.Tempest:
-                        element = Element.Wind;
                         if (Magics.TryGetValue(MagicType.GustBlast, out explos) && Level >= explos.Info.NeedLevel1)
                             power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
@@ -17127,11 +17133,9 @@ namespace Zircon.Server.Models
                         break;
 
                     case MagicType.ExplosiveTalisman:
-                        element = Element.Dark;
                         power += magic.GetPower() + GetSC();
                         break;
                     case MagicType.ImprovedExplosiveTalisman:
-                        element = Element.Dark; 
                         power += magic.GetPower() + GetSC();
 
                         if (Magics.TryGetValue(MagicType.ExplosiveTalisman, out explos) && Level >= explos.Info.NeedLevel1)
@@ -17139,27 +17143,22 @@ namespace Zircon.Server.Models
 
                         break;
                     case MagicType.EvilSlayer:
-                        element = Element.Holy;
                         power += magic.GetPower() + GetSC();
                         break;
                     case MagicType.GreaterEvilSlayer:
-                        element = Element.Holy;
                         power += magic.GetPower() + GetSC();
                         if (Magics.TryGetValue(MagicType.EvilSlayer, out var evil) && Level >= evil.Info.NeedLevel1)
                             power += evil.GetPower();
                         break;
                     case MagicType.SummonPuppet:
-                        element = Element.Fire;
                         power += GetDC() * magic.GetPower() / 100;
                         break;
                     case MagicType.Rake:
-                        element = Element.Ice;
                         power += GetDC() * magic.GetPower() / 100;
                         slow = 1;
                         slowLevel = 10;
                         break;
                     case MagicType.DragonRepulse:
-                        element = Element.Lightning;
                         power = GetDC() * magic.GetPower() / 100 + Level;
 
                         MirDirection dir = Functions.DirectionFromPoint(CurrentLocation, ob.CurrentLocation);
@@ -17242,7 +17241,6 @@ namespace Zircon.Server.Models
                         break;
                     case MagicType.DemonExplosion:
                         power = extra;
-                        element = Element.Phantom;
                         break;
                 }
             }
@@ -17365,7 +17363,7 @@ namespace Zircon.Server.Models
             }
 
             if (asteroid != null)
-                power += asteroid.GetPower() + GetMC();
+                power += asteroid.GetPower() + GetMC() + GetElementPower(ob.Race, element);
 
             if (power <= 0)
             {
@@ -18026,8 +18024,8 @@ namespace Zircon.Server.Models
                     case MagicType.Resurrection:
                         ResurrectionEnd(magic, (PlayerObject)data[1]);
                         break;
-                        case MagicType.Infection:
-                            InfectionEnd(magics, (MapObject)data[1]);
+                    case MagicType.Infection:
+                        InfectionEnd(magics, (MapObject)data[1]);
                         break;
 
                     #endregion
@@ -18741,6 +18739,22 @@ namespace Zircon.Server.Models
 
             return GetElementPower(race, ele);
         }
+        public int GetElementPower(ObjectType race, Element ele)
+        {
+            Stat stat = ele switch
+            {
+                Element.Dark => Stat.DarkAttack,
+                Element.Phantom => Stat.PhantomAttack,
+                Element.Holy => Stat.HolyAttack,
+                Element.Fire => Stat.FireAttack,
+                Element.Lightning => Stat.LightningAttack,
+                Element.Wind => Stat.WindAttack,
+                Element.Ice => Stat.IceAttack,
+                _ => Stat.None,
+            };
+
+            return GetElementPower(race, ele);
+        }
         public int GetElementPower(ObjectType race, Stat element)
         {
             if (race != ObjectType.Player) return Stats[element];
@@ -19046,7 +19060,7 @@ namespace Zircon.Server.Models
                         return;
                     }*/
 
-                    if (SEnvir.Random.Next(10) > 4 + magic.Level) return;
+                    if (SEnvir.Random.Next(15) > 4 + magic.Level) return;
 
                     break;
                 case ObjectType.Monster:
@@ -19134,7 +19148,7 @@ namespace Zircon.Server.Models
             if (Buffs.Any(x => x.Type == BuffType.Might))
             {
                 BuffRemove(BuffType.Might);
-                ChangeHP(-(CurrentHP / 2));
+                ChangeHP(-CurrentHP / 2);
             }
 
             Stats buffStats = new Stats();
@@ -19149,16 +19163,27 @@ namespace Zircon.Server.Models
         public void MightEnd(UserMagic magic)
         {
             if (Buffs.Any(x => x.Type == BuffType.Defiance))
-            {
                 BuffRemove(BuffType.Defiance);
-                ChangeHP(-(CurrentHP / 2));
+
+            var consumeHP = Stats[Stat.Health] / 2;
+            if (CurrentHP <= consumeHP)
+            {
+                Connection.ReceiveChat($"你的血量不足以施展 {magic.Info.Name}", MessageType.System);
+                return;
             }
-            int value = 4 + magic.Level * 6;
+
+            ChangeHP(-consumeHP);
+            
+            //int minDC = Stats[Stat.MinDC];
+            int maxDC = Stats[Stat.MaxDC];
+
+            int minValue = 5 + magic.Level * 2 + maxDC * ((580 - magic.Level * 30) + maxDC) / ((580 - magic.Level * 30) * 14 + maxDC);
+
+            int maxValue = 5 + magic.Level * 4 + maxDC * ((380 - magic.Level * 20) + maxDC) / ((380 - magic.Level * 20) * 14 + maxDC);
 
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.MinDC, value);
-            buffStats.Values.Add(Stat.MaxDC, value);
-
+            buffStats.Values.Add(Stat.MinDC, minValue);
+            buffStats.Values.Add(Stat.MaxDC, maxValue);
 
             BuffAdd(BuffType.Might, TimeSpan.FromSeconds(60 + magic.Level * 30), buffStats, false, false, TimeSpan.Zero);
 
@@ -19606,6 +19631,7 @@ namespace Zircon.Server.Models
             ob.BuffAdd(BuffType.Heal, TimeSpan.FromSeconds(buffStats[Stat.Healing] / buffStats[Stat.HealingCap]), buffStats, false, false, TimeSpan.FromSeconds(1));
             LevelMagic(magic);
         }
+        
         private int GetElementBySchool(MagicSchool school)
         {
             Stat ele = school switch 
@@ -19672,7 +19698,8 @@ namespace Zircon.Server.Models
 
             var sc = GetSC();
             var ele = GetElementBySchool(magic.Info.School);
-            var value = (sc + ele * 2) * (magic.Level + 1) / (ob.Race == ObjectType.Player ? 200 : 100);
+            var value = magic.Level * 2 + 1 + (sc * 2 + ele * 4) / (ob.Race == ObjectType.Player ? 200 : 100);
+
             Stats buffStats = new Stats();
             buffStats.Values.Add(Stat.LifeSteal, 3 + Math.Max(magic.Level * 2 + 1, value));
             ob.BuffAdd(BuffType.LifeSteal, TimeSpan.FromSeconds(magic.GetPower()), buffStats, true, false, TimeSpan.Zero);
@@ -19733,7 +19760,7 @@ namespace Zircon.Server.Models
 
             int value = 5 + magic.Level;
 
-            value += GetSC() * magic.Level / 30;
+            value += (GetSC() + GetElementBySchool(magic.Info.School)) * magic.Level / 30;
 
             Stats buffStats = new Stats();
             buffStats.Values.Add(Stat.MaxMR, value);
@@ -19800,14 +19827,17 @@ namespace Zircon.Server.Models
 
             int value = 5 + magic.Level;
 
-            value += GetSC() * magic.Level / 30;
+            var sc = GetSC();
+            var ele = GetElementBySchool(magic.Info.School);
+
+            value += (sc + ele * 2) * magic.Level / 30;
 
             Stats buffStats = new Stats();
             buffStats.Values.Add(Stat.MaxAC, value);
             buffStats.Values.Add(Stat.MinAC, value / 2);
             buffStats.Values.Add(Stat.PhysicalResistance, 1);
 
-            ob.BuffAdd(BuffType.Resilience, TimeSpan.FromSeconds((magic.GetPower() + GetSC() * 2)), buffStats, true, false, TimeSpan.Zero);
+            ob.BuffAdd(BuffType.Resilience, TimeSpan.FromSeconds((magic.GetPower() + sc * 2 + ele * 4)), buffStats, true, false, TimeSpan.Zero);
 
             LevelMagic(magic);
         }
@@ -19817,7 +19847,7 @@ namespace Zircon.Server.Models
 
 
             Stats buffStats = new Stats();
-            int value = 5 + magic.Level;
+            int value = 5 + magic.Level * 3;
 
             int sc = GetSC();
             int ele = GetElementBySchool(magic.Info.School);
@@ -19878,7 +19908,7 @@ namespace Zircon.Server.Models
             }
 
 
-            ob.BuffAdd(BuffType.ElementalSuperiority, TimeSpan.FromSeconds(magic.GetPower() + GetSC() * 2), buffStats, true, false, TimeSpan.Zero);
+            ob.BuffAdd(BuffType.ElementalSuperiority, TimeSpan.FromSeconds(magic.GetPower() + GetSC() * 2 + ele * 4), buffStats, true, false, TimeSpan.Zero);
 
             LevelMagic(magic);
         }
@@ -19888,7 +19918,7 @@ namespace Zircon.Server.Models
         {
             if (ob == null || ob.Node == null || !CanHelpTarget(ob)) return;
 
-            int value = 1 + magic.Level * 3;
+            int value = 5 + magic.Level * 3;
 
             int sc = GetSC();
             int ele = GetElementBySchool(magic.Info.School);
@@ -19897,7 +19927,7 @@ namespace Zircon.Server.Models
             Stats buffStats = new Stats();
             buffStats.Values.Add(Stat.MaxDC, value);
             buffStats.Values.Add(Stat.MinDC, value / 3);
-            ob.BuffAdd(BuffType.BloodLust, TimeSpan.FromSeconds((magic.GetPower() + GetSC() * 2)), buffStats, true, false, TimeSpan.Zero);
+            ob.BuffAdd(BuffType.BloodLust, TimeSpan.FromSeconds((magic.GetPower() + sc * 2 + ele * 4)), buffStats, true, false, TimeSpan.Zero);
 
             LevelMagic(magic);
         }
@@ -19993,7 +20023,7 @@ namespace Zircon.Server.Models
             
             ob.ApplyPoison(new Poison
             {
-                Value = GetSC() + Stats[Stat.CriticalChance] + Stats[Stat.CriticalDamage],
+                Value = GetSC() + GetElementBySchool(magic.Info.School) * 2 + Stats[Stat.CriticalChance] + Stats[Stat.CriticalDamage],
                 Type = PoisonType.Infection,
                 Owner = this,
                 TickCount = 10 + magic.Level * 10,

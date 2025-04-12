@@ -4858,6 +4858,23 @@ namespace Server.Envir
 
             return result;
         }
+        public static Element GetElementsFromSchool(MagicSchool school)
+        {
+            return school switch
+            {
+
+                MagicSchool.Dark => Element.Dark,
+                MagicSchool.Phantom => Element.Phantom,
+                MagicSchool.Holy => Element.Holy,
+                MagicSchool.Fire => Element.Fire,
+                MagicSchool.Lightning => Element.Lightning,
+                MagicSchool.Wind => Element.Wind,
+                MagicSchool.Ice => Element.Ice,
+                _ => Element.None,
+
+            };
+
+        }
     }
 
     public class WebCommand

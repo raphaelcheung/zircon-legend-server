@@ -145,8 +145,8 @@ namespace Server.DBModels
 
 
         public int GetPower()
-        {
-            int min = Info.MinBasePower + Level*Info.MinLevelPower/3;
+        { 
+            int min = Info.MinBasePower + Level * Info.MinLevelPower / 3;
             int max = Info.MaxBasePower + Level * Info.MaxLevelPower / 3;
 
             if (min < 0) min = 0;
