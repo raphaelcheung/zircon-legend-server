@@ -2413,7 +2413,7 @@ namespace Zircon.Server.Models
             foreach(var ob in SEnvir.ActiveObjects)
             {
                 if (!(ob is MonsterObject mon)) continue;
-                if (mon.MonsterInfo.MonsterName != parts[1]) continue;
+                if (mon.MonsterInfo.MonsterName != parts[1] || mon.Dead) continue;
 
                 if (mon.CurrentMap.Info.Index == CurrentMap.Info.Index && Functions.InRange(mon.CurrentLocation, CurrentLocation, 10))
                     continue;
@@ -7480,7 +7480,7 @@ namespace Zircon.Server.Models
 
                     if (SEnvir.Random.Next(100) >= item.CurrentDurability)
                     {
-                        Connection.ReceiveChat(Connection.Language.LearnBookFailed, MessageType.System);
+                        Connection.ReceiveChat(string.Format(Connection.Language.LearnBookFailed, item.Info.ItemName), MessageType.System);
 
                         foreach (SConnection con in Connection.Observers)
                             con.ReceiveChat(con.Language.LearnBookFailed, MessageType.System);
@@ -7497,16 +7497,18 @@ namespace Zircon.Server.Models
                         if (magic.Level >= Config.技能最高等级)
                         {
                             Connection.ReceiveChat($"{magic.Info.Name} 已修炼满级", MessageType.System);
+
                             break;
                         }
 
                         int rate = (int)Math.Pow(2, magic.Level - 3) * 500;
 
-                        magic.Experience += (Config.技能高级阶段基础经验 + 1) * Config.SkillRate;
+                        magic.Experience += item.CurrentDurability * Config.技能高等级经验倍率 / 100;
 
                         if (magic.Experience >= rate || (magic.Level == 3 && SEnvir.Random.Next(rate) == 0))
                         {
                             magic.Level++;
+
                             magic.Experience = 0;
 
                             Enqueue(new S.MagicLeveled { InfoIndex = magic.Info.Index, Level = magic.Level, Experience = magic.Experience });
@@ -9400,7 +9402,7 @@ namespace Zircon.Server.Models
             stats[Stat.BaseExperienceRate] += Config.ExperienceRate;
             stats[Stat.BaseDropRate] += Config.DropRate;
             stats[Stat.BaseGoldRate] += Config.GoldRate;
-            stats[Stat.SkillRate] = Config.SkillRate;
+            stats[Stat.SkillRate] = Config.技能低等级经验倍率;
             stats[Stat.CompanionRate] = Config.CompanionRate;
 
 
@@ -15418,7 +15420,6 @@ namespace Zircon.Server.Models
                     break;
                 case MagicType.Resilience:
                 case MagicType.BloodLust:
-                case MagicType.LifeSteal:
 
                     ob = null;
 
@@ -15428,6 +15429,20 @@ namespace Zircon.Server.Models
                         break;
                     }
 
+                    locations.Add(p.Location);
+                    cells = CurrentMap.GetCells(p.Location, 0, 3);
+
+                    foreach (Cell cell in cells)
+                    {
+                        ActionList.Add(new DelayedAction(
+                            SEnvir.Now.AddMilliseconds(500 + Functions.Distance(CurrentLocation, p.Location) * 48),
+                            ActionType.DelayMagic,
+                            new List<UserMagic> { magic },
+                            cell));
+                    }
+                    break;
+                case MagicType.LifeSteal:
+                    ob = null;
                     locations.Add(p.Location);
                     cells = CurrentMap.GetCells(p.Location, 0, 3);
 
@@ -16569,7 +16584,7 @@ namespace Zircon.Server.Models
                         {
                             power = power * magic.GetPower() / 100;
                             ignoreDenfense = true;
-                            destroySheildChance = 5 + magic.Level;
+                            destroySheildChance = 10 + magic.Level * 2;
                         }
                         break;
 
@@ -17006,6 +17021,8 @@ namespace Zircon.Server.Models
             int power = 0;
             UserMagic asteroid = null;
 
+            int destorySheildRate = 0;
+            int ignoreMR = 0;
 
             foreach (UserMagic magic in magics)
             {
@@ -17112,10 +17129,14 @@ namespace Zircon.Server.Models
                             power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         repel = 10;
+                        destorySheildRate = 5 + magic.Level;
+                        ignoreMR = 5 + magic.Level;
                         break;
                     case MagicType.GustBlast:
                         power += magic.GetPower() + GetMC();
                         repel = 10;
+                        destorySheildRate = magic.Level;
+                        ignoreMR = magic.Level;
                         break;
                     case MagicType.Cyclone:
                     case MagicType.DragonTornado:
@@ -17123,6 +17144,8 @@ namespace Zircon.Server.Models
                             power += explos.GetPower();
                         power += magic.GetPower() + GetMC();
                         repel = 5;
+                        destorySheildRate = 5 + magic.Level;
+                        ignoreMR = 5 + magic.Level;
                         break;
                     case MagicType.Tempest:
                         if (Magics.TryGetValue(MagicType.GustBlast, out explos) && Level >= explos.Info.NeedLevel1)
@@ -17130,6 +17153,8 @@ namespace Zircon.Server.Models
                         power += magic.GetPower() + GetMC();
                         repel = 5;
                         canStuck = false;
+                        destorySheildRate = 10 + magic.Level * 3;
+                        ignoreMR = 20 + magic.Level * 2;
                         break;
 
                     case MagicType.ExplosiveTalisman:
@@ -17318,14 +17343,34 @@ namespace Zircon.Server.Models
                 }
             }
 
-            power -= ob.GetMR();
+            if (ignoreMR <= 0 || SEnvir.Random.Next(100) >= ignoreMR)
+                power -= ob.GetMR();
 
+            var buff = Buffs.FirstOrDefault(x => x.Type == BuffType.MagicShield);
 
-           /* if (Buffs.Any(x => x.Type == BuffType.Renounce))
+            if (destorySheildRate > 0)
             {
-                if (ob.Race == ObjectType.Player)
-                    power += ob.Stats[Stat.Health] * (1 + (Math.Min(4000, ob.Stats[Stat.Health]) / 2000)) / 100;
-            }*/
+                if (buff != null && SEnvir.Random.Next(100) < destorySheildRate)
+                {
+                    buff.RemainingTime = TimeSpan.Zero;
+                    Enqueue(new S.BuffTime { Index = buff.Index, Time = buff.RemainingTime });
+                }
+                else if (buff == null)
+                {
+                    buff = Buffs.FirstOrDefault(x => x.Type == BuffType.CelestialLight);
+                    if (buff != null && SEnvir.Random.Next(100) < destorySheildRate)
+                    {
+                        buff.RemainingTime = TimeSpan.Zero;
+                        Enqueue(new S.BuffTime { Index = buff.Index, Time = buff.RemainingTime });
+                    }
+                }
+            }
+
+            //if (Buffs.Any(x => x.Type == BuffType.Renounce))
+            //{
+            //    if (ob.Race == ObjectType.Player)
+            //        power += ob.Stats[Stat.Health] * (1 + (Math.Min(4000, ob.Stats[Stat.Health]) / 2000)) / 100;
+            //}
 
             switch (element)
             {
@@ -17485,7 +17530,7 @@ namespace Zircon.Server.Models
                         }
                     }
 
-                    if (silence > 0 && !((MonsterObject) ob).MonsterInfo.IsBoss)
+                    if (silence > 0 && ob is MonsterObject mon && (!mon.MonsterInfo.IsBoss || SEnvir.Random.Next(100) < 10))
                     {
                         ob.ApplyPoison(new Poison
                         {
@@ -18080,7 +18125,7 @@ namespace Zircon.Server.Models
 
             int experience = SEnvir.Random.Next(Config.技能初级阶段基础经验) + 1;
 
-            experience *= Stats[Stat.SkillRate];
+            experience *= Stats[Stat.SkillRate] / 100;
 
             int maxExperience;
             switch (magic.Level)
@@ -18753,7 +18798,7 @@ namespace Zircon.Server.Models
                 _ => Stat.None,
             };
 
-            return GetElementPower(race, ele);
+            return GetElementPower(race, stat);
         }
         public int GetElementPower(ObjectType race, Stat element)
         {

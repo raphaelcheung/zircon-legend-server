@@ -2618,7 +2618,7 @@ namespace Zircon.Server.Models
         {
             if (MonsterInfo.IsBoss && MonsterInfo.Level == 250 && EXPOwner != null)
             {
-                string msg = $"[{SEnvir.Now:HH:mm:ss}] {CurrentMap.Info.Description}的【{MonsterInfo.MonsterName}】被绝世高手【{EXPOwner.Name}】击杀";
+                string msg = $"[{SEnvir.Now.ToLocalTime():HH:mm:ss}] {CurrentMap.Info.Description}的【{MonsterInfo.MonsterName}】被绝世高手【{EXPOwner.Name}】击杀";
                 foreach (var con in SEnvir.Connections)
                     con.ReceiveChat(msg, MessageType.Announcement);
             }

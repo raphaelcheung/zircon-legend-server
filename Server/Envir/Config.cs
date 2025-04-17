@@ -96,7 +96,7 @@ namespace Server.Envir
             ExperienceRate  = 0;
             DropRate = 0;
             GoldRate = 0;
-            SkillRate = 0;
+            技能低等级经验倍率 = 0;
             CompanionRate = 0;
         }
 
@@ -205,7 +205,6 @@ namespace Server.Envir
         public static int 最高转生次数 { get; set; } = 0;
         public static int 转生基础等级 { get; set; } = 86;
         public static int 技能最高等级 { get; set; } = 6;
-        public static int 技能高级阶段基础经验 { get; set; } = 5;
         public static bool 转生死亡经验优化 { get; set; } = false;
         public static string 转生标识设置文件 { get; set; } = "";
 
@@ -250,9 +249,10 @@ namespace Server.Envir
         public static int ExperienceRate { get; set; }
         public static int DropRate { get; set; }
         public static int GoldRate { get; set; }
-        public static int SkillRate { get; set; }
+        public static int 技能低等级经验倍率 { get; set; } = 1;
         public static int CompanionRate { get; set; }
         public static int Boss掉落倍率 { get; set; } = 0;
+        public static int 技能高等级经验倍率 { get; set; } = 100;
 
     }
 }

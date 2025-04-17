@@ -68,7 +68,7 @@ namespace Server.Envir.Translations
             CannotTownTeleport= "无法在此地图上进行回城传送。";
             CannotRandomTeleport= "无法在此地图上进行随机传送。";
             ConnotResetCompanionSkill= "要使用 {0} 请输入 '@宠物技能{1}'";
-            LearnBookFailed= "修炼技能失败，书籍没有包含你缺少的页面。";
+            LearnBookFailed= "秘籍《{0}》修炼失败，没有包含你缺少的页面。";
             LearnBookSuccess= "恭喜，你成功修炼技能 {0}。";
             LearnBook4Failed= "你的技能 {0} 经验有所增加。";
             LearnBook4Success= "恭喜，你成功将技能 {0} 修炼到了 {1} 级。";

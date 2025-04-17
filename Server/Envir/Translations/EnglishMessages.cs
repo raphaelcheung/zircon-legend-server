@@ -67,7 +67,7 @@ namespace Server.Envir.Translations
             CannotTownTeleport= "Unable to Town Teleport on this Map.";
             CannotRandomTeleport= "Unable to Random Teleport on this Map.";
             ConnotResetCompanionSkill= "To use {0} please type '@EnableLevel{1}'";
-            LearnBookFailed= "Failed to learn skill, not enough pages";
+            LearnBookFailed= "Failed to learn skill {0}, not enough pages";
             LearnBookSuccess= "Congratulations, You have successfully learned {0}.";
             LearnBook4Failed= "Failed to learn level {0} skill.";
             LearnBook4Success= "Congratulations, You have successfully learned level {1} {0}.";
