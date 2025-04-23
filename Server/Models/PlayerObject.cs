@@ -5,14 +5,9 @@ using Library.SystemModels;
 using MirDB;
 using Server.DBModels;
 using Server.Envir;
-using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics.Metrics;
+using System.ComponentModel;
 using System.Drawing;
-using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 using Zircon.Server.Models.Monsters;
@@ -2148,6 +2143,23 @@ namespace Zircon.Server.Models
                         if (!Character.Account.TempAdmin) return;
                         EditMonsterRace(parts);
                         break;
+                    case "重载转生标识":
+                        if (!GameMaster) return;
+                        ReloadRebirthConfig(parts);
+                        break;
+                    case "转生等级":
+                    case "重生等级":
+                        if (!Character.Account.TempAdmin) return;
+                        SetRebirthLevel(parts);
+                        break;
+                    case "修改配置":
+                        if (!Character.Account.TempAdmin) return;
+                        EditConfig(parts);
+                        break;
+                    case "角色信息":
+                        if (!GameMaster) return;
+                        CharacterInfo(parts);
+                        break;
                 }
             }
             else if (text.StartsWith("#"))
@@ -2183,6 +2195,110 @@ namespace Zircon.Server.Models
                     }
                 }
             }
+        }
+        private void CharacterInfo(string[] parts)
+        {
+            if (parts.Length < 2) return;
+
+            string accountName = "";
+            string characterName = "";
+
+            if (parts.Length >= 3)
+            {
+                accountName = parts[1];
+                characterName = parts[2];
+            }
+            else characterName = parts[1];
+
+            uint totalCount = 0;
+            uint showCount = 0;
+
+            foreach (var account in SEnvir.AccountInfoList.Binding)
+            {
+                if (!string.IsNullOrEmpty(accountName) && account.EMailAddress != accountName) continue;
+
+                foreach (var character in account.Characters)
+                {
+                    if (character == null || character.Deleted || characterName != character.CharacterName) continue;
+
+                    totalCount++;
+
+                    if (showCount >= 3) continue;
+
+                    Connection.ReceiveChat($"[{account.EMailAddress} - {character.CharacterName}]：", MessageType.System);
+                    Connection.ReceiveChat($"- 性别职业：{character.Gender}{Functions.GetEnumDesc(character.Class)}", MessageType.System);
+                    Connection.ReceiveChat($"- 等级：{character.Rebirth}转 {character.Level}", MessageType.System);
+                    Connection.ReceiveChat($"- 生命魔法：[{character.CurrentHP}] [{character.CurrentMP}]", MessageType.System);
+                    Connection.ReceiveChat($"- 经验值：{character.Experience}", MessageType.System);
+                    Connection.ReceiveChat($"- 上一次登录：{character.LastLogin}", MessageType.System);
+
+                    showCount++;
+                }
+            }
+
+            if (totalCount > showCount)
+                Connection.ReceiveChat($"剩余 {totalCount - showCount} 个同名角色未显示......", MessageType.System);
+            else if (totalCount <= 0)
+                Connection.ReceiveChat($"没有找到这个名字的角色", MessageType.System);
+
+        }
+        private void EditConfig(string[] parts)
+        {
+            if (parts.Length < 3) return;
+
+            var prop = typeof(Config).GetProperty(parts[1], System.Reflection.BindingFlags.Static);
+            if (prop == null)
+            {
+                Connection.ReceiveChat($"没有找到这个配置：{parts[1]}", MessageType.System);
+                return;
+            }
+
+            var converter = TypeDescriptor.GetConverter(prop.PropertyType);
+            if (!converter.CanConvertFrom(typeof(string)))
+            {
+                Connection.ReceiveChat($"{parts[1]} 设置失败，无法将值转换为[{prop.PropertyType}]类型", MessageType.System);
+                return;
+            }
+
+            prop.SetValue(null, converter.ConvertFromString(parts[2]));
+            Connection.ReceiveChat($"{parts[1]} 设置为：{prop.GetValue(null)}", MessageType.System);
+        }
+        private void SetRebirthLevel(string[] parts)
+        {
+            if (parts.Length < 2) return;
+
+            var player = this;
+            int level = 0;
+            if (parts.Length > 2)
+            {
+                if (!int.TryParse(parts[2], out level)) return;
+
+                var name = parts[1];
+                if (name != Name)
+                {
+                    player = SEnvir.GetPlayerByCharacter(name);
+                    if (player == null)
+                    {
+                        Connection.ReceiveChat($"找不到玩家：{name}", MessageType.System);
+                        return;
+                    }
+                }
+            }
+            else if (!int.TryParse(parts[1], out level))
+                return;
+
+            if (level < 0) return;
+
+            player.Character.Rebirth = level;
+            player.RefreshStats();
+            Connection.ReceiveChat($"成功设置 [{player.Name}] 转生等级为：{level}", MessageType.System);
+        }
+        private void ReloadRebirthConfig(string[] parts)
+        {
+            var result = SEnvir.LoadRebirthInfo();
+
+            if (string.IsNullOrEmpty(result)) Connection.ReceiveChat("转生标识配置重载完毕", MessageType.System);
+            else Connection.ReceiveChat($"重载出错：{result}", MessageType.System);
         }
         private void EditMonsterRace(string[] parts)
         {
@@ -3630,8 +3746,12 @@ namespace Zircon.Server.Models
 
             if (Stats[Stat.Defiance] > 0)
             {
+                var min = Stats[Stat.MinAC];
                 Stats[Stat.MinAC] = Stats[Stat.MaxAC];
+                Stats[Stat.MaxAC] += min;
+                min = Stats[Stat.MinMR];
                 Stats[Stat.MinMR] = Stats[Stat.MaxMR];
+                Stats[Stat.MaxMR] += min;
             }
 
             if (Buffs.Any(x => x.Type == BuffType.MagicWeakness))
@@ -13257,9 +13377,9 @@ namespace Zircon.Server.Models
             }
             #endregion
 
-        #region Yellow
+            #region Yellow
 
-        if (p.Yellow != null)
+            if (p.Yellow != null)
             {
                 item = Inventory[p.Yellow.Slot];
                 if (item.Count == 1)
@@ -13291,22 +13411,22 @@ namespace Zircon.Server.Models
 
             #endregion
 
-                #region Red
+            #region Red
 
-                if (p.Red != null)
+            if (p.Red != null)
+            {
+                item = Inventory[p.Red.Slot];
+                if (item.Count == 1)
                 {
-                    item = Inventory[p.Red.Slot];
-                    if (item.Count == 1)
-                    {
-                        RemoveItem(item);
-                        Inventory[p.Red.Slot] = null;
-                        item.Delete();
-                    }
-                    else
-                        item.Count -= 1;
+                    RemoveItem(item);
+                    Inventory[p.Red.Slot] = null;
+                    item.Delete();
                 }
+                else
+                    item.Count -= 1;
+            }
 
-                #endregion
+            #endregion
 
             #region Purple
 
@@ -15443,13 +15563,13 @@ namespace Zircon.Server.Models
                     break;
                 case MagicType.LifeSteal:
                     ob = null;
-                    locations.Add(p.Location);
-                    cells = CurrentMap.GetCells(p.Location, 0, 3);
+                    locations.Add(CurrentLocation);
+                    cells = CurrentMap.GetCells(CurrentLocation, 0, 3);
 
                     foreach (Cell cell in cells)
                     {
                         ActionList.Add(new DelayedAction(
-                            SEnvir.Now.AddMilliseconds(500 + Functions.Distance(CurrentLocation, p.Location) * 48),
+                            SEnvir.Now.AddMilliseconds(500),
                             ActionType.DelayMagic,
                             new List<UserMagic> { magic },
                             cell));
@@ -16832,16 +16952,16 @@ namespace Zircon.Server.Models
 
             if (destroySheildChance > 0)
             {
-                var buff = Buffs.FirstOrDefault(x => x.Type == BuffType.MagicShield);
+                var buff = ob.Buffs.FirstOrDefault(x => x.Type == BuffType.MagicShield);
 
                 if (buff != null && SEnvir.Random.Next(100) < destroySheildChance)
                 {
                     buff.RemainingTime = TimeSpan.Zero;
-                    Enqueue(new S.BuffTime { Index = buff.Index, Time = buff.RemainingTime });
+                    //Enqueue(new S.BuffTime { Index = buff.Index, Time = buff.RemainingTime });
                 }
                 else if (buff == null)
                 {
-                    buff = Buffs.FirstOrDefault(x => x.Type == BuffType.CelestialLight);
+                    buff = ob.Buffs.FirstOrDefault(x => x.Type == BuffType.CelestialLight);
                     if (buff != null && SEnvir.Random.Next(100) < destroySheildChance)
                     {
                         buff.RemainingTime = TimeSpan.Zero;
@@ -17094,7 +17214,7 @@ namespace Zircon.Server.Models
                         break;
                     case MagicType.FrostBite:
                         slowLevel = 5;
-                        power += Math.Min(stats[Stat.FrostBiteDamage], stats[Stat.FrostBiteMaxDamage]) - Stats[Stat.IceAttack] * 2;
+                        power += Math.Min(stats[Stat.FrostBiteDamage], stats[Stat.FrostBiteMaxDamage]);
                         slow = 5;
                         break;
 
@@ -17346,22 +17466,22 @@ namespace Zircon.Server.Models
             if (ignoreMR <= 0 || SEnvir.Random.Next(100) >= ignoreMR)
                 power -= ob.GetMR();
 
-            var buff = Buffs.FirstOrDefault(x => x.Type == BuffType.MagicShield);
+            var buff = ob.Buffs.FirstOrDefault(x => x.Type == BuffType.MagicShield);
 
             if (destorySheildRate > 0)
             {
                 if (buff != null && SEnvir.Random.Next(100) < destorySheildRate)
                 {
                     buff.RemainingTime = TimeSpan.Zero;
-                    Enqueue(new S.BuffTime { Index = buff.Index, Time = buff.RemainingTime });
+                    //Enqueue(new S.BuffTime { Index = buff.Index, Time = buff.RemainingTime });
                 }
                 else if (buff == null)
                 {
-                    buff = Buffs.FirstOrDefault(x => x.Type == BuffType.CelestialLight);
+                    buff = ob.Buffs.FirstOrDefault(x => x.Type == BuffType.CelestialLight);
                     if (buff != null && SEnvir.Random.Next(100) < destorySheildRate)
                     {
                         buff.RemainingTime = TimeSpan.Zero;
-                        Enqueue(new S.BuffTime { Index = buff.Index, Time = buff.RemainingTime });
+                        //Enqueue(new S.BuffTime { Index = buff.Index, Time = buff.RemainingTime });
                     }
                 }
             }
@@ -19161,7 +19281,10 @@ namespace Zircon.Server.Models
         }
         public void MassBeckonEnd(UserMagic magic)
         {
-            List<MapObject> targets = GetTargets(CurrentMap, CurrentLocation, 9);
+            List<MapObject> targets = GetTargets(CurrentMap, CurrentLocation, 8 + magic.Level / 2);
+
+            int count = 0;
+            int limit = 4 + magic.Level * 5;
 
             foreach (MapObject ob in targets)
             {
@@ -19172,9 +19295,10 @@ namespace Zircon.Server.Models
 
                 if (SEnvir.Random.Next(9) > 2 + magic.Level * 2) continue;
 
-
-
                 if (!string.IsNullOrEmpty(ob.Teleport(CurrentMap, CurrentMap.GetRandomLocation(CurrentLocation, 3)))) continue;
+
+                count++;
+                if (count > limit) break;
 
                 ob.ApplyPoison(new Poison
                 {
@@ -19219,16 +19343,19 @@ namespace Zircon.Server.Models
 
             ChangeHP(-consumeHP);
             
-            //int minDC = Stats[Stat.MinDC];
+            int minDC = Stats[Stat.MinDC];
             int maxDC = Stats[Stat.MaxDC];
 
-            int minValue = 5 + magic.Level * 2 + maxDC * ((580 - magic.Level * 30) + maxDC) / ((580 - magic.Level * 30) * 14 + maxDC);
-
+            int minValue = 5 + magic.Level * 2 + minDC * ((380 - magic.Level * 20) + minDC) / ((380 - magic.Level * 20) * 10 + minDC);
+            
             int maxValue = 5 + magic.Level * 4 + maxDC * ((380 - magic.Level * 20) + maxDC) / ((380 - magic.Level * 20) * 14 + maxDC);
+            maxValue += maxDC * ((580 - magic.Level * 30) + maxDC) / ((580 - magic.Level * 30) * 14 + maxDC);
+
+            consumeHP /= 100;
 
             Stats buffStats = new Stats();
             buffStats.Values.Add(Stat.MinDC, minValue);
-            buffStats.Values.Add(Stat.MaxDC, maxValue);
+            buffStats.Values.Add(Stat.MaxDC, maxValue + consumeHP);
 
             BuffAdd(BuffType.Might, TimeSpan.FromSeconds(60 + magic.Level * 30), buffStats, false, false, TimeSpan.Zero);
 
@@ -19237,7 +19364,10 @@ namespace Zircon.Server.Models
 
         public void EnduranceEnd(UserMagic magic)
         {
-            BuffAdd(BuffType.Endurance, TimeSpan.FromSeconds(10 + magic.Level * 5), null, false, false, TimeSpan.Zero);
+
+            Stats buffStats = new Stats();
+            buffStats.Values.Add(Stat.Health, Stats[Stat.Health] * (4 + magic.Level) / 18);
+            BuffAdd(BuffType.Endurance, TimeSpan.FromSeconds(15 + magic.Level * 7), buffStats, false, false, TimeSpan.Zero);
 
             LevelMagic(magic);
         }
@@ -19664,16 +19794,17 @@ namespace Zircon.Server.Models
             int ele = GetElementBySchool(magic.Info.School);
             int baseValue = sc + ele * 2;
             int value = baseValue + baseValue * bonus / 100;
+            value = power + power * Level / 80 + value + value * magic.Level / 3;
 
 
             cap += sc / 7 + ele / 2 + magic.Level * 3;
 
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.Healing, power + power * Level / 80 + value + value * magic.Level / 3);
+            buffStats.Values.Add(Stat.Healing, value * (ob is MonsterObject mon && mon.PetOwner == this ? 2 : 1));
             buffStats.Values.Add(Stat.HealingCap, cap);
 
 
-            ob.BuffAdd(BuffType.Heal, TimeSpan.FromSeconds(buffStats[Stat.Healing] / buffStats[Stat.HealingCap]), buffStats, false, false, TimeSpan.FromSeconds(1));
+            ob.BuffAdd(BuffType.Heal, TimeSpan.FromSeconds(Math.Round(buffStats[Stat.Healing] / (double)buffStats[Stat.HealingCap])), buffStats, false, false, TimeSpan.FromSeconds(1));
             LevelMagic(magic);
         }
         
@@ -19741,6 +19872,8 @@ namespace Zircon.Server.Models
         {
             if (ob == null || ob.Node == null || !CanHelpTarget(ob)) return;
 
+            bool strong = ob is MonsterObject mon && mon.PetOwner == this;
+
             var sc = GetSC();
             var ele = GetElementBySchool(magic.Info.School);
             var value = magic.Level * 2 + 1 + (sc * 2 + ele * 4) / (ob.Race == ObjectType.Player ? 200 : 100);
@@ -19803,13 +19936,17 @@ namespace Zircon.Server.Models
         {
             if (ob == null || ob.Node == null || !CanHelpTarget(ob)) return;
 
-            int value = 5 + magic.Level;
+            var sc = GetSC();
+            var ele = GetElementBySchool(magic.Info.School);
 
-            value += (GetSC() + GetElementBySchool(magic.Info.School)) * magic.Level / 30;
+            int minValue = 5 + magic.Level + (sc + ele * 2) * magic.Level / 30;
+            int maxValue = 5 + magic.Level * 4 + (sc + ele * 2) * magic.Level / 15;
+
+            bool strong = ob is MonsterObject mon && mon.PetOwner == this;
 
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.MaxMR, value);
-            buffStats.Values.Add(Stat.MinMR, value / 2);
+            buffStats.Values.Add(Stat.MaxMR, strong ? maxValue * 2 : maxValue);
+            buffStats.Values.Add(Stat.MinMR, strong ? minValue * 2 : minValue);
 
 
             if (stats[Stat.FireAffinity] > 0)
@@ -19870,16 +20007,18 @@ namespace Zircon.Server.Models
         {
             if (ob == null || ob.Node == null || !CanHelpTarget(ob)) return;
 
-            int value = 5 + magic.Level;
 
             var sc = GetSC();
             var ele = GetElementBySchool(magic.Info.School);
 
-            value += (sc + ele * 2) * magic.Level / 30;
+            int minValue = 5 + magic.Level + (sc + ele * 2) * magic.Level / 30;
+            int maxValue = 5 + magic.Level * 4 + (sc + ele * 2) * magic.Level / 15;
+
+            bool strong = ob is MonsterObject mon && mon.PetOwner == this;
 
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.MaxAC, value);
-            buffStats.Values.Add(Stat.MinAC, value / 2);
+            buffStats.Values.Add(Stat.MaxAC, strong ? maxValue * 2 : maxValue);
+            buffStats.Values.Add(Stat.MinAC, strong ? minValue * 2 : minValue);
             buffStats.Values.Add(Stat.PhysicalResistance, 1);
 
             ob.BuffAdd(BuffType.Resilience, TimeSpan.FromSeconds((magic.GetPower() + sc * 2 + ele * 4)), buffStats, true, false, TimeSpan.Zero);
@@ -19892,16 +20031,18 @@ namespace Zircon.Server.Models
 
 
             Stats buffStats = new Stats();
-            int value = 5 + magic.Level * 3;
+            int value = 5 + magic.Level;
 
             int sc = GetSC();
             int ele = GetElementBySchool(magic.Info.School);
-            value += sc / 7 + ele / 2;
+            value += (sc + ele * 2) * magic.Level / 18;
 
-            buffStats.Values.Add(Stat.MaxMC, value);
-            buffStats.Values.Add(Stat.MaxSC, value);
-            buffStats.Values.Add(Stat.MinMC, value / 3);
-            buffStats.Values.Add(Stat.MinSC, value / 3);
+            bool strong = ob is MonsterObject mon && mon.PetOwner == this;
+
+            buffStats.Values.Add(Stat.MaxMC, strong ? value * 2 : value);
+            buffStats.Values.Add(Stat.MaxSC, strong ? value * 2 : value);
+            buffStats.Values.Add(Stat.MinMC, strong ? value : value / 2);
+            buffStats.Values.Add(Stat.MinSC, strong ? value : value / 2);
 
             if (stats[Stat.FireAffinity] > 0)
             {
@@ -19963,15 +20104,17 @@ namespace Zircon.Server.Models
         {
             if (ob == null || ob.Node == null || !CanHelpTarget(ob)) return;
 
-            int value = 5 + magic.Level * 3;
+            int value = 5 + magic.Level;
 
             int sc = GetSC();
             int ele = GetElementBySchool(magic.Info.School);
-            value += sc / 7 + ele / 2;
+            value += (sc + ele * 2) * magic.Level / 18;
+
+            bool strong = ob is MonsterObject mon && mon.PetOwner == this;
 
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.MaxDC, value);
-            buffStats.Values.Add(Stat.MinDC, value / 3);
+            buffStats.Values.Add(Stat.MaxDC, strong ? value * 2 : value);
+            buffStats.Values.Add(Stat.MinDC, strong ? value : value / 2);
             ob.BuffAdd(BuffType.BloodLust, TimeSpan.FromSeconds((magic.GetPower() + sc * 2 + ele * 4)), buffStats, true, false, TimeSpan.Zero);
 
             LevelMagic(magic);

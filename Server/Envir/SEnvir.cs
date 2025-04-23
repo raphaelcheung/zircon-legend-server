@@ -3258,19 +3258,13 @@ namespace Server.Envir
 
             Log($"设备从登录黑名单中移除：{num}");
         }
-        public static void LoadRebirthInfo()
+        public static string LoadRebirthInfo()
         {
             if (string.IsNullOrEmpty(Config.转生标识设置文件))
-            {
-                Log($"配置项 [转生标识设置文件] 为空，使用默认转生标识");
-                return;
-            }
+                return $"配置项 [转生标识设置文件] 为空，使用默认转生标识";
 
             if (!File.Exists(Config.转生标识设置文件))
-            {
-                Log($"配置项 [转生标识设置文件] 指向的文件不存在，使用默认转生标识设置");
-                return;
-            }
+                return $"配置项 [转生标识设置文件] 指向的文件不存在，使用默认转生标识设置";
 
             int limit = Config.最高转生次数 + 1;
             List<TagRebirthInfo> result = new();
@@ -3299,26 +3293,18 @@ namespace Server.Envir
                     || !int.TryParse(parts2[0], out var r)
                     || !int.TryParse(parts2[1], out var g)
                     || !int.TryParse(parts2[2], out var b))
-                {
-                    Log($"{Config.转生标识设置文件} 中的格式错误，使用默认转生标识设置");
-                    return;
-                }
+                    return $"{Config.转生标识设置文件} 中的格式错误，使用默认转生标识设置";
 
                 try { result.Add(new TagRebirthInfo(mark, Color.FromArgb(255, r, g, b))); }
                 catch
-                {
-                    Log($"{Config.转生标识设置文件} 中的格式错误，使用默认转生标识设置");
-                    return;
-                }
+                { return $"{Config.转生标识设置文件} 中的格式错误，使用默认转生标识设置"; }
             }
 
             if (result.Count < limit)
-            {
-                Log($"{Config.转生标识设置文件} 中的转生设置少于允许的最大转生次数，使用默认转生标识设置");
-                return;
-            }
+                return $"{Config.转生标识设置文件} 中的转生设置少于允许的最大转生次数，使用默认转生标识设置";
 
             s_RebirthInfoList = result.ToArray();
+            return "";
         }
         public static void LoadBlock()
         {
@@ -4326,7 +4312,7 @@ namespace Server.Envir
                 
                 TimeSpan duration = Now - character.LastLogin;
 
-                if (duration < Config.RelogDelay)
+                if (duration < Config.RelogDelay && !con.Account.Admin)
                 {
                     con.Enqueue(new S.StartGame { Result = StartGameResult.Delayed, Duration = Config.RelogDelay - duration });
                     return;

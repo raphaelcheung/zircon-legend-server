@@ -16,7 +16,7 @@
 
 觉得本项目对你有帮助的别忘了 **点个星** ，祝你年年发大财！
 
-技术交流以及体验公益服请加 【[QQ群：915941142](https://qm.qq.com/q/JeoJOJ4z4e)】
+技术交流请进 【[QQ群：915941142](https://qm.qq.com/q/JeoJOJ4z4e)】
 
 ![扫码加群](Images/QQ%E7%BE%A4.jpg)
 

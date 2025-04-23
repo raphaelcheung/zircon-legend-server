@@ -654,7 +654,7 @@ namespace Zircon.Server.Models
 
                                     MonsterObject mob = (MonsterObject)ob;
 
-                                    if (mob.MonsterInfo.IsBoss) continue;
+                                    //if (mob.MonsterInfo.IsBoss) continue;
 
                                     ActionList.Add(new DelayedAction(
                                         SEnvir.Now.AddMilliseconds(SEnvir.Random.Next(500)),

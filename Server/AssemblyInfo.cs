@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitleAttribute("皓石传奇三 服务器")]
 [assembly: AssemblyDescription("皓石传奇三 服务器")]
 
-[assembly: AssemblyVersion("1.11.0.*")]
+[assembly: AssemblyVersion("1.12.0.*")]
 
 
 [assembly: AssemblyCopyright("Copyright © ")]

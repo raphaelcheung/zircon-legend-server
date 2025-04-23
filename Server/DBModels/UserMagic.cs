@@ -130,7 +130,7 @@ namespace Server.DBModels
         }
         private long _Experience;
 
-        public DateTime Cooldown;
+        public DateTime Cooldown { get;set; }
 
         [IgnoreProperty]
         public int Cost { get { return Info.BaseCost + Level * Info.LevelCost / 3; } }

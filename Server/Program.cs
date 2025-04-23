@@ -106,7 +106,8 @@ Task.Run(() =>
 
 SEnvir.LoadBlock();
 SEnvir.LoadClientHash();
-SEnvir.LoadRebirthInfo();
+var log = SEnvir.LoadRebirthInfo();
+if (!string.IsNullOrEmpty(log)) SEnvir.Log(log);
 SEnvir.StartServer();
 
 while(!stop) Thread.Sleep(100);

@@ -81,19 +81,6 @@ namespace Server.Envir
             BeginReceive();
 
             Enqueue(new G.Connected());
-
-
-            var packet = new S.CheckClientHash()
-            {
-                ClientFileHash = new List<ClientUpgradeItem>(),
-            };
-
-            foreach(var pair in SEnvir.ClientFileHash)
-            {
-                packet.ClientFileHash.Add(pair.Value);
-            }
-
-            Enqueue(packet);
         }
 
         public override void Disconnect()
@@ -307,6 +294,17 @@ namespace Server.Envir
                     break;
             }
 
+            var packet = new S.CheckClientHash()
+            {
+                ClientFileHash = new List<ClientUpgradeItem>(),
+            };
+
+            foreach (var pair in SEnvir.ClientFileHash)
+            {
+                packet.ClientFileHash.Add(pair.Value);
+            }
+
+            Enqueue(packet);
         }
         public void Process(G.Disconnect p)
         {
