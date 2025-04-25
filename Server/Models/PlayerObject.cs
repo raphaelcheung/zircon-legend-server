@@ -10,6 +10,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Zircon.Server.Models.Monsters;
 using C = Library.Network.ClientPackets;
 using S = Library.Network.ServerPackets;
@@ -2162,29 +2163,25 @@ namespace Zircon.Server.Models
                         if (!GameMaster || Character.Account.Identify < AccountIdentity.Operator) return;
                         EditMonsterStats(parts);
                         break;
-                    case "修正道具":
-                        if (!Character.Account.TempAdmin) return;
-                        ReviseItems(parts);
-                        break;
                     case "调整怪物种族":
                         if (!GameMaster || Character.Account.Identify < AccountIdentity.Operator) return;
                         EditMonsterRace(parts);
                         break;
                     case "重载转生标识":
-                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
+                        if (Character.Account.Identify < AccountIdentity.Admin) return;
                         ReloadRebirthConfig(parts);
                         break;
                     case "转生等级":
                     case "重生等级":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         SetRebirthLevel(parts);
                         break;
                     case "修改配置":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         EditConfig(parts);
                         break;
                     case "角色信息":
-                        if (!GameMaster) return;
+                        if (Character.Account.Identify <= AccountIdentity.Normal) return;
                         CharacterInfo(parts);
                         break;
                 }
@@ -2309,7 +2306,7 @@ namespace Zircon.Server.Models
                     player = SEnvir.GetPlayerByCharacter(name);
                     if (player == null)
                     {
-                        Connection.ReceiveChat($"找不到玩家：{name}", MessageType.System);
+                        Connection.ReceiveChat($"找不到在线玩家：{name}", MessageType.System);
                         return;
                     }
                 }
@@ -2317,7 +2314,13 @@ namespace Zircon.Server.Models
             else if (!int.TryParse(parts[1], out level))
                 return;
 
-            if (level < 0) return;
+            if (level < 0 || level >= SEnvir.s_RebirthInfoList.Length) return;
+
+            if (player.Character.Account.Identify >= Character.Account.Identify && player != this)
+            {
+                Connection.ReceiveChat("只能修改权限比自己低的角色", MessageType.System);
+                return;
+            }
 
             player.Character.Rebirth = level;
             player.RefreshStats();
@@ -2361,10 +2364,6 @@ namespace Zircon.Server.Models
                 SEnvir.Log(e);
                 Connection.ReceiveChat($"设置 {mon.MonsterName}：{parts[2]}={value} 时发生异常：{e.Message}", MessageType.System);
             }
-        }
-        private void ReviseItems(string[] parts)
-        {
-
         }
         private void EndMonsterSiege()
         {
