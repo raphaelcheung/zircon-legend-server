@@ -4671,15 +4671,30 @@ namespace Server.Envir
         {
             return GetCharacter(name)?.Account?.Connection;
         }
-
         public static CharacterInfo GetCharacter(string name, bool ordinal = false)
         {
             for (int i = 0; i < CharacterInfoList.Count; i++)
-                if (string.Compare(CharacterInfoList[i].CharacterName, name, ordinal ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase) == 0)
-                    return CharacterInfoList[i];
+                    if (string.Compare(CharacterInfoList[i].CharacterName, name, ordinal ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase) == 0)
+                        return CharacterInfoList[i];
 
             return null;
         }
+        public static CharacterInfo? GetCharacter(string account, string name, int index = -1, bool ordinal = false)
+        {
+            int current = 0;
+            for (int i = 0; i < CharacterInfoList.Count; i++)
+                if (string.Compare(CharacterInfoList[i].Account.EMailAddress, account, ordinal ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase) == 0)
+                    if (string.Compare(CharacterInfoList[i].CharacterName, name, ordinal ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        if (index >= 0 && index == current)
+                            return CharacterInfoList[i];
+                        else
+                            current++;
+                    }
+
+            return null;
+        }
+
         public static CharacterInfo GetCharacter(int index)
         {
             for (int i = 0; i < CharacterInfoList.Count; i++)

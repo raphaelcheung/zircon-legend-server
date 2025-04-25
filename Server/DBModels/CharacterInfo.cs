@@ -629,7 +629,7 @@ namespace Server.DBModels
         }
         private CharacterInfo _Partner;
 
-
+        public long TotalPlaySeconds { get; set; } = 0;
         protected override void OnDeleted()
         {
             Account = null;

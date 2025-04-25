@@ -649,6 +649,10 @@ namespace Server.DBModels
         public DBBindingList<UserFortuneInfo> Fortunes { get; set; }
 
 
+        public long TotalPlaySeconds { get; set; } = 0;
+        public AccountIdentity Identify { get; set; } = AccountIdentity.Normal;
+
+
         public CharacterInfo LastCharacter
         {
             get { return _LastCharacter; }

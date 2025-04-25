@@ -415,7 +415,7 @@ namespace Zircon.Server.Models
         }
         public void ProcessAutoPotion()
         {
-            if (SEnvir.Now < UseItemTime || Buffs.Any(x => x.Type == BuffType.Cloak || x.Type == BuffType.Transparency || x.Type == BuffType.DragonRepulse)) return; //Can't auto Pot
+            if (SEnvir.Now < UseItemTime || Buffs.Any(x => x.Type == BuffType.Cloak || x.Type == BuffType.DragonRepulse)) return; //Can't auto Pot
 
 
             if (DelayItemUse != null)
@@ -644,6 +644,9 @@ namespace Zircon.Server.Models
         }
         public void StopGame()
         {
+            var duration = (SEnvir.Now - Character.LastLogin).Seconds;
+            Character.TotalPlaySeconds += Math.Max(0, duration);
+            Character.Account.TotalPlaySeconds += Math.Max(0, duration);
             Character.LastLogin = SEnvir.Now;
 
             if (Character.Account.GuildMember != null)
@@ -1902,6 +1905,8 @@ namespace Zircon.Server.Models
                     case "MOVE":
                         //If Is GM or Teleport Ring
                         break;
+
+                    case "地图":
                     case "MAP":
                         if (!Character.Account.Admin) return;
 
@@ -2225,12 +2230,15 @@ namespace Zircon.Server.Models
 
                     if (showCount >= 3) continue;
 
+                    var duration = TimeSpan.FromSeconds(character.TotalPlaySeconds);
+
                     Connection.ReceiveChat($"[{account.EMailAddress} - {character.CharacterName}]：", MessageType.System);
                     Connection.ReceiveChat($"- 性别职业：{character.Gender}{Functions.GetEnumDesc(character.Class)}", MessageType.System);
                     Connection.ReceiveChat($"- 等级：{character.Rebirth}转 {character.Level}", MessageType.System);
                     Connection.ReceiveChat($"- 生命魔法：[{character.CurrentHP}] [{character.CurrentMP}]", MessageType.System);
                     Connection.ReceiveChat($"- 经验值：{character.Experience}", MessageType.System);
                     Connection.ReceiveChat($"- 上一次登录：{character.LastLogin}", MessageType.System);
+                    Connection.ReceiveChat($"- 总游玩时长：{duration.Days:00} 天 {duration.Hours:00} 小时 {duration.Minutes:00} 分 {duration.Seconds} 秒", MessageType.System);
 
                     showCount++;
                 }
@@ -3024,9 +3032,13 @@ namespace Zircon.Server.Models
 
         private bool RestoreDeleted(string[] parts)
         {
-            if (parts.Length < 2) return false;
+            if (parts.Length < 3) return false;
 
-            var chara = SEnvir.GetCharacter(parts[1], true);
+            int index = -1;
+            if (parts.Length >= 4 && !int.TryParse(parts[3], out index))
+                return false;
+
+            var chara = SEnvir.GetCharacter(parts[1], parts[2], index, true);
             if (chara == null)
             {
                 Connection.ReceiveChat("没有找到这个角色", MessageType.System);
@@ -7693,7 +7705,7 @@ namespace Zircon.Server.Models
             result.Success = true;
 
             BuffRemove(BuffType.Cloak);
-            BuffRemove(BuffType.Transparency);
+            //BuffRemove(BuffType.Transparency);
 
             if (item.Count > useCount)
             {
@@ -9738,12 +9750,11 @@ namespace Zircon.Server.Models
             return info;
         }
 
-        public override void BuffRemove(BuffInfo info)
+        public override void BuffRemove(BuffInfo info, bool needDelete = true)
         {
             int oldHealth = Stats[Stat.Health];
 
-            base.BuffRemove(info);
-
+            base.BuffRemove(info, false);
 
             switch (info.Type)
             {
@@ -9773,6 +9784,9 @@ namespace Zircon.Server.Models
                     RemoveAllObjects();
                     break;
             }
+
+            if (needDelete)
+                info.Delete();
         }
 
         public void PauseBuffs()
@@ -14431,7 +14445,6 @@ namespace Zircon.Server.Models
                 case MagicType.SummonSkeleton:
                 case MagicType.SummonJinSkeleton:
                 case MagicType.SummonShinsu:
-                //case MagicType.Transparency:
 
                 case MagicType.PoisonousCloud:
                 case MagicType.WraithGrip:
@@ -15421,7 +15434,7 @@ namespace Zircon.Server.Models
 
                     if (count > 0)
                     {
-                        augMagic.Cooldown = SEnvir.Now.AddMilliseconds(augMagic.Info.Delay);
+                        augMagic.Cooldown = SEnvir.Now.AddMilliseconds(Math.Max(augMagic.Info.Delay - augMagic.Level * 300, 0));
                         Enqueue(new S.MagicCooldown { InfoIndex = augMagic.Info.Index, Delay = augMagic.Info.Delay });
                     }
 
@@ -15484,7 +15497,7 @@ namespace Zircon.Server.Models
 
                     if (count > 0)
                     {
-                        augMagic.Cooldown = SEnvir.Now.AddMilliseconds(augMagic.Info.Delay);
+                        augMagic.Cooldown = SEnvir.Now.AddMilliseconds(Math.Max(augMagic.Info.Delay - augMagic.Level * 300, 0));
                         Enqueue(new S.MagicCooldown { InfoIndex = augMagic.Info.Index, Delay = augMagic.Info.Delay });
                     }
 
@@ -16675,16 +16688,20 @@ namespace Zircon.Server.Models
             }
 
             bool hasStone = Equipment[(int) EquipmentSlot.Amulet] != null ? Equipment[(int) EquipmentSlot.Amulet].Info.ItemType == ItemType.DarkStone : false;
-            bool ignoreDenfense = false;
+            int ignoreDenfenseChance = 0;
             int destroySheildChance = 0;
 
             for (int i = magics.Count - 1; i >= 0; i--)
             {
                 magic = magics[i];
                 int bonus;
+
                 switch (magic.Info.Magic)
                 {
                     case MagicType.Slaying:
+                        ignoreDenfenseChance = 3 + magic.Level;
+                        power += magic.GetPower();
+                        break;
                     case MagicType.CalamityOfFullMoon: // Lotus only
                         power += magic.GetPower();
                         break;
@@ -16703,7 +16720,7 @@ namespace Zircon.Server.Models
                         if (!primary)
                         {
                             power = power * magic.GetPower() / 100;
-                            ignoreDenfense = true;
+                            ignoreDenfenseChance = 100;
                             destroySheildChance = 10 + magic.Level * 2;
                         }
                         break;
@@ -16877,7 +16894,7 @@ namespace Zircon.Server.Models
             {
                 if (!hasLotus)
                 {
-                    if(!ignoreDenfense)
+                    if(ignoreDenfenseChance <= 0 || SEnvir.Random.Next(100) >= ignoreDenfenseChance)
                         power -= ob.GetAC();
 
                     if (ob.Race == ObjectType.Player)
@@ -19314,11 +19331,11 @@ namespace Zircon.Server.Models
 
         public void DefianceEnd(UserMagic magic)
         {
-            if (Buffs.Any(x => x.Type == BuffType.Might))
-            {
-                BuffRemove(BuffType.Might);
-                ChangeHP(-CurrentHP / 2);
-            }
+            //if (Buffs.Any(x => x.Type == BuffType.Might))
+            //{
+            //    BuffRemove(BuffType.Might);
+            //    ChangeHP(-CurrentHP / 2);
+            //}
 
             Stats buffStats = new Stats();
             buffStats.Values.Add(Stat.Defiance, 1);
@@ -19331,8 +19348,8 @@ namespace Zircon.Server.Models
 
         public void MightEnd(UserMagic magic)
         {
-            if (Buffs.Any(x => x.Type == BuffType.Defiance))
-                BuffRemove(BuffType.Defiance);
+            //if (Buffs.Any(x => x.Type == BuffType.Defiance))
+            //    BuffRemove(BuffType.Defiance);
 
             var consumeHP = Stats[Stat.Health] / 2;
             if (CurrentHP <= consumeHP)
@@ -19887,7 +19904,7 @@ namespace Zircon.Server.Models
         public void StrengthOfFaithEnd(UserMagic magic)
         {
             Stats buffStats = new Stats();
-
+            
             var sc = GetSC();
             var ele = GetElementBySchool(magic.Info.School);
             int value =  magic.Level * 10 + (sc / 6 + ele / 2);
@@ -19912,11 +19929,13 @@ namespace Zircon.Server.Models
             magic.Cooldown = SEnvir.Now.AddMilliseconds(delay);
             Enqueue(new S.MagicCooldown { InfoIndex = magic.Info.Index, Delay = delay });
 
-
             Stats buffStats = new Stats();
             buffStats.Values.Add(Stat.Transparency, 1);
 
-            ob.BuffAdd(BuffType.Transparency, TimeSpan.FromSeconds(Math.Min(SEnvir.Now <= PvPTime.AddSeconds(30) ? 20 : 3600, magic.GetPower() + GetSC() / 2 + Stats[Stat.PhantomAttack] * 2)), buffStats, true, false, TimeSpan.Zero);
+            var ele = GetElementPower(ob.Race, magic.Info.School);
+
+            ob.BuffAdd(BuffType.Transparency
+                , TimeSpan.FromSeconds(Math.Min(SEnvir.Now <= PvPTime.AddSeconds(30) ? 20 : 3600, magic.GetPower() + GetSC() / 2 + ele * 2)), buffStats, true, false, TimeSpan.Zero);
 
             LevelMagic(magic);
         }

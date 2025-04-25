@@ -1355,7 +1355,7 @@ namespace Zircon.Server.Models
 
             return info;
         }
-        public virtual void BuffRemove(BuffInfo info)
+        public virtual void BuffRemove(BuffInfo info, bool needDelete = true)
         {
             if (info.Visible)
                 Broadcast(new S.ObjectBuffRemove { ObjectID = ObjectID, Type = info.Type });
@@ -1365,7 +1365,6 @@ namespace Zircon.Server.Models
             if (info.Stats != null && info.Stats.Count > 0)
                 RefreshStats();
 
-            info.Delete();
             switch (info.Type)
             {
                 case BuffType.Cloak:
@@ -1404,6 +1403,9 @@ namespace Zircon.Server.Models
 
                     break;
             }
+
+            if (needDelete)
+                info.Delete();
         }
 
         public void BuffRemove(BuffType type)
