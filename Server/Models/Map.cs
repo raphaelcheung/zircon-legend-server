@@ -433,13 +433,14 @@ namespace Zircon.Server.Models
 
                 Cell cell = map.GetCell(movement.DestinationRegion.PointList[SEnvir.Random.Next(movement.DestinationRegion.PointList.Count)]);
 
+
                 if (cell == null) continue;
 
                 if (ob.Race == ObjectType.Player)
                 {
                     PlayerObject player = (PlayerObject)ob;
 
-                    if (movement.DestinationRegion.Map.MinimumLevel > ob.Level && !player.Character.Account.TempAdmin)
+                    if (movement.DestinationRegion.Map.MinimumLevel > ob.Level && !player.GameMaster)
                     {
                         player.Connection.ReceiveChat(string.Format(player.Connection.Language.NeedLevel, movement.DestinationRegion.Map.MinimumLevel), MessageType.System);
 
@@ -448,7 +449,7 @@ namespace Zircon.Server.Models
 
                         break;
                     }
-                    if (movement.DestinationRegion.Map.MaximumLevel > 0 && movement.DestinationRegion.Map.MaximumLevel < ob.Level && !player.Character.Account.TempAdmin)
+                    if (movement.DestinationRegion.Map.MaximumLevel > 0 && movement.DestinationRegion.Map.MaximumLevel < ob.Level && !player.GameMaster)
                     {
                         player.Connection.ReceiveChat(string.Format(player.Connection.Language.NeedMaxLevel, movement.DestinationRegion.Map.MaximumLevel), MessageType.System);
 

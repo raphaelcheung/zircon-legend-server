@@ -873,19 +873,19 @@ namespace Server.Envir
         {
             if (Stage != GameStage.Game && Stage != GameStage.Observer && Stage != GameStage.Login) return;
 
-            Enqueue(SEnvir.GetRanks(p, Account?.Admin ?? false));
+            Enqueue(SEnvir.GetRanks(p, Account?.Identify != AccountIdentity.Normal));
         }
 
         public void Process(C.ObserverRequest p)
         {
             if (Account == null) return;
-            if (!Config.AllowObservation && (!Account.TempAdmin && !Account.Observer)) return;
+            if (!Config.AllowObservation && Account.Identify == AccountIdentity.Normal) return;
 
             PlayerObject player = SEnvir.GetPlayerByCharacter(p.Name);
 
             if (player == null || player == Player) return;
 
-            if (!player.Character.Observable && (!Account.TempAdmin && !Account.Observer)) return;
+            if (!player.Character.Observable && Account.Identify == AccountIdentity.Normal) return;
 
             if (Stage == GameStage.Game)
                 Player.StopGame();

@@ -205,7 +205,6 @@ namespace Server.Envir
         public static int 最高转生次数 { get; set; } = 0;
         public static int 转生基础等级 { get; set; } = 86;
         public static int 技能最高等级 { get; set; } = 6;
-        public static bool 转生死亡经验优化 { get; set; } = false;
         public static string 转生标识设置文件 { get; set; } = "";
 
         [ConfigSection("Monsters")]

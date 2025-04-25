@@ -29,7 +29,7 @@ namespace Server.Envir.Translations
             GlobalLevel = "你的等级需要达到 33 才能公共喊话。";
             ShoutDelay = "你还需要等待 {0} 秒才能喊话。";
             ShoutLevel = "你的等级需要达到 2 才能使用喊话。";
-            DiceRoll = "[ROLL] - {0} 摇了 {1} 个 {2} 面骰子.";
+            DiceRoll = "[摇骰] - {0} 摇了 {1} 个 {2} 面骰子.";
             TradingEnabled = "交易启用。";
             TradingDisabled = "交易禁用。";
             WhisperEnabled = "私聊启用。";

@@ -495,21 +495,6 @@ namespace Server.DBModels
         }
         private int _HuntGold;
 
-        public bool Admin
-        {
-            get { return _Admin; }
-            set
-            {
-                if (_Admin == value) return;
-
-                var oldValue = _Admin;
-                _Admin = value;
-
-                OnChanged(oldValue, value, "Admin");
-            }
-        }
-        private bool _Admin;
-
         public int StorageSize
         {
             get { return _StorageSize; }
@@ -650,7 +635,18 @@ namespace Server.DBModels
 
 
         public long TotalPlaySeconds { get; set; } = 0;
-        public AccountIdentity Identify { get; set; } = AccountIdentity.Normal;
+        public AccountIdentity Identify
+        {
+            get => _Identity;
+            set
+            {
+                if (_Identity == value) return;
+                var old = _Identity;
+                _Identity = value;
+                OnChanged(old, value, "Identify");
+            }
+        }
+        private AccountIdentity _Identity = AccountIdentity.Normal;
 
 
         public CharacterInfo LastCharacter
@@ -730,7 +726,13 @@ namespace Server.DBModels
             return EMailAddress;
         }
 
-
+        public AccountIdentity GetLogonIdentity()
+        {
+            if (Identify == AccountIdentity.SuperAdmin && TempAdmin)
+                return AccountIdentity.SuperAdmin;
+            else
+                return Identify;
+        }
 
 
         public DateTime FlashTime

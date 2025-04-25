@@ -725,10 +725,9 @@ namespace Zircon.Server.Models
             Enqueue(new S.StartGame { Result = StartGameResult.Success, StartInformation = GetStartInformation() });
             //Send Items
 
-            if (Character.Account.TempAdmin)
-                Connection.ReceiveChat("你正在以正式管理员身份登录", MessageType.System);
-            else if(Character.Account.Admin)
-                Connection.ReceiveChat("你正在以临时管理员身份登录", MessageType.System);
+            var identity = Character.Account.GetLogonIdentity();
+            if (identity > AccountIdentity.Normal)
+                Connection.ReceiveChat($"你正在以 [{Functions.GetEnumDesc(identity)}] 身份登录", MessageType.System);
 
             Connection.ReceiveChat(Connection.Language.Welcome, MessageType.Announcement);
 
@@ -865,9 +864,9 @@ namespace Zircon.Server.Models
             if (SEnvir.Players != null && Character.Account.EMailAddress != SEnvir.SuperAdmin)
                 foreach(var player in SEnvir.Players)
                 {
-                    if (!player.Character.Account.Admin || !player.SwatchOnlineChanged || player == this) continue;
+                    if (player.Character.Account.Identify == AccountIdentity.Normal || !player.SwatchOnlineChanged || player == this) continue;
 
-                    if (Character.Account.TempAdmin && !player.Character.Account.TempAdmin) continue;
+                    if (Character.Account.Identify <= player.Character.Account.Identify) continue;
 
 
                     player.Connection.ReceiveChat($"{Name}({Level}级) 上线了...", MessageType.System);
@@ -999,7 +998,7 @@ namespace Zircon.Server.Models
 
             for (int i = Connection.Observers.Count - 1; i >= 0; i--)
             {
-                if (Connection.Observers[i].Account != null && (Connection.Observers[i].Account.Observer || Connection.Observers[i].Account.TempAdmin)) continue;
+                if (Connection.Observers[i].Account != null && (Connection.Observers[i].Account.Observer || Connection.Observers[i].Account.Identify != AccountIdentity.Normal)) continue;
 
                 Connection.Observers[i].EndObservation();
             }
@@ -1159,9 +1158,9 @@ namespace Zircon.Server.Models
             if (SEnvir.Players != null && Character.Account.EMailAddress != SEnvir.SuperAdmin)
                 foreach(var player in SEnvir.Players)
                 {
-                    if (!player.Character.Account.Admin || !player.SwatchOnlineChanged) continue;
+                    if (player.Character.Account.Identify == AccountIdentity.Normal || !player.SwatchOnlineChanged) continue;
 
-                    if (Character.Account.TempAdmin && !player.Character.Account.TempAdmin) continue;
+                    if (Character.Account.Identify <= player.Character.Account.Identify) continue;
 
                     player.Connection.ReceiveChat($"{Name}({Level}级) 已下线.", MessageType.System);
                 }
@@ -1328,24 +1327,19 @@ namespace Zircon.Server.Models
                 text = text.Remove(0, 2).Trim();
                 if (string.IsNullOrEmpty(text)) return;
 
-                if (!GameMaster)
+                if (SEnvir.Now < Character.Account.GlobalTime)
                 {
-                    if (SEnvir.Now < Character.Account.GlobalTime)
-                    {
-                        Connection.ReceiveChat(string.Format(Connection.Language.GlobalDelay, Math.Ceiling((Character.Account.GlobalTime - SEnvir.Now).TotalSeconds)), MessageType.System);
-                        return;
-                    }
-                    if (Level < 33 && Stats[Stat.GlobalShout] == 0)
-                    {
-                        Connection.ReceiveChat(Connection.Language.GlobalLevel, MessageType.System);
-                        return;
-                    }
-
-                    Character.Account.GlobalTime = SEnvir.Now.AddSeconds(30);
-                    text = string.Format("{0} 全服喊话: {1}", Name, text);
+                    Connection.ReceiveChat(string.Format(Connection.Language.GlobalDelay, Math.Ceiling((Character.Account.GlobalTime - SEnvir.Now).TotalSeconds)), MessageType.System);
+                    return;
                 }
-                else
-                    text = string.Format("系统通知: {0}", text);
+                if (Level < 33 && Stats[Stat.GlobalShout] == 0)
+                {
+                    Connection.ReceiveChat(Connection.Language.GlobalLevel, MessageType.System);
+                    return;
+                }
+
+                Character.Account.GlobalTime = SEnvir.Now.AddSeconds(30);
+                text = string.Format("{0} 全服喊话: {1}", Name, text);
 
 
                 foreach (SConnection con in SEnvir.Connections)
@@ -1356,7 +1350,22 @@ namespace Zircon.Server.Models
                         case GameStage.Observer:
                             if (SEnvir.IsBlocking(Character.Account, con.Account)) continue;
 
-                            con.ReceiveChat(text, GameMaster ? MessageType.System : MessageType.Global);
+                            if (GameMaster)
+                            {
+                                switch(Character.Account.Identify)
+                                {
+                                    case AccountIdentity.SuperAdmin:
+                                    case AccountIdentity.Admin:
+                                        con.ReceiveChat(text, MessageType.System);
+                                        break;
+
+                                    default:
+                                        con.ReceiveChat(text, MessageType.Announcement);
+                                        break;
+                                }
+                            }
+                            else
+                                con.ReceiveChat(text, GameMaster && Character.Account.Identify >= AccountIdentity.Admin ? MessageType.System : MessageType.Global);
                             break;
                         default: continue;
                     }
@@ -1407,15 +1416,23 @@ namespace Zircon.Server.Models
 
                 if (!GameMaster) return;
 
-                text = string.Format("发布通告: {0}", text);
-
                 foreach (SConnection con in SEnvir.Connections)
                 {
                     switch (con.Stage)
                     {
                         case GameStage.Game:
                         case GameStage.Observer:
-                            con.ReceiveChat(text, MessageType.Announcement);
+                            if (Character.Account.Identify < AccountIdentity.Admin)
+                            {
+                                text = string.Format("全服通告: {0}", text);
+                                con.ReceiveChat(text, MessageType.Announcement);
+                            }
+                            else
+                            {
+                                text = string.Format("系统通知: {0}", text);
+                                con.ReceiveChat(text, MessageType.System);
+                            }
+
                             break;
                         default: continue;
                     }
@@ -1435,8 +1452,14 @@ namespace Zircon.Server.Models
 
                 switch (parts[0].ToUpper())
                 {
+                    case "摇骰":
+                    case "摇骰子":
                     case "ROLL":
-                        if (GroupMembers == null) return;
+                        if (GroupMembers == null)
+                        {
+                            Connection.ReceiveChat($"摇骰子得在组队的时候进行", MessageType.System);
+                            return;
+                        }
 
                         if (parts.Length < 2 || !int.TryParse(parts[1], out count) || count < 0)
                             count = 6;
@@ -1522,7 +1545,7 @@ namespace Zircon.Server.Models
 
                     case "召唤":
                     case "RECALL":
-                        if (!Character.Account.Admin) return;
+                        if (Character.Account.Identify == AccountIdentity.Normal) return;
                         Recall(parts);
                         break;
                     case "允许召唤":
@@ -1540,7 +1563,7 @@ namespace Zircon.Server.Models
                         GroupRecall();
                         break;
                     case "OBSERVER":
-                        if (!Character.Account.TempAdmin) return;
+                        if (Character.Account.Identify < AccountIdentity.Admin) return;
                         Observer = !Observer;
 
                         AddAllObjects();
@@ -1549,7 +1572,7 @@ namespace Zircon.Server.Models
 
                     case "GM":
                     case "GAMEMASTER":
-                        if (!Character.Account.TempAdmin && !Character.Account.Admin) return;
+                        if (Character.Account.Identify <= AccountIdentity.Normal) return;
                         GameMaster = !GameMaster;
 
                         if (GameMaster)
@@ -1560,7 +1583,7 @@ namespace Zircon.Server.Models
                         Connection.ReceiveChat($"GM模式: {(GameMaster ? "开启" : "关闭")}", MessageType.Hint);
                         break;
                     case "GOLDBOT":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
 
                         if (parts.Length < 2) return;
 
@@ -1572,7 +1595,7 @@ namespace Zircon.Server.Models
                         Connection.ReceiveChat(string.Format("金币机器 [{0}] - [{1}]", target.CharacterName, target.Account.GoldBot), MessageType.System);
                         break;
                     case "ITEMBOT":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
 
                         if (parts.Length < 2) return;
 
@@ -1586,12 +1609,15 @@ namespace Zircon.Server.Models
 
                     case "等级":
                     case "LEVEL":
+                        if (!GameMaster) return;
+                        if (parts.Length > 2 && Character.Account.Identify < AccountIdentity.Admin) return;
+
                         ChangeLevel(parts);
                         break;
 
                     case "传送":
                     case "GOTO":
-                        if (!Character.Account.Admin) return;
+                        if (Character.Account.Identify == AccountIdentity.Normal) return;
                         if (parts.Length < 2) return;
 
                         player = SEnvir.GetPlayerByCharacter(parts[1]);
@@ -1602,7 +1628,7 @@ namespace Zircon.Server.Models
                         break;
                     case "GIVESKILLS":
                         if (!GameMaster) return;
-                        if (parts.Length >= 2 && !Character.Account.TempAdmin) return;
+                        if (parts.Length >= 2 && Character.Account.Identify < AccountIdentity.Admin) return;
 
                         if (parts.Length < 2) 
                             player = this;
@@ -1643,8 +1669,10 @@ namespace Zircon.Server.Models
                         player.RefreshStats();
 
                         break;
+
+                    case "伙伴状态":
                     case "SETCOMPANIONVALUE":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify <= AccountIdentity.Normal) return;
                         if (parts.Length < 3) return;
 
                         Stat stat;
@@ -1699,6 +1727,7 @@ namespace Zircon.Server.Models
                     case "制造物品":
                     case "打造物品":
                     case "制造道具":
+                    case "制造":
                     case "MAKE":
                         if (!GameMaster) return;
                         if (parts.Length < 2) return;
@@ -1723,7 +1752,7 @@ namespace Zircon.Server.Models
                             userItem.Count = count;
                             userItem.Flags = UserItemFlags.None;
 
-                            if (!Character.Account.TempAdmin)
+                            if (Character.Account.Identify < AccountIdentity.Admin)
                                 userItem.Flags |= UserItemFlags.Bound | UserItemFlags.GameMaster | UserItemFlags.Worthless;
 
                             value -= count;
@@ -1736,7 +1765,7 @@ namespace Zircon.Server.Models
 
                         break;
                     case "GCCOLLECT":
-                        if (!Character.Account.TempAdmin) return;
+                        if (Character.Account.Identify < AccountIdentity.Admin) return;
 
                         DateTime time = Time.Now;
 
@@ -1745,12 +1774,12 @@ namespace Zircon.Server.Models
                         Connection.ReceiveChat(string.Format("[GC COLLECT] {0}ms", (Time.Now - time).Ticks / TimeSpan.TicksPerMillisecond), MessageType.System);
                         break;
                     case "CLEARIPBLOCKS":
-                        if (!Character.Account.TempAdmin) return;
+                        if (Character.Account.Identify < AccountIdentity.Admin) return;
 
                         SEnvir.IPBlocks.Clear();
                         break;
                     case "REBOOT":
-                        if (!Character.Account.TempAdmin) return;
+                        if (Character.Account.Identify < AccountIdentity.Admin) return;
 
                         time = Time.Now;
 
@@ -1759,7 +1788,7 @@ namespace Zircon.Server.Models
                         Connection.ReceiveChat(string.Format("[重启命令] {0}ms", (Time.Now - time).Ticks / TimeSpan.TicksPerMillisecond), MessageType.System);
                         break;
                     case "GIVEGAMEGOLD":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         if (parts.Length < 3) return;
 
                         CharacterInfo character = SEnvir.GetCharacter(parts[1]);
@@ -1791,7 +1820,7 @@ namespace Zircon.Server.Models
 
                         break;
                     case "REMOVEGAMEGOLD":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         if (parts.Length < 3) return;
 
                         character = SEnvir.GetCharacter(parts[1]);
@@ -1823,7 +1852,7 @@ namespace Zircon.Server.Models
                         Connection.ReceiveChat(string.Format("[销毁游戏币] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
                         break;
                     case "TAKEGAMEGOLD":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         if (parts.Length < 3) return;
 
                         character = SEnvir.GetCharacter(parts[1]);
@@ -1841,7 +1870,7 @@ namespace Zircon.Server.Models
                         Connection.ReceiveChat(string.Format("[赠送游戏币] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
                         break;
                     case "REFUNDGAMEGOLD":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         if (parts.Length < 3) return;
 
                         character = SEnvir.GetCharacter(parts[1]);
@@ -1859,7 +1888,7 @@ namespace Zircon.Server.Models
                         Connection.ReceiveChat(string.Format("[退还游戏币] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
                         break;
                     case "REFUNDHUNTGOLD":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         if (parts.Length < 3) return;
 
                         character = SEnvir.GetCharacter(parts[1]);
@@ -1877,7 +1906,7 @@ namespace Zircon.Server.Models
                         Connection.ReceiveChat(string.Format("[退还狩猎金] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
                         break;
                     case "CHATBAN":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         if (parts.Length < 2) return;
 
                         character = SEnvir.GetCharacter(parts[1]);
@@ -1890,7 +1919,7 @@ namespace Zircon.Server.Models
                         character.Account.ChatBanExpiry = SEnvir.Now.AddMinutes(count);
                         break;
                     case "GLOBALBAN":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify <= AccountIdentity.Normal) return;
                         if (parts.Length < 2) return;
 
                         character = SEnvir.GetCharacter(parts[1]);
@@ -1908,7 +1937,7 @@ namespace Zircon.Server.Models
 
                     case "地图":
                     case "MAP":
-                        if (!Character.Account.Admin) return;
+                        if (Character.Account.Identify == AccountIdentity.Normal) return;
 
                         if (parts.Length < 2) return;
 
@@ -1925,7 +1954,7 @@ namespace Zircon.Server.Models
                             Character.BeltLinks[i].Delete();
                         break;
                     case "FORCEWAR":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         if (parts.Length < 2) return;
 
                         if (!int.TryParse(parts[1], out value)) return;
@@ -1939,7 +1968,7 @@ namespace Zircon.Server.Models
                         SEnvir.StartConquest(castle, true);
                         break;
                     case "FORCEENDWAR":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         if (parts.Length < 2) return;
 
                         if (!int.TryParse(parts[1], out value)) return;
@@ -1955,7 +1984,7 @@ namespace Zircon.Server.Models
                         war.EndTime = DateTime.MinValue;
                         break;
                     case "TAKECASTLE":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         if (parts.Length < 2) return;
 
                         if (!int.TryParse(parts[1], out value)) return;
@@ -2015,141 +2044,134 @@ namespace Zircon.Server.Models
 
                     case "在线统计":
                     case "PLAYERONLINE":
-                        if (!Character.Account.Admin) return;
+                        if (Character.Account.Identify == AccountIdentity.Normal) return;
                         OnlineInfo();
                         break;
 
                     case "在线角色":
                     case "CHARACTERONLINE":
-                        if (!Character.Account.Admin) return;
+                        if (Character.Account.Identify == AccountIdentity.Normal) return;
                         OnlineCharacter();
                         break;
 
+                    case "身份":
                     case "管理":
                     case "ADMIN":
-                        if (!Character.Account.TempAdmin || !GameMaster) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         if (!ChangeAdmin(parts)) return;
                         break;
 
                     case "修改密码":
-                        if (!Character.Account.TempAdmin || !GameMaster) return;
+                        if (!GameMaster || Character.Account.Identify <= AccountIdentity.Normal) return;
                         if (!ChangeOtherPassword(parts)) return;
                         break;
                     case "禁止登录":
-                        if (!Character.Account.TempAdmin || !GameMaster) return;
+                        if (!GameMaster || Character.Account.Identify <= AccountIdentity.Normal) return;
                         if (!BanLogin(parts)) return;
                         break;
                     case "恢复误删":
-                        if (!Character.Account.TempAdmin || !GameMaster) return;
+                        if (!GameMaster || Character.Account.Identify <= AccountIdentity.Normal) return;
                         if (!RestoreDeleted(parts)) return;
                         break;
                     case "重载更新":
-                        if (!Character.Account.TempAdmin || !GameMaster) return;
+                        if (Character.Account.Identify < AccountIdentity.Admin) return;
 
                         Connection.ReceiveChat("正在重新生成更新清单...", MessageType.System);
                         SEnvir.LoadClientHash();
                         Connection.ReceiveChat("更新清单已刷新！", MessageType.System);
                         break;
                     case "怪物攻城":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Operator) return;
                         MonsterSiege(parts);
                         break;
                     case "开启怪物攻城":
                     case "开始怪物攻城":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Operator) return;
                         BeginMonsterSiege();
                         break;
                     case "结束怪物攻城":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Operator) return;
                         EndMonsterSiege();
                         break;
                     case "屏蔽物品掉落":
-                        if (!Character.Account.TempAdmin || !GameMaster) return;
+                        if (!GameMaster) return;
+                        if (Character.Account.Identify < AccountIdentity.Operator) return;
                         if (!BlockDrop(parts)) return;
                         break;
                     case "批量屏蔽掉落":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         if (!BatchBlockDrop(parts)) return;
                         break;
                     case "保存数据库":
-                        if (!Character.Account.TempAdmin) return;
+                        if (Character.Account.Identify < AccountIdentity.Admin) return;
 
                         SEnvir.SaveSystem();
                         Connection.ReceiveChat($"服务器数据库已保存", MessageType.System);
                         break;
 
                     case "监控在线":
-                        if (!Character.Account.Admin) return;
+                        if (Character.Account.Identify <= AccountIdentity.Normal) return;
                         SwatchOnlineChanged = !SwatchOnlineChanged;
                         Connection.ReceiveChat($"监控角色上下线：{SwatchOnlineChanged}", MessageType.System);
                         break;
 
                     case "怪物倍率":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Operator) return;
                         if (!ChangeMonsterRate(parts)) return;
                         break;
 
                     case "清理怪物":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Operator) return;
                         if (!ClearMonsters(parts)) return;
                         break;
                     case "屏蔽地图":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || !Character.Account.TempAdmin) return;
                         //BlockMap(parts);
                         break;
                     case "开启敏感词":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         SEnvir.LoadSensitiveWords();
                         break;
                     case "关闭敏感词":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         SEnvir.SensitiveWords = null;
                         Connection.ReceiveChat("已关闭敏感词检测", MessageType.System);
                         break;
                     case "清理已删角色":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         ClearDeletedCharacters(parts);
                         break;
                     case "清理内存":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         //ClearMemory(parts);
                         Connection.ReceiveChat($"共清理 {SEnvir.ClearUserDatas(true)} 条数据", MessageType.System);
                         break;
                     case "内存统计":
-                        if (!Character.Account.TempAdmin) return;
+                        if (Character.Account.Identify < AccountIdentity.Admin) return;
                         MemoryCount();
                         break;
-                    case "死亡经验优化":
-                        if (!Character.Account.TempAdmin) return;
-                        Config.转生死亡经验优化 = !Config.转生死亡经验优化;
-                        Connection.ReceiveChat($"转生死亡经验优化={Config.转生死亡经验优化}", MessageType.System);
-                        break;
                     case "角色关联":
-                        if (!Character.Account.Admin) return;
+                        if (Character.Account.Identify <= AccountIdentity.Normal) return;
                         SameDeviceCharacter(parts);
                         break;
                     case "找怪物":
-                        if (!Character.Account.Admin) return;
+                        if (Character.Account.Identify <= AccountIdentity.Normal) return;
                         FindMonster(parts);
                         break;
                     case "怪物数值":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Operator) return;
                         EditMonsterStats(parts);
-                        break;
-                    case "道具呼唤怪物时长":
-                        if (!Character.Account.TempAdmin) return;
-                        ChangeItemSummonMonster(parts);
                         break;
                     case "修正道具":
                         if (!Character.Account.TempAdmin) return;
                         ReviseItems(parts);
                         break;
                     case "调整怪物种族":
-                        if (!Character.Account.TempAdmin) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Operator) return;
                         EditMonsterRace(parts);
                         break;
                     case "重载转生标识":
-                        if (!GameMaster) return;
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
                         ReloadRebirthConfig(parts);
                         break;
                     case "转生等级":
@@ -2405,15 +2427,6 @@ namespace Zircon.Server.Models
             if (monstat == null) return 0;
             return monstat.Amount;
         }
-        private void ChangeItemSummonMonster(string[] parts)
-        {
-            if (parts.Length < 2) return;
-            if (!uint.TryParse(parts[1], out uint value))
-                return;
-
-            Config.道具呼唤的怪物存活分钟 = value;
-            Connection.ReceiveChat($"道具呼唤的怪物存活分钟：{value}", MessageType.System);
-        }
         private void EditMonsterStats(string[] parts)
         {
             if (parts.Length < 2) return;
@@ -2600,7 +2613,7 @@ namespace Zircon.Server.Models
 
             foreach (var conn in SEnvir.Connections)
             {
-                if (conn.Player == null || conn.Account == null || conn.Account.EMailAddress == SEnvir.SuperAdmin) continue;
+                if (conn.Player == null || conn.Account == null || conn.Account.Identify > Character.Account.Identify) continue;
 
                 if (msg.Length <= 0)
                     msg.Append(conn.Player.Name);
@@ -2629,43 +2642,29 @@ namespace Zircon.Server.Models
             PlayerObject player;
             int value;
 
-            if (Character.Account.TempAdmin)
+            if (parts.Length < 3)
             {
-                if (parts.Length < 3)
-                {
-                    if (parts.Length < 2) return;
+                if (parts.Length < 2) return;
 
-                    if (!int.TryParse(parts[1], out value) || value < 0) return;
+                if (!int.TryParse(parts[1], out value) || value < 0 || value > Config.MaxLevel) return;
 
-                    player = this;
-                }
-                else
-                {
-                    if (!int.TryParse(parts[2], out value) || value < 0) return;
-
-                    player = SEnvir.GetPlayerByCharacter(parts[1]);
-                }
-
-                if (player == null) return;
-
-                var old = player.Level;
-
-                player.Level = value;
-                player.LevelUp();
-                SEnvir.Log($"[调整等级] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 调整目标=[{player.Character.CharacterName}：{old}=>{value}]");
-                Connection.ReceiveChat($"{player.Character.CharacterName} 等级调整为：{value}", MessageType.System);
+                player = this;
             }
-            else if (GameMaster)
+            else
             {
-                if (parts.Length >= 3) return;
-                if (!int.TryParse(parts[1], out value) || value < 0 || value >= 100) return;
+                if (!int.TryParse(parts[2], out value) || value < 0) return;
 
-                var old = Level;
-                Level = value;
-                LevelUp();
-
-                SEnvir.Log($"[调整等级] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 调整目标=[{Character.CharacterName}：{old}=>{value}]");
+                player = SEnvir.GetPlayerByCharacter(parts[1]);
             }
+
+            if (player == null) return;
+
+            var old = player.Level;
+
+            player.Level = value;
+            player.LevelUp();
+            SEnvir.Log($"[调整等级] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 调整目标=[{player.Character.CharacterName}：{old}=>{value}]");
+            Connection.ReceiveChat($"{player.Character.CharacterName} 等级调整为：{value}", MessageType.System);
         }
         private void SameDeviceCharacter(string[] parts)
         {
@@ -2676,7 +2675,7 @@ namespace Zircon.Server.Models
                 Dictionary<string, List<string>> dict = new();
                 foreach(var con in SEnvir.Connections)
                 {
-                    if (con.Account == null || con.Player?.Character == null) continue;
+                    if (con.Account == null || con.Player?.Character == null || con.Account.Identify > Character.Account.Identify) continue;
 
                     if (dict.TryGetValue(con.Account.LastSum, out var list))
                         list.Add(con.Player.Character.CharacterName);
@@ -2905,24 +2904,33 @@ namespace Zircon.Server.Models
                 return false;
             }
 
-            if (account.EMailAddress == SEnvir.SuperAdmin)
+            if (account.Identify >= Character.Account.Identify)
             {
-                Connection.ReceiveChat("你不能修改超级管理员的权限！", MessageType.System);
+                Connection.ReceiveChat("你不能修改同级别或高级别的管理员权限！", MessageType.System);
                 return false;
             }
 
             if (null != account.Connection)
             {
-                Connection.ReceiveChat("修改管理员身份必须在账号离线的状态下操作", MessageType.System);
+                Connection.ReceiveChat("修改账号身份必须在账号离线的状态下操作", MessageType.System);
                 return false;
             }
 
-            if (!bool.TryParse(parts[2], out bool admin))
+            if (!Enum.TryParse(parts[2], out AccountIdentity identity))
+            {
+                Connection.ReceiveChat($"身份标识不正确：{parts[2]}", MessageType.System);
                 return false;
+            }
 
-            account.Admin = admin;
-            Connection.ReceiveChat($"{parts[1]} 的管理员权限设置为：{admin}", MessageType.System);
-            SEnvir.Log($"[管理员授权] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 被修改账号={account.EMailAddress}");
+            if (identity >= Character.Account.Identify)
+            {
+                Connection.ReceiveChat($"只能设置比自己低的权限：{Functions.GetEnumDesc(identity)}", MessageType.System);
+                return false;
+            }
+
+            account.Identify = identity;
+            Connection.ReceiveChat($"{parts[1]} 的身份设置为：{Functions.GetEnumDesc(identity)}", MessageType.System);
+            SEnvir.Log($"[修改账号身份] 管理员[{Character.Account.EMailAddress}-{Character.CharacterName}] 修改：{account.EMailAddress}={Functions.GetEnumDesc(identity)}");
 
             return true;
         }
@@ -2938,13 +2946,13 @@ namespace Zircon.Server.Models
                 return false;
             }
 
-            if (SEnvir.SuperAdmin == account.EMailAddress && Character.Account.EMailAddress != SEnvir.SuperAdmin)
+            if (account.Identify >= Character.Account.Identify && account.EMailAddress != Character.Account.EMailAddress)
             {
-                Connection.ReceiveChat("你不能修改超级GM的密码！", MessageType.System);
+                Connection.ReceiveChat("你只能修改权限低于自己的账号密码！", MessageType.System);
                 return false;
             }
 
-            if (SEnvir.SuperAdmin != account.EMailAddress && null != account.Connection)
+            if (account.EMailAddress != Character.Account.EMailAddress && null != account.Connection)
             {
                 Connection.ReceiveChat("修改账号密码必须在账号离线的状态下操作！", MessageType.System);
                 return false;
@@ -2977,9 +2985,9 @@ namespace Zircon.Server.Models
                 return false;
             }
 
-            if (account.EMailAddress == SEnvir.SuperAdmin)
+            if (account.EMailAddress != Character.Account.EMailAddress && account.Identify >= Character.Account.Identify)
             {
-                Connection.ReceiveChat("你不能禁止超级GM登录！", MessageType.System);
+                Connection.ReceiveChat("你只能禁止权限低于自己的账号登录！", MessageType.System);
                 return false;
             }
 
@@ -3011,7 +3019,7 @@ namespace Zircon.Server.Models
 
                 Connection.ReceiveChat($"{account.EMailAddress} 在 {banner_time.ToString()} 前禁止登录", MessageType.System);
 
-                SEnvir.Log($"[冻结账号] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 冻结账号={account.EMailAddress}");
+                SEnvir.Log($"[冻结账号] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 冻结账号={account.EMailAddress} 截至时间={account.ExpiryDate.ToLocalTime()}");
             }
             else
             {
@@ -3045,9 +3053,9 @@ namespace Zircon.Server.Models
                 return false;
             }
 
-            if (chara.Account.EMailAddress == SEnvir.SuperAdmin && Character.Account != chara.Account)
+            if (chara.Account.EMailAddress != Character.Account.EMailAddress && chara.Account.Identify >= Character.Account.Identify)
             {
-                Connection.ReceiveChat("你没有权限恢复超级GM的角色！", MessageType.System);
+                Connection.ReceiveChat("你只能恢复权限低于自己的账号角色！", MessageType.System);
                 return false;
             }
 
@@ -3270,7 +3278,7 @@ namespace Zircon.Server.Models
             }
             else if (text.StartsWith("@!"))
             {
-                if (!con.Account.LastCharacter.Account.TempAdmin) return;
+                if (con.Account.LastCharacter.Account.TempAdmin) return;
 
                 text = string.Format("{0}: {1}", con.Account.LastCharacter.CharacterName, text.Remove(0, 2));
 
@@ -4903,7 +4911,7 @@ namespace Zircon.Server.Models
                 return;
             }
 
-            if (account == Character.Account && !Character.Account.TempAdmin)
+            if (account == Character.Account && Character.Account.Identify <= AccountIdentity.Normal)
             {
                 Connection.ReceiveChat(Connection.Language.MailSelfMail, MessageType.System);
                 return;
@@ -4925,7 +4933,7 @@ namespace Zircon.Server.Models
                         fromArray = Inventory;
                         break;
                     case GridType.Storage:
-                        if (!InSafeZone && !Character.Account.Admin)
+                        if (!InSafeZone && Character.Account.Identify == AccountIdentity.Normal)
                         {
                             Connection.ReceiveChat(Connection.Language.MailSendSafeZone, MessageType.System);
                             return;
@@ -4945,7 +4953,7 @@ namespace Zircon.Server.Models
                 item = fromArray[link.Slot];
 
                 if (item == null || link.Count > item.Count) return;
-                if (((item.Flags & UserItemFlags.Bound) == UserItemFlags.Bound || !item.Info.CanTrade) && !Character.Account.TempAdmin) return;
+                if (((item.Flags & UserItemFlags.Bound) == UserItemFlags.Bound || !item.Info.CanTrade) && Character.Account.Identify < AccountIdentity.Admin) return;
                 if ((item.Flags & UserItemFlags.Marriage) == UserItemFlags.Marriage) return;
                 //Success
             }
@@ -5048,7 +5056,7 @@ namespace Zircon.Server.Models
             {
                 case GridType.Inventory:
                     array = Inventory;
-                    if (!InSafeZone && !Character.Account.TempAdmin)
+                    if (!InSafeZone && Character.Account.Identify <= AccountIdentity.Normal)
                     {
                         Connection.ReceiveChat(Connection.Language.ConsignSafeZone, MessageType.System);
                         return;
@@ -5061,7 +5069,7 @@ namespace Zircon.Server.Models
                     if (Companion == null) return;
 
                     array = Companion.Inventory;
-                    if (!InSafeZone && !Character.Account.TempAdmin)
+                    if (!InSafeZone && Character.Account.Identify <= AccountIdentity.Normal)
                     {
                         Connection.ReceiveChat(Connection.Language.ConsignSafeZone, MessageType.System);
                         return;
@@ -5260,7 +5268,7 @@ namespace Zircon.Server.Models
                 return;
             }
 
-            if (info.Account == Character.Account && !Character.Account.TempAdmin)
+            if (info.Account == Character.Account && Character.Account.Identify != AccountIdentity.Normal)
             {
                 Connection.ReceiveChat(Connection.Language.ConsignBuyOwnItem, MessageType.System);
                 return;
@@ -5607,7 +5615,7 @@ namespace Zircon.Server.Models
                 return;
             }
 
-            if (Character.Account.EMailAddress != SEnvir.SuperAdmin && SEnvir.SensitiveWords != null)
+            if (Character.Account.Identify < AccountIdentity.Admin && SEnvir.SensitiveWords != null)
             {
                 var check = new ContentCheck(SEnvir.SensitiveWords, p.Name, 2);
                 if (check.FindSensitiveWords().Count > 0)
@@ -7903,7 +7911,7 @@ namespace Zircon.Server.Models
                     fromArray = Equipment;
                     break;
                 case GridType.Storage:
-                    if (!InSafeZone && !Character.Account.TempAdmin)
+                    if (!InSafeZone && Character.Account.Identify <= AccountIdentity.Normal)
                     {
                         Connection.ReceiveChat(Connection.Language.StorageSafeZone, MessageType.System);
 
@@ -7968,7 +7976,7 @@ namespace Zircon.Server.Models
                     break;
                 case GridType.Storage:
 
-                    if (!InSafeZone && !Character.Account.TempAdmin)
+                    if (!InSafeZone && Character.Account.Identify <= AccountIdentity.Normal)
                     {
                         Connection.ReceiveChat(Connection.Language.StorageSafeZone, MessageType.System);
 
@@ -9999,7 +10007,7 @@ namespace Zircon.Server.Models
                     fromArray = Companion.Inventory;
                     break;
                 case GridType.Storage:
-                    if (!InSafeZone && !Character.Account.TempAdmin)
+                    if (!InSafeZone && Character.Account.Identify < AccountIdentity.Normal)
                     {
                         Connection.ReceiveChat(Connection.Language.StorageSafeZone, MessageType.System);
 
@@ -10036,7 +10044,8 @@ namespace Zircon.Server.Models
 
             UserItem fromItem = fromArray[cell.Slot];
 
-            if (fromItem == null || cell.Count > fromItem.Count || (!TradePartner.Character.Account.Admin && !Character.Account.TempAdmin && ((fromItem.Flags & UserItemFlags.Bound) == UserItemFlags.Bound || !fromItem.Info.CanTrade))) return;
+            if (fromItem == null || cell.Count > fromItem.Count 
+                || (TradePartner.Character.Account.Identify == AccountIdentity.Normal && Character.Account.Identify < AccountIdentity.Admin && ((fromItem.Flags & UserItemFlags.Bound) == UserItemFlags.Bound || !fromItem.Info.CanTrade))) return;
             if ((fromItem.Flags & UserItemFlags.Marriage) == UserItemFlags.Marriage) return;
 
             if (TradeItems.ContainsKey(fromItem)) return;
@@ -12169,7 +12178,7 @@ namespace Zircon.Server.Models
 
             if (info == null) return;
 
-            if (SEnvir.Now < info.RetrieveTime && !Character.Account.Admin)
+            if (SEnvir.Now < info.RetrieveTime && Character.Account.Identify == AccountIdentity.Normal)
             {
                 Connection.ReceiveChat(Connection.Language.NPCRefineNotReady, MessageType.System);
 
@@ -12193,7 +12202,7 @@ namespace Zircon.Server.Models
 
             int result = SEnvir.Random.Next(100);
 
-            if (Character.Account.TempAdmin)
+            if (Character.Account.Identify > AccountIdentity.Normal)
                 Connection.ReceiveChat($"武器精炼结果：Random={result}  Chance={info.Chance}  MaxChance={info.MaxChance}", MessageType.Hint);
 
             SEnvir.Log($"[{Character.CharacterName}] 武器精炼：Weapon={info.Weapon.Info.ItemName}  Random={result}  Chance={info.Chance}  MaxChance={info.MaxChance}");
@@ -18483,7 +18492,7 @@ namespace Zircon.Server.Models
             if (Stats[Stat.Rebirth] > 0 && (LastHitter == null || LastHitter.Race != ObjectType.Player))
             {
                 //Level = Math.Max(Level - Stats[Stat.Rebirth] * 3, 1);
-                decimal expbonus = Config.转生死亡经验优化 ? Experience / 2 : Experience;
+                decimal expbonus = Experience / 2;
                 Enqueue(new S.GainedExperience { Amount = -expbonus });
                 Experience -= expbonus;
 
@@ -18503,13 +18512,8 @@ namespace Zircon.Server.Models
                     {
                         target = targets[SEnvir.Random.Next(targets.Count)];
 
-                        if (Config.转生死亡经验优化)
-                        {
-                            target.Level++;
-                            target.LevelUp();
-                        }
-                        else
-                            target.GainExperience(expbonus, false, int.MaxValue, false);
+                        target.Level++;
+                        target.LevelUp();
                     }
 
                     string tmp;
@@ -18517,13 +18521,7 @@ namespace Zircon.Server.Models
                     if (target == null)
                         tmp = $"\"{Character.Rebirth}转玩家 [{Name}] 意外死亡失去了 {expbonus:##,##0} 的经验, 没有人赢得该经验.\"";
                     else
-                    {
-                        if (Config.转生死亡经验优化)
-                            tmp = $"{Character.Rebirth}转玩家 [{Name}] 意外死亡失去了 {expbonus:##,##0} 的经验, 幸运的 [{target.Name}] 得到了部分经验，直接突破当前等级.";
-                        else
-                            tmp = $"{Character.Rebirth}转玩家 [{Name}] 意外死亡失去了 {expbonus:##,##0} 的经验, 幸运的 [{target.Name}] 赢得了全部经验.";
-
-                    }
+                        tmp = $"{Character.Rebirth}转玩家 [{Name}] 意外死亡失去了 {expbonus:##,##0} 的经验, 幸运的 [{target.Name}] 得到了部分经验，直接突破当前等级.";
 
 
                     SEnvir.Broadcast(new S.Chat {Text = tmp, Type = MessageType.System});

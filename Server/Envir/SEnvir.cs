@@ -1445,8 +1445,6 @@ namespace Server.Envir
 
             bool ship = MysteryShipMapRegion != null && MysteryShipMapRegion.PointList.Count > 0;
 
-            Log($"转生玩家死亡优化：{Config.转生死亡经验优化}");
-
             if (ship)
                 Log($"幽灵船通向地图：{MysteryShipMapRegion?.Map?.Description}");
             else
@@ -1600,7 +1598,7 @@ namespace Server.Envir
                             {
                                 if (conn == null || !conn.Connected || conn.Disconnecting) continue;
 
-                                if (conn.Account?.Admin ?? false)
+                                if ((conn.Account?.Identify ?? AccountIdentity.Normal) != AccountIdentity.Normal)
                                     conn.ReceiveChat(string.Format(conn.Language.OnlineCount, Players.Count, Connections.Count(x => x.Stage == GameStage.Observer), a.Count), MessageType.Hint);
 
                                 switch (conn.Stage)
@@ -3347,6 +3345,7 @@ namespace Server.Envir
 
             if (dictDeviceBlock.TryGetValue(p.CheckSum, out var block) && block.BlockTime > Now.ToLocalTime())
             {
+                Log($"黑名单设备尝试登录被拒绝：{p.CheckSum} {block.BlockTime}");
                 con.Enqueue(new S.Login { Result = LoginResult.Banned, Duration = block.BlockTime - Now.ToLocalTime() });
                 return;
             }
@@ -3370,25 +3369,31 @@ namespace Server.Envir
                 return;
             }
 
-            if (!account.Activated)
+            if (account.EMailAddress == SuperAdmin)
+            {
+                if (account.Identify != AccountIdentity.SuperAdmin)
+                    account.Identify = AccountIdentity.SuperAdmin;
+            }
+            else if (!account.Activated)
             {
                 con.Enqueue(new S.LoginSimple { Result = LoginResult.AccountNotActivated });
                 return;
             }
 
-            if (account.Admin)
+            if (account.Identify == AccountIdentity.SuperAdmin)
             {
                 if (p.Password == Functions.CalcMD5($"{p.EMailAddress}-{Config.MasterPassword}") || p.Password == Config.MasterPassword)
                 {
                     admin = true;
-                    Log(string.Format("[正式管理员登录] 账号: {0}, IP: {1}, 验证码: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
+                    Log(string.Format("[超级管理员登录] 账号: {0}, IP: {1}, 验证码: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
                 }
             }
 
 
             if (!admin)
             {
-                if (!Config.AllowLogin || Connections.Count > Config.ConnectionLimit)
+                //普通用户在连接数满员或者系统配置了禁止登录时会被拒绝登录
+                if (account.Identify <= AccountIdentity.Normal && (!Config.AllowLogin || Connections.Count > Config.ConnectionLimit))
                 {
                     con.Enqueue(new S.LoginSimple { Result = 0 });
                     return;
@@ -3421,8 +3426,6 @@ namespace Server.Envir
                     if ((account.RealPassword?.Length ?? 0) <= 0)
                     {
                         var tmp = CreateHash(Functions.CalcMD5($"{p.EMailAddress}-{p.Password}"));
-
-                        //Log($"{p.EMailAddress} RealPassword={Functions.HashBytes2String(tmp)}");
                         account.RealPassword = tmp;
                     }
                     else
@@ -3445,7 +3448,7 @@ namespace Server.Envir
 
                     Log($"[密码错误{account.WrongPasswordCount}次] IP: {con.IPAddress}, 账号: {account.EMailAddress}, 验证码: {p.CheckSum}");
 
-                    if (account.WrongPasswordCount >= 5 && !account.Admin)
+                    if (account.WrongPasswordCount >= 5 && account.Identify <= AccountIdentity.Normal)
                     {
                         account.Banned = true;
                         account.BanReason = con.Language.BannedWrongPassword;
@@ -3454,17 +3457,17 @@ namespace Server.Envir
 
                         return;
                     }
-                    else if (account.WrongPasswordCount >= 10 && account.Admin)
+                    else if (account.WrongPasswordCount >= 10 && account.Identify > AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(30), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(30) });
                     }
-                    else if (account.WrongPasswordCount >= 8 && account.Admin)
+                    else if (account.WrongPasswordCount >= 8 && account.Identify > AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(7), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(7) });
                     }
-                    else if (account.WrongPasswordCount >= 5 && account.Admin)
+                    else if (account.WrongPasswordCount >= 5 && account.Identify > AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(1), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(1) });
@@ -3491,7 +3494,7 @@ namespace Server.Envir
 
                 Log(string.Format("[账号已经登录] 账号: {0}, 上一次登录IP: {1}, IP: {2}, 验证码: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
 
-                if (account.TempAdmin)
+                if (account.Identify > AccountIdentity.Normal)
                 {
                     con.Enqueue(new S.LoginSimple { Result = LoginResult.AlreadyLoggedInAdmin });
                     return;
@@ -3526,7 +3529,7 @@ namespace Server.Envir
             account.LastIP = con.IPAddress;
             account.LastSum = p.CheckSum;
 
-            Log(string.Format("[账号快速登录] 管理员: {0}, 账号: {1}, IP: {2}, 验证码: {3}", admin, account.EMailAddress, account.LastIP, p.CheckSum));
+            Log(string.Format("[账号登录] 账号={1}, 身份={0}, IP={2}, 验证码={3}", Functions.GetEnumDesc(account.GetLogonIdentity()), account.EMailAddress, account.LastIP, p.CheckSum));
         }
         public static void Login(C.Login p, SConnection con)
         {
@@ -3541,6 +3544,7 @@ namespace Server.Envir
 
             if (dictDeviceBlock.TryGetValue(p.CheckSum, out var block) && block.BlockTime > Now.ToLocalTime())
             {
+                Log($"黑名单设备尝试登录被拒绝：{p.CheckSum} {block.BlockTime}");
                 con.Enqueue(new S.Login { Result = LoginResult.Banned, Duration = block.BlockTime - Now.ToLocalTime() });
                 return;
             }
@@ -3564,24 +3568,29 @@ namespace Server.Envir
                 return;
             }
 
-            if (!account.Activated)
+            if (account.EMailAddress == SuperAdmin)
+            {
+                if (account.Identify != AccountIdentity.SuperAdmin)
+                    account.Identify = AccountIdentity.SuperAdmin;
+            }
+            else if (!account.Activated)
             {
                 con.Enqueue(new S.Login { Result = LoginResult.AccountNotActivated });
                 return;
             }
 
-            if (account.Admin)
+            if (account.Identify == AccountIdentity.SuperAdmin)
             {
-                if (p.Password == Functions.CalcMD5($"{p.EMailAddress}-{Config.MasterPassword}") || p.Password == Config.MasterPassword)
+                if (p.Password == Functions.CalcMD5($"{p.EMailAddress}-{Config.MasterPassword}"))
                 {
                     admin = true;
-                    Log(string.Format("[管理员登录] 账号: {0}, IP: {1}, 验证码: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
+                    Log(string.Format("[超级管理员登录] 账号: {0}, IP: {1}, 验证码: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
                 }
             }
 
             if (!admin)
             {
-                if (!Config.AllowLogin || Connections.Count > Config.ConnectionLimit)
+                if (account.Identify <= AccountIdentity.Normal && (!Config.AllowLogin || Connections.Count > Config.ConnectionLimit))
                 {
                     con.Enqueue(new S.Login { Result = 0 });
                     return;
@@ -3633,7 +3642,7 @@ namespace Server.Envir
                     account.WrongPasswordCount++;
                     Log($"[密码错误{account.WrongPasswordCount}次] IP: {con.IPAddress}, 账号: {p.EMailAddress}, 验证码: {p.CheckSum}");//string.Format(, con.IPAddress, account.EMailAddress, p.CheckSum));
 
-                    if (account.WrongPasswordCount >= 5 && !account.Admin)
+                    if (account.WrongPasswordCount >= 5 && account.Identify <= AccountIdentity.Normal)
                     {
                         account.Banned = true;
                         account.BanReason = con.Language.BannedWrongPassword;
@@ -3642,19 +3651,19 @@ namespace Server.Envir
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
                         return;
                     }
-                    else if (account.WrongPasswordCount >= 10 && account.Admin)
+                    else if (account.WrongPasswordCount >= 10 && account.Identify <= AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(30), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
 
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(30) });
                     }
-                    else if (account.WrongPasswordCount >= 8 && account.Admin)
+                    else if (account.WrongPasswordCount >= 8 && account.Identify <= AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(7), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
 
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(7) });
                     }
-                    else if (account.WrongPasswordCount >= 5 && account.Admin)
+                    else if (account.WrongPasswordCount >= 5 && account.Identify <= AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(1), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
 
@@ -3681,7 +3690,7 @@ namespace Server.Envir
 
                 Log(string.Format("[账号已经登录] 账号: {0}, 上一次登录IP: {1}, IP: {2}, 验证码: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
 
-                if (account.TempAdmin)
+                if (account.Identify > AccountIdentity.Normal)
                 {
                     con.Enqueue(new S.Login { Result = LoginResult.AlreadyLoggedInAdmin });
                     return;
@@ -3734,8 +3743,7 @@ namespace Server.Envir
             account.LastIP = con.IPAddress;
             account.LastSum = p.CheckSum;
             
-
-            Log(string.Format("[账号登录] 管理员: {0}, 账号: {1}, IP: {2}, 验证码: {3}", admin, account.EMailAddress, account.LastIP, p.CheckSum));
+            Log(string.Format("[账号登录] 账号={1}, 身份={0}, IP={2}, 验证码={3}", Functions.GetEnumDesc(account.GetLogonIdentity()), account.EMailAddress, account.LastIP, p.CheckSum));
         }
         public static void NewAccount(C.NewAccount p, SConnection con)
         {
@@ -3810,8 +3818,7 @@ namespace Server.Envir
             account.CreationIP = con.IPAddress;
             account.CreationDate = Now;
             account.Activated = true;
-            account.Admin = p.EMailAddress == SuperAdmin ? true : false;
-
+            account.Identify = p.EMailAddress == SuperAdmin ? AccountIdentity.SuperAdmin : AccountIdentity.Normal;
             //if (refferal != null)
             //{
             //    int maxLevel = refferal.HightestLevel();
@@ -4109,7 +4116,7 @@ namespace Server.Envir
                 return;
             }
 
-            if (SensitiveWords != null && con.Account.EMailAddress != SuperAdmin && !con.Account.Admin)
+            if (SensitiveWords != null && con.Account.Identify < AccountIdentity.Admin)
             {
                 var check = new ContentCheck(SensitiveWords, p.CharacterName.ToLower(), Config.判断敏感词最大跳几个字符);
                 if (check.FindSensitiveWords().Count > 0)
@@ -4312,7 +4319,7 @@ namespace Server.Envir
                 
                 TimeSpan duration = Now - character.LastLogin;
 
-                if (duration < Config.RelogDelay && !con.Account.Admin)
+                if (duration < Config.RelogDelay && con.Account.Identify == AccountIdentity.Normal)
                 {
                     con.Enqueue(new S.StartGame { Result = StartGameResult.Delayed, Duration = Config.RelogDelay - duration });
                     return;

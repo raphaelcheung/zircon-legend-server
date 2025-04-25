@@ -729,8 +729,8 @@ namespace Zircon.Server.Models
 
             if (!SEnvir.Maps.TryGetValue(info, out map)) return false;
 
-            if (Race == ObjectType.Player && info.MinimumLevel > Level && !((PlayerObject)this).Character.Account.TempAdmin) return false;
-            if (Race == ObjectType.Player && info.MaximumLevel > 0 && info.MaximumLevel < Level && !((PlayerObject)this).Character.Account.TempAdmin) return false;
+            if (this is PlayerObject player1 && info.MinimumLevel > Level && !player1.GameMaster) return false;
+            if (this is PlayerObject player2 && info.MaximumLevel > 0 && info.MaximumLevel < Level && !player2.GameMaster) return false;
 
             Cell cell = map.GetCell(location);
 
@@ -817,10 +817,10 @@ namespace Zircon.Server.Models
         }
         public virtual string Teleport(Map map, Point location, bool leaveEffect = true)
         {
-            if (Race == ObjectType.Player && map.Info.MinimumLevel > Level && !((PlayerObject)this).Character.Account.TempAdmin)
+            if (this is PlayerObject player1 && map.Info.MinimumLevel > Level && !player1.GameMaster)
                 return "召唤的角色等级不能低于地图要求";
 
-            if (Race == ObjectType.Player && map.Info.MaximumLevel > 0 && map.Info.MaximumLevel < Level && !((PlayerObject)this).Character.Account.TempAdmin) 
+            if (this is PlayerObject player2 && map.Info.MaximumLevel > 0 && map.Info.MaximumLevel < Level && !player2.GameMaster) 
                 return "召唤的角色等级不能高于地图要求";
 
             Cell? cell = map?.GetCell(location);
