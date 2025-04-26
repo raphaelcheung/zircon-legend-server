@@ -15383,7 +15383,7 @@ namespace Zircon.Server.Models
 
                     if (count > 0)
                     {
-                        augMagic.Cooldown = SEnvir.Now.AddMilliseconds(augMagic.Info.Delay);
+                        augMagic.Cooldown = SEnvir.Now.AddMilliseconds(Math.Max(augMagic.Info.Delay - augMagic.Level * 300, 0));
                         Enqueue(new S.MagicCooldown { InfoIndex = augMagic.Info.Index, Delay = augMagic.Info.Delay });
                     }
                     if (ob == null)
