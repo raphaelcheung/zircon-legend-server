@@ -1424,15 +1424,9 @@ namespace Zircon.Server.Models
                         case GameStage.Game:
                         case GameStage.Observer:
                             if (Character.Account.Identify < AccountIdentity.Admin)
-                            {
-                                text = string.Format("全服通告: {0}", text);
-                                con.ReceiveChat(text, MessageType.Announcement);
-                            }
+                                con.ReceiveChat($"全服通告: {text}", MessageType.Announcement);
                             else
-                            {
-                                text = string.Format("系统通知: {0}", text);
-                                con.ReceiveChat(text, MessageType.System);
-                            }
+                                con.ReceiveChat($"系统通知: {text}", MessageType.System);
 
                             break;
                         default: continue;
@@ -2184,6 +2178,18 @@ namespace Zircon.Server.Models
                         if (Character.Account.Identify <= AccountIdentity.Normal) return;
                         CharacterInfo(parts);
                         break;
+                    case "强行邀请入会":
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
+                        ForceInviteGuild(parts);
+                        break;
+                    case "强行驱逐离会":
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
+                        ForceLeaveGuild(parts);
+                        break;
+                    case "设置角色状态":
+                        if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
+                        EditCharacterStats(parts);
+                        break;
                 }
             }
             else if (text.StartsWith("#"))
@@ -2219,6 +2225,87 @@ namespace Zircon.Server.Models
                     }
                 }
             }
+        }
+        private void EditCharacterStats(string[] parts)
+        {
+            if (parts.Length < 5) return;
+
+            PlayerObject? player = null;
+            foreach(var con in SEnvir.Connections)
+            {
+                if (con.Account?.EMailAddress != parts[1]) continue;
+                if (con.Player?.Name != parts[2]) continue;
+
+                player = con.Player;
+                break;
+            }
+
+            if (player == null)
+            {
+                Connection.ReceiveChat($"找不到这个在线角色：{parts[1]}-{parts[2]}", MessageType.System);
+                return;
+            }
+
+            if (!Enum.TryParse(parts[3], out Stat stat))
+            {
+                Connection.ReceiveChat($"找不到这个状态：{parts[3]}", MessageType.System);
+                return;
+            }
+
+            if (!int.TryParse(parts[4], out int value))
+            {
+                Connection.ReceiveChat($"状态值必须是整数", MessageType.System);
+                return;
+            }
+
+            player.Stats[stat] = value;
+            Connection.ReceiveChat($"成功设置 {player.Name} 的状态 {parts[3]}={parts[4]}", MessageType.System);
+        }
+        private void ForceLeaveGuild(string[] parts)
+        {
+            if (parts.Length < 2) return;
+            var account = SEnvir.GetAccount(parts[1]);
+            if (account == null)
+            {
+                Connection.ReceiveChat($"找不到这个账号：{parts[1]}", MessageType.System);
+                return;
+            }
+
+            if (account.GuildMember == null)
+            {
+                Connection.ReceiveChat("该账号没有加入任何行会", MessageType.System);
+                return;
+            }
+
+            var name = account.GuildMember?.Guild?.GuildName;
+
+            SEnvir.ForceLeaveGuild(account);
+            Connection.ReceiveChat($"{parts[1]} 已成功离开行会：{name}", MessageType.System);
+
+        }
+        private void ForceInviteGuild(string[] parts)
+        {
+            if (parts.Length < 3) return;
+            var account = SEnvir.GetAccount(parts[1]);
+            if (account == null)
+            {
+                Connection.ReceiveChat($"找不到这个账号：{parts[1]}", MessageType.System);
+                return;
+            }
+
+            var guild = SEnvir.GuildInfoList.Binding.FirstOrDefault(x => x.GuildName == parts[2]);
+            if (guild == null)
+            {
+                Connection.ReceiveChat($"找不到这个行会：{parts[2]}", MessageType.System);
+                return;
+            }
+
+            SEnvir.ForceLeaveGuild(account);
+            var result = SEnvir.ForceJoinGuild(account, guild);
+            if (!string.IsNullOrEmpty(result))
+                Connection.ReceiveChat(result, MessageType.System);
+            else
+                Connection.ReceiveChat($"{parts[1]} 成功加入行会：{parts[2]}", MessageType.System);
         }
         private void CharacterInfo(string[] parts)
         {
@@ -3746,7 +3833,7 @@ namespace Zircon.Server.Models
             Stats[Stat.Comfort] = Math.Min(20, Stats[Stat.Comfort]);
             Stats[Stat.AttackSpeed] = Math.Min(15, Stats[Stat.AttackSpeed]);
 
-            RegenDelay = TimeSpan.FromMilliseconds(15000 - Stats[Stat.Comfort] * 650);
+            RegenDelay = TimeSpan.FromMilliseconds(Math.Max(15000 - Stats[Stat.Comfort] * 650, 500));
 
             Stats[Stat.Health] += (Stats[Stat.Health] * Stats[Stat.HealthPercent]) / 100;
             Stats[Stat.Mana] += (Stats[Stat.Mana] * Stats[Stat.ManaPercent]) / 100;
@@ -3802,8 +3889,8 @@ namespace Zircon.Server.Models
 
             Stats[Stat.Rebirth] = Character.Rebirth;
 
-            Stats[Stat.DropRate] += 20 * Stats[Stat.Rebirth];
-            Stats[Stat.GoldRate] += 20 * Stats[Stat.Rebirth];
+            //Stats[Stat.DropRate] += 20 * Stats[Stat.Rebirth];
+            //Stats[Stat.GoldRate] += 20 * Stats[Stat.Rebirth];
 
             Enqueue(new S.StatsUpdate { Stats = Stats, HermitStats = Character.HermitStats, HermitPoints = Math.Max(0, Level - 39 - Character.SpentPoints) });
 
@@ -6200,6 +6287,12 @@ namespace Zircon.Server.Models
             if ((Character.Account?.GuildMember ?? null) == null) return;
 
             GuildMemberInfo info = Character.Account.GuildMember;
+
+            if (Character.Account.ForceGuild)
+            {
+                Connection.ReceiveChat($"不允许自行退出行会：{info.Guild?.GuildName}", MessageType.System);
+                return;
+            }
 
             if ((Character.Account.GuildMember.Permission & GuildPermission.Leader) == GuildPermission.Leader && info.Guild.Members.Count > 1 && info.Guild.Members.FirstOrDefault(x => x.Index != info.Index && (x.Permission & GuildPermission.Leader) == GuildPermission.Leader) == null)
             {
@@ -15383,7 +15476,7 @@ namespace Zircon.Server.Models
 
                     if (count > 0)
                     {
-                        augMagic.Cooldown = SEnvir.Now.AddMilliseconds(Math.Max(augMagic.Info.Delay - augMagic.Level * 300, 0));
+                        augMagic.Cooldown = SEnvir.Now.AddMilliseconds(Math.Max(augMagic.Info.Delay - augMagic.Level * 800, 0));
                         Enqueue(new S.MagicCooldown { InfoIndex = augMagic.Info.Index, Delay = augMagic.Info.Delay });
                     }
                     if (ob == null)
@@ -16189,6 +16282,25 @@ namespace Zircon.Server.Models
                 case MagicType.ChangeOfSeasons:
                 case MagicType.TheNewBeginning:
                 case MagicType.Transparency:
+                case MagicType.Heal:
+                case MagicType.MagicResistance:
+                case MagicType.MassInvisibility:
+                case MagicType.TrapOctagon:
+                case MagicType.ElementalSuperiority:
+                case MagicType.MassHeal:
+                case MagicType.BloodLust:
+                case MagicType.Resurrection:
+                case MagicType.CelestialLight:
+                case MagicType.LifeSteal:
+                case MagicType.SummonSkeleton:
+                case MagicType.SummonShinsu:
+                case MagicType.SummonJinSkeleton:
+                case MagicType.StrengthOfFaith:
+                case MagicType.SummonDemonicCreature:
+                case MagicType.DemonExplosion:
+                case MagicType.DemonicRecovery:
+                case MagicType.Purification:
+                case MagicType.PoisonDust:
                     break;
                 default:
                     BuffRemove(BuffType.Cloak);
@@ -19378,9 +19490,9 @@ namespace Zircon.Server.Models
 
         public void EnduranceEnd(UserMagic magic)
         {
-
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.Health, Stats[Stat.Health] * (4 + magic.Level) / 18);
+            buffStats.Values.Add(Stat.Health, Stats[Stat.Health] * (4 + magic.Level) / 14);
+            buffStats.Values.Add(Stat.Comfort, magic.Level * 2);
             BuffAdd(BuffType.Endurance, TimeSpan.FromSeconds(15 + magic.Level * 7), buffStats, false, false, TimeSpan.Zero);
 
             LevelMagic(magic);
@@ -19390,7 +19502,7 @@ namespace Zircon.Server.Models
         public void ReflectDamageEnd(UserMagic magic)
         {
             Stats buffStats = new Stats();
-            buffStats.Values.Add(Stat.ReflectDamage, 5 + magic.Level * 3);
+            buffStats.Values.Add(Stat.ReflectDamage, 5 + magic.Level * 4);
 
             BuffAdd(BuffType.ReflectDamage, TimeSpan.FromSeconds(15 + magic.Level * 10), buffStats, false, false, TimeSpan.Zero);
 
@@ -20355,6 +20467,8 @@ namespace Zircon.Server.Models
             ob.SummonBase = GetSC() + GetElementBySchool(magic.Info.School) * 2;
             ob.SummonCritical = Stats[Stat.CriticalChance] / 2;
             ob.SummonCriticalDamage = Stats[Stat.CriticalDamage] / 2;
+
+            ob.Stats[Stat.Rebirth] = Character.Rebirth;
 
             if (Buffs.Any(x => x.Type == BuffType.StrengthOfFaith))
                 ob.Magics.Add(Magics[MagicType.StrengthOfFaith]);

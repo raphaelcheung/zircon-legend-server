@@ -26,6 +26,7 @@ using System.Globalization;
 using System.Reflection.PortableExecutable;
 using Library.ContentSafe.SensitiveWord;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace Server.Envir
 {
@@ -4882,6 +4883,86 @@ namespace Server.Envir
 
             };
 
+        }
+
+        public static string ForceJoinGuild(AccountInfo account, GuildInfo guild)
+        {
+            GuildMemberInfo memberInfo = GuildMemberInfoList.CreateNewObject();
+
+            memberInfo.Account = account;
+            memberInfo.Guild = guild;
+            memberInfo.Rank = guild.DefaultRank;
+            memberInfo.JoinDate = Now;
+            memberInfo.Permission = guild.DefaultPermission;
+            account.ForceGuild = true;
+
+            var info = memberInfo.ToClientInfo();
+            if (info == null)
+            {
+                memberInfo.Delete();
+                return $"加入行会时出现了内部错误，请反馈给管理员";
+            }
+
+            S.GuildUpdate update = memberInfo.Guild.GetUpdatePacket();
+            update.Members.Add(info);
+
+            account.Connection?.Player?.SendGuildInfo();
+            account.Connection?.ReceiveChat(string.Format(account.Connection.Language.GuildJoinWelcome, "管理员"), MessageType.System);
+
+            Broadcast(new S.GuildChanged { ObjectID = ObjectID, GuildName = memberInfo.Guild.GuildName, GuildRank = memberInfo.Rank });
+            account.Connection?.Player?.AddAllObjects();
+
+
+
+            foreach (GuildMemberInfo member in memberInfo.Guild.Members)
+            {
+                if (member.Account.Connection == null || member == memberInfo || member.Account.Connection.Player == null)
+                    continue;
+
+                member.Account.Connection.ReceiveChat(string.Format(member.Account.Connection.Language.GuildMemberJoined, "管理员", "新"), MessageType.System);
+                member.Account.Connection.Player.Enqueue(update);
+
+                member.Account.Connection.Player.AddAllObjects();
+                member.Account.Connection.Player.ApplyGuildBuff();
+            }
+
+            account.Connection?.Player?.ApplyCastleBuff();
+            account.Connection?.Player?.ApplyGuildBuff();
+            return "";
+        }
+        public static void ForceLeaveGuild(AccountInfo account)
+        {
+            var guildMember = account.GuildMember;
+            if (guildMember == null) return;
+
+            var guild = guildMember.Guild;
+            int index = guildMember.Index;
+
+            guildMember.Guild = null;
+            guildMember.Account = null;
+            guildMember.Delete();
+
+            account.ForceGuild = false;
+            account.Connection?.ReceiveChat(account.Connection.Language.GuildLeave, MessageType.System);
+            account.Connection?.Enqueue(new S.GuildInfo { ObserverPacket = false });
+
+            Broadcast(new S.GuildChanged { ObjectID = ObjectID });
+            account.Connection?.Player?.RemoveAllObjects();
+
+            foreach (GuildMemberInfo member in guild.Members)
+            {
+                if (member.Account == null) continue;
+
+                member.Account.Connection?.Player?.Enqueue(new S.GuildKick { Index = index, ObserverPacket = false });
+                member.Account.Connection?.ReceiveChat(string.Format(member.Account.Connection.Language.GuildMemberLeave, ""), MessageType.System);
+
+                member.Account.Connection?.Player?.RemoveAllObjects();
+                member.Account.Connection?.Player?.ApplyGuildBuff();
+
+            }
+
+            account.Connection?.Player?.ApplyCastleBuff();
+            account.Connection?.Player?.ApplyGuildBuff();
         }
     }
 

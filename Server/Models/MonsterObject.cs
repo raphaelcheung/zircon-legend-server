@@ -835,8 +835,12 @@ namespace Zircon.Server.Models
 
             MoveDelay = MonsterInfo.MoveDelay * (36 - SummonLevel) / 36;
 
-            AttackDelay = MonsterInfo.AttackDelay * (36 - SummonLevel) / 36;
-            AttackDelay = Math.Max(400, AttackDelay);
+
+            int tmp = Dead ? 24 : 36;
+            AttackDelay = MonsterInfo.AttackDelay * (tmp - SummonLevel) / tmp;
+
+            if (SummonLevel > 0)
+                AttackDelay = Math.Max(400, AttackDelay);
 
             int live_rate = MonsterInfo.Undead ? 5 : 10;
             int attack_rate = MonsterInfo.Undead ? 6 : 10;

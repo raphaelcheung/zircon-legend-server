@@ -730,8 +730,9 @@ namespace Server.DBModels
         {
             if (Identify == AccountIdentity.SuperAdmin && TempAdmin)
                 return AccountIdentity.SuperAdmin;
-            else
-                return Identify;
+            else if (Identify == AccountIdentity.SuperAdmin)
+                return AccountIdentity.Admin;
+            else return Identify;
         }
 
 
@@ -767,5 +768,7 @@ namespace Server.DBModels
             }
         }
         private long _AutoTime;
+
+        public bool ForceGuild { get; set; } = false;
     }
 }
