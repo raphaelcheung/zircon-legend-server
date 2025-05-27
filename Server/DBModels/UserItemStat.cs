@@ -16,19 +16,6 @@ namespace Server.DBModels
             linkUserItems.Remove(this);
         }
 
-        //public static void ForEachSafe(Func<UserItemStat,int, bool> func)
-        //{
-        //    foreach (var item in linkUserItems)
-        //        if (item != null) func(item);
-        //}
-
-        public static void DeleteLink(UserItemStat item)
-        {
-            try { linkUserItems.Remove(item); }
-            catch { }
-        }
-
-
         [Association("AddedStats")]
         public UserItem Item
         {
@@ -93,7 +80,6 @@ namespace Server.DBModels
         protected override void OnDeleted()
         {
             Item = null;
-
             base.OnDeleted();
         }
 

@@ -218,34 +218,39 @@ namespace Server.Envir
                 StringBuilder sb = new StringBuilder();
                 foreach(var pair in dict)
                 {
-                    if (sb.Length<= 0) sb.Append($"[{pair.Key.FullName}x{pair.Value}]");
-                    else sb.Append($"、[{pair.Key.FullName}x{pair.Value}]");
+                    if (sb.Length<= 0) sb.Append($"[{pair.Key.FullName}]x{pair.Value}");
+                    else sb.Append($"、[{pair.Key.FullName}]x{pair.Value}");
                 }
 
                 dict.Clear();
 
 
                 var checknum = Account?.LastSum ?? "";
-                SEnvir.Log($"{IPAddress} 账号={Account?.EMailAddress ?? "空"} 角色={Player?.Character?.CharacterName ?? "空"} 验证码={Account?.LastSum ?? ""} 网络包太多，断开用户连接");
-                SEnvir.Log($"积压的网络包共有 {ReceiveList.Count} 个，统计：{sb.ToString()}");
+                SEnvir.Log($"网络包太多，断开用户连接：账号={Account?.EMailAddress ?? "空"} 角色={Player?.Character?.CharacterName ?? "空"} IP={IPAddress} 验证码={Account?.LastSum ?? ""}");
+                SEnvir.Log($"积压的网络包共有 {ReceiveList.Count} 个：{sb.ToString()}");
                 sb.Clear();
 
                 TryDisconnect();
-                //SEnvir.IPBlocks[IPAddress] = SEnvir.Now.Add(Config.PacketBanTime);
+                SEnvir.IPBlocks[IPAddress] = SEnvir.Now.Add(Config.PacketBanTime);
 
-                if (!string.IsNullOrEmpty(checknum))
-                    for (int i = SEnvir.Connections.Count - 1; i >= 0; i--)
+
+                for (int i = SEnvir.Connections.Count - 1; i >= 0; i--)
+                {
+                    var con = SEnvir.Connections[i];
+                    if (con == null || con.Account == null)
+                        continue;
+
+                    if (!string.IsNullOrEmpty(checknum) && con.Account.LastSum == checknum)
                     {
-                        var con = SEnvir.Connections[i];
-                        if (con == null || con.Account == null)
-                            continue;
-
-                        if (con.Account.LastSum == checknum)
-                        {
-                            SEnvir.Log($"断开相同验证码的连接 账号={con.Account} 角色={con.Player?.Character?.CharacterName ?? ""}");
-                            SEnvir.Connections[i].TryDisconnect();
-                        }
+                        SEnvir.Log($"断开相同验证码的连接 账号={con.Account} 角色={con.Player?.Character?.CharacterName ?? ""}");
+                        SEnvir.Connections[i].TryDisconnect();
                     }
+                    else if (con.IPAddress == IPAddress)
+                    {
+                        SEnvir.Log($"断开相同IP的连接 账号={con.Account} 角色={con.Player?.Character?.CharacterName ?? ""}");
+                        SEnvir.Connections[i].TryDisconnect();
+                    }
+                }
             }
 
             base.Process();

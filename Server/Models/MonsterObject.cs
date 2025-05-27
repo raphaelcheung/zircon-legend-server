@@ -135,6 +135,7 @@ namespace Zircon.Server.Models
                         EXPOwnerDelay = TimeSpan.FromSeconds(20);
 
         public MonsterInfo MonsterInfo;
+        private MapObject? Killer = null;
 
         public SpawnInfo SpawnInfo;
         public int DropSet;
@@ -875,7 +876,7 @@ namespace Zircon.Server.Models
             }
             
             if (Stats[Stat.CriticalChance] < 1)
-                Stats[Stat.CriticalChance] = 1;
+                Stats[Stat.CriticalChance] = MonsterInfo.IsBoss && MonsterInfo.Level >= 250 ? SEnvir.BigBossCriticalChance : 1;
 
             if (Buffs.Any(x => x.Type == BuffType.MagicWeakness))
             {
@@ -906,9 +907,6 @@ namespace Zircon.Server.Models
                     }
                 }
             }
-
-
-           
 
             /*
             Stats[Stat.FireResistance] = Math.Min(5, Stats[Stat.FireResistance]);
@@ -958,6 +956,17 @@ namespace Zircon.Server.Models
             Stats[Stat.MinDC] = Math.Min(Stats[Stat.MinDC], Stats[Stat.MaxDC]);
             Stats[Stat.MinMC] = Math.Min(Stats[Stat.MinMC], Stats[Stat.MaxMC]);
             Stats[Stat.MinSC] = Math.Min(Stats[Stat.MinSC], Stats[Stat.MaxSC]);
+
+            if (MonsterInfo.Undead && PetOwner != null && Stats[Stat.Rebirth] > 0)
+            {
+                for(int i = 0; i < Stats[Stat.Rebirth]; i++)
+                {
+                    if (Stats[Stat.MinAC] > 0) Stats[Stat.MinAC] += Stats[Stat.MinAC] * 15 / 100;
+                    if (Stats[Stat.MaxAC] > 0) Stats[Stat.MaxAC] += Stats[Stat.MaxAC] * 15 / 100;
+                    if (Stats[Stat.MinMR] > 0) Stats[Stat.MinMR] += Stats[Stat.MinMR] * 15 / 100;
+                    if (Stats[Stat.MaxMR] > 0) Stats[Stat.MaxMR] += Stats[Stat.MaxMR] * 15 / 100;
+                }
+            }
 
             if (EasterEventMob)
                 Stats[Stat.Health] = 1;
@@ -2558,6 +2567,7 @@ namespace Zircon.Server.Models
             }
 
             ShockTime = DateTime.MinValue;
+            Killer = player;
 
             if (EXPOwner == null && PetOwner == null)
                 EXPOwner = player;
@@ -2620,13 +2630,23 @@ namespace Zircon.Server.Models
 
         public override void Die()
         {
-            if (MonsterInfo.IsBoss && MonsterInfo.Level == 250 && EXPOwner != null)
+            if (MonsterInfo.IsBoss && MonsterInfo.Level == 250 && EXPOwner != null && PetOwner == null)
             {
                 string msg = $"[{SEnvir.Now.ToLocalTime():HH:mm:ss}] {CurrentMap.Info.Description}的【{MonsterInfo.MonsterName}】被绝世高手【{EXPOwner.Name}】击杀";
                 foreach (var con in SEnvir.Connections)
                     con.ReceiveChat(msg, MessageType.Announcement);
             }
 
+            if (PetOwner != null && !string.IsNullOrEmpty(Name))
+            {
+                if (Killer != null)
+                    PetOwner.Connection?.ReceiveChat($"你的宝宝[{Name}]被{Killer.Race switch { ObjectType.Player => "玩家", ObjectType.Monster => "怪物", _=>"" }}[{Killer.Name}]杀死了", MessageType.System);
+                else
+                    PetOwner.Connection?.ReceiveChat($"你的宝宝[{Name}]被杀死了", MessageType.System);
+
+            }
+
+            Killer = null;
             base.Die();
 
             YieldReward();

@@ -73,7 +73,7 @@ namespace Zircon.Server.Models
         public DateTime FrostBiteImmunity;
 
         public DateTime ActionTime, MoveTime, RegenTime, AttackTime, MagicTime, CellTime, StruckTime, BuffTime, ShockTime, DisplayHPMPTime, ItemReviveTime;
-        public List<DelayedAction> ActionList;
+        public List<DelayedAction> ActionList { get; set; }
 
         public virtual bool CanMove 
         {
@@ -102,7 +102,7 @@ namespace Zircon.Server.Models
 
         public Stats Stats;
         public bool Visible, PreventSpellCheck;
-        public decimal LifeSteal;
+        public decimal LifeSteal { get; set; }
 
         public TimeSpan RegenDelay { get; set; }
 
@@ -815,7 +815,7 @@ namespace Zircon.Server.Models
             
             return Teleport(map, point, leaveEffect);
         }
-        public virtual string Teleport(Map map, Point location, bool leaveEffect = true)
+        public virtual string Teleport(Map map, Point location, bool leaveEffect = true, bool beForced = false)
         {
             if (this is PlayerObject player1 && map.Info.MinimumLevel > Level && !player1.GameMaster)
                 return "召唤的角色等级不能低于地图要求";
@@ -892,7 +892,7 @@ namespace Zircon.Server.Models
         {
             if (!Activated) return;
 
-            if (NearByPlayers.Count > 0 && ActionList.Count == 0) return;
+            if (NearByPlayers.Count > 0 || ActionList.Count > 0) return;
             
             Activated = false;
             SEnvir.ActiveObjects.Remove(this);

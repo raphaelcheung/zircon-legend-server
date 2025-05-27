@@ -15,6 +15,8 @@ namespace Zircon.Server.Models.Monsters
         public bool Mode;
         public DateTime ModeTime;
 
+        protected override byte AttackRange{ get => 3; }
+
         public override bool CanAttack { get { return base.CanAttack && Mode; } }
 
         public Shinsu()

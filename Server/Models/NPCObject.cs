@@ -165,7 +165,7 @@ namespace Zircon.Server.Models
                     case NPCActionType.Rebirth:
                         if (ob.Character.Rebirth >= Config.最高转生次数)
                         {
-                            ob.Connection.ReceiveChat("你的转生次数已达上限，不可再次转生.", MessageType.System);
+                            ob.Connection.ReceiveChat("你的转生次数已达上限，再重生恐怕就醒不过来了.", MessageType.System);
                             continue;
                         }
 

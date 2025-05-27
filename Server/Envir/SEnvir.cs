@@ -49,6 +49,8 @@ namespace Server.Envir
 
         private static DateTime AutoClearUserDatasTime = DateTime.MinValue;
 
+        public static int BigBossCriticalChance { get; set; } = 5;
+
         public struct TagRebirthInfo(string mark, Color color)
         {
             public string Mark = mark;
@@ -199,7 +201,6 @@ namespace Server.Envir
                 TcpClient client = _listener.EndAcceptTcpClient(result);
                 string ipAddress;
 
-                    
                 NetworkStream stream = client.GetStream();
                 
                 if (stream.DataAvailable)
@@ -213,27 +214,12 @@ namespace Server.Envir
                     {
                         string[] parts = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                         if (parts.Length == 6 && parts[0] == "PROXY" && !string.IsNullOrEmpty(parts[2]))
-                        {
                             ipAddress = parts[2]; // 真实的客户端IP地址
-                        }
                         else
-                        {
-                            //Log($"代理模式下错误的代理头信息：{line} {client.Client.RemoteEndPoint.ToString()}");
-                            //client.Close();
-                            //ContinueListen();
-                            //return;
                             ipAddress = client.Client.RemoteEndPoint.ToString().Split(':')[0];
-                        }
                     }
                     else
-                    {
-                        //Log($"代理模式下错误的代理头信息：{line} {client.Client.RemoteEndPoint.ToString()}");
-                        //client.Close();
-                        //ContinueListen();
-                        //return;
                         ipAddress = client.Client.RemoteEndPoint.ToString().Split(':')[0];
-                    }
-                    
                 }
                 else
                     ipAddress = client.Client.RemoteEndPoint.ToString().Split(':')[0];
@@ -247,6 +233,8 @@ namespace Server.Envir
                     if (Connection.Connected)
                         NewConnections.Enqueue(Connection);
                 }
+                else
+                    Log($"IP黑名单尝试连接：IP={ipAddress} 到期={banDate.ToLocalTime()}");
             }
             catch (Exception ex)
             {
@@ -743,7 +731,7 @@ namespace Server.Envir
         public static uint ObjectID {get{return (uint)Interlocked.Increment(ref _ObjectID);}}
 
         public static LinkedList<MapObject> Objects = new LinkedList<MapObject>();
-        public static List<MapObject> ActiveObjects = new List<MapObject>();
+        public static List<MapObject> ActiveObjects { get; set; } = new List<MapObject>();
 
         public static List<PlayerObject> Players = new List<PlayerObject>();
         public static List<ConquestWar> ConquestWars = new List<ConquestWar>();
@@ -1460,7 +1448,8 @@ namespace Server.Envir
 
             Log(string.Format("加载耗时: {0}", Functions.ToString(Time.Now - Now, true)));
 
-            Log($"共清理 {ClearUserDatas(true)} 条数据");
+            if (Config.数据清理间隔分钟 > 0)
+                Log($"共清理 {ClearUserDatas(true)} 条数据");
 
             while (Started)
             {
@@ -3461,16 +3450,20 @@ namespace Server.Envir
                     else if (account.WrongPasswordCount >= 10 && account.Identify > AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(30), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+                        IPBlocks[con.IPAddress] = Now.AddDays(3);
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(30) });
                     }
                     else if (account.WrongPasswordCount >= 8 && account.Identify > AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(7), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+                        IPBlocks[con.IPAddress] = Now.AddDays(1);
+
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(7) });
                     }
                     else if (account.WrongPasswordCount >= 5 && account.Identify > AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(1), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+                        IPBlocks[con.IPAddress] = Now.AddDays(1);
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(1) });
                     }
 
@@ -3487,19 +3480,12 @@ namespace Server.Envir
             {
                 if (admin)
                 {
-                    con.Enqueue(new S.LoginSimple { Result = LoginResult.AlreadyLoggedIn });
+                    con.Enqueue(new S.LoginSimple { Result = LoginResult.AlreadyLoggedInAdmin });
                     account.Connection.TrySendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUser });
                     return;
-                    //  account.Connection.SendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUserAdmin });
                 }
 
-                Log(string.Format("[账号已经登录] 账号: {0}, 上一次登录IP: {1}, IP: {2}, 验证码: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
-
-                if (account.Identify > AccountIdentity.Normal)
-                {
-                    con.Enqueue(new S.LoginSimple { Result = LoginResult.AlreadyLoggedInAdmin });
-                    return;
-                }
+                Log(string.Format("[账号已经登录] 账号: {0}, 上一次IP: {1}, 本次IP: {2}, 验证码: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
 
                 con.Enqueue(new S.LoginSimple { Result = LoginResult.AlreadyLoggedIn });
                 account.Connection.TrySendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUser });
@@ -3655,18 +3641,21 @@ namespace Server.Envir
                     else if (account.WrongPasswordCount >= 10 && account.Identify <= AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(30), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+                        IPBlocks[con.IPAddress] = Now.AddDays(3);
 
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(30) });
                     }
                     else if (account.WrongPasswordCount >= 8 && account.Identify <= AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(7), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+                        IPBlocks[con.IPAddress] = Now.AddDays(1);
 
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(7) });
                     }
                     else if (account.WrongPasswordCount >= 5 && account.Identify <= AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(1), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
+                        IPBlocks[con.IPAddress] = Now.AddDays(1);
 
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(1) });
                     }
@@ -3683,34 +3672,12 @@ namespace Server.Envir
             {
                 if (admin)
                 {
-                    con.Enqueue(new S.Login { Result = LoginResult.AlreadyLoggedIn });
+                    con.Enqueue(new S.Login { Result = LoginResult.AlreadyLoggedInAdmin });
                     account.Connection.TrySendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUser });
                     return;
-                    //  account.Connection.SendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUserAdmin });
                 }
 
                 Log(string.Format("[账号已经登录] 账号: {0}, 上一次登录IP: {1}, IP: {2}, 验证码: {3}", account.EMailAddress, account.LastIP, con.IPAddress, p.CheckSum));
-
-                if (account.Identify > AccountIdentity.Normal)
-                {
-                    con.Enqueue(new S.Login { Result = LoginResult.AlreadyLoggedInAdmin });
-                    return;
-                }
-
-                //if (account.LastIP != con.IPAddress && account.LastSum != p.CheckSum)
-                //{
-                //    account.Connection.TrySendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUserPassword });
-                //    string password = Functions.RandomString(Random, 10);
-
-                //    account.Password = CreateHash(password);
-                //    account.ResetKey = string.Empty;
-                //    account.WrongPasswordCount = 0;
-
-                //    SendResetPasswordEmail(account, password);
-
-                //    con.Enqueue(new S.Login { Result = LoginResult.AlreadyLoggedInPassword });
-                //    return;
-                //}
 
                 con.Enqueue(new S.Login { Result = LoginResult.AlreadyLoggedIn });
                 account.Connection.TrySendDisconnect(new G.Disconnect { Reason = DisconnectReason.AnotherUser });
@@ -4608,6 +4575,7 @@ namespace Server.Envir
             return result;
         }
         public static void SaveSystem() { Session.ForceSaveSystem(); }
+        public static void SaveUserDatas() { Session.Save(true); }
 
         #region Password Encryption
         private const int Iterations = 1354;
@@ -4816,18 +4784,26 @@ namespace Server.Envir
             var list = Objects.ToList();
             for(int i = list.Count - 1; i >= 0; i--)
             {
-                if (!(list[i] is ItemObject itemob)) continue;
-                if (itemob.ExpireTime > Now && itemob.Activated)
+                if (list[i] is ItemObject itemob)
                 {
-                    if (itemob.Item != null)
-                        checklist.TryAdd(itemob.Item.Index, true);
+                    if (itemob.ExpireTime > Now && itemob.Activated)
+                    {
+                        if (itemob.Item != null)
+                            checklist.TryAdd(itemob.Item.Index, true);
 
-                    continue;
+                        continue;
+                    }
+
+                    itemob.Item?.Delete();
+                    itemob.Despawn();
+                    result++;
                 }
-
-                itemob.Item?.Delete();
-                itemob.Despawn();
-                result++;
+                else if (list[i] is MonsterObject monob)
+                {
+                    if (!monob.Dead) continue;
+                    monob.Despawn();
+                    result++;
+                }
             }
 
             list.Clear();
@@ -4852,6 +4828,17 @@ namespace Server.Envir
             }
 
             checklist.Clear();
+
+            for (int i = UserItemStatsList.Count - 1; i >= 0; i--)
+            {
+                var itemStat = UserItemStatsList[i];
+                if (itemStat.Item != null) continue;
+
+                itemStat.Delete(true);
+                UserItemStatsList.Delete(i);
+                result++;
+            }
+
             if (!full) return result;
 
             for(int i = GuildMemberInfoList.Count - 1; i >= 0; i--)

@@ -17,7 +17,7 @@ namespace Zircon.Server.Models
         public override ObjectType Race {get{return ObjectType.Item;}}
         public override bool Blocking { get { return false; } }
 
-        public DateTime ExpireTime { get; set; }
+        public DateTime ExpireTime { get; set; } = DateTime.MaxValue;
 
         public UserItem? Item { get; set; }
         public List<CharacterInfo> OwnerList { get; } = new List<CharacterInfo>();
