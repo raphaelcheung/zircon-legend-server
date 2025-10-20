@@ -47,6 +47,8 @@ project.lock.json
 /MonoGame.Framework/MonoGame.Framework.Net.WindowsUniversal.project.lock.json
 /MonoGame.Framework/MonoGame.Framework.WindowsUniversal.project.lock.json
 artifacts/
+*.code-workspace
+/.github*/
 
 # JetBrains Rider
 .idea/
