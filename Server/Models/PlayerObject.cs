@@ -21364,7 +21364,13 @@ namespace Zircon.Server.Models
             {
                 ItemSortList[i] = new List<UserItem>();
             }
-            for (int i = 0; i < Globals.StorageSize; i++)
+
+            // Use the account's actual StorageSize (can be expanded beyond Globals.StorageSize)
+            int storageSize = Character?.Account != null ? Character.Account.StorageSize : Globals.StorageSize;
+            storageSize = Math.Min(storageSize, Storage?.Length ?? Globals.StorageSize);
+
+            // Collect and categorize items from the entire storage range
+            for (int i = 0; i < storageSize; i++)
             {
                 UserItem Item = Storage[i];
                 if (Item != null)
@@ -21418,8 +21424,19 @@ namespace Zircon.Server.Models
             for (int i = 0; i <= 31; i++)
             {
                 TY = ItemSortList[i];
-                foreach (UserItem item in TY)
+                // 按物品品种（ItemInfo.Index）排序，碎片作为特例：按其绑定的物品Index排序
+                IEnumerable<UserItem> sortedItems;
+                if (i == (int)ItemType.ItemPart)
+                    sortedItems = TY.OrderBy(x => x.Stats[Stat.ItemIndex]).ThenBy(x => x.Info.Index);
+                else
+                    sortedItems = TY.OrderBy(x => x.Info.Index)
+                                    .ThenBy(x => x.Level).ThenBy(x => x.AddedStats?.Count ?? 0).ThenBy(x => x.CurrentDurability);
+
+                foreach (UserItem item in sortedItems)
                 {
+                    if (ItemCount >= storageSize)
+                        break; // Safety: don't write beyond storage limit
+
                     item.Slot = ItemCount;
                     item.Account = Character.Account;
                     Storage[ItemCount] = item;
@@ -21430,7 +21447,16 @@ namespace Zircon.Server.Models
             TY.Clear();
             TY = null;
             ItemSortList = null;
-            Enqueue(new S.SortStorageItem { Items = Character.Account.Items.Where(x => x.Slot < Globals.StorageSize).Select(x => x.ToClientInfo()).ToList() });
+
+            // Send sorted items to client using the actual storageSize for filtering
+            Enqueue(new S.SortStorageItem { Items = Character.Account.Items.Where(x => x.Slot < storageSize).Select(x => x.ToClientInfo()).ToList() });
+
+            // Clear remaining slots on the client to avoid visual residues.
+            // We only need to clear slots from ItemCount to storageSize - 1.
+            for (int i = ItemCount; i < storageSize; i++)
+            {
+                Enqueue(new S.ItemChanged { Link = new CellLinkInfo { GridType = GridType.Storage, Slot = i }, Success = true });
+            }
         }
 
         public void SortBagItem()
@@ -21496,7 +21522,16 @@ namespace Zircon.Server.Models
             for (int i = 0; i <= 31; i++)
             {
                 TY = ItemSortList[i];
-                foreach (UserItem item in TY)
+                // 在同类型里，先按品种(Info.Index)排序，再按强化等级、附加属性数量、耐久排序
+                IEnumerable<UserItem> invSortedItems;
+                if (i == (int)ItemType.ItemPart)
+                    invSortedItems = TY.OrderBy(x => x.Stats[Stat.ItemIndex]).ThenBy(x => x.Info.Index)
+                                       .ThenBy(x => x.Level).ThenBy(x => x.AddedStats?.Count ?? 0).ThenBy(x => x.CurrentDurability);
+                else
+                    invSortedItems = TY.OrderBy(x => x.Info.Index)
+                                       .ThenBy(x => x.Level).ThenBy(x => x.AddedStats?.Count ?? 0).ThenBy(x => x.CurrentDurability);
+
+                foreach (UserItem item in invSortedItems)
                 {
                     item.Slot = ItemCount;
                     item.Character = Character;
