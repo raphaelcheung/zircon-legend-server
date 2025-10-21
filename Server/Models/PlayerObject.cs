@@ -684,7 +684,14 @@ namespace Zircon.Server.Models
             SpellList.Clear();
 
             for (int i = Pets.Count - 1; i >= 0; i--)
-                Pets[i].Despawn();
+            {
+                Pets[i].PendingDespawnTime = SEnvir.Now.AddMinutes(20);
+                Pets[i].PendingDespawnOwnerIndex = Character.Index;
+                Pets[i].PetOwner = null; // Clear owner reference to prevent null reference errors
+                Pets[i].Target = null; // Clear target
+                Pets[i].ActionList.Clear(); // Clear actions
+                Pets[i].Activate(); // Keep pet active so Process() runs and checks despawn timer
+            }
             Pets.Clear();
 
             for (int i = Connection.Observers.Count - 1; i >= 0; i--)
@@ -721,6 +728,15 @@ namespace Zircon.Server.Models
             Connection.Stage = GameStage.Game;
 
             ShoutTime = SEnvir.Now.AddSeconds(10);
+
+            // Reattach pets that were pending despawn
+            foreach (MonsterObject monster in CurrentMap.Objects.OfType<MonsterObject>().Where(x => x.PendingDespawnOwnerIndex == Character.Index).ToList())
+            {
+                monster.PendingDespawnTime = DateTime.MaxValue;
+                monster.PendingDespawnOwnerIndex = -1;
+                monster.PetOwner = this;
+                Pets.Add(monster);
+            }
 
             //Broadcast Appearance(?)
 

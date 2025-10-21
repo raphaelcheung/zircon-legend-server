@@ -243,6 +243,8 @@ namespace Zircon.Server.Models
         public override bool CanAttack { get { return base.CanAttack && (Poison & PoisonType.Silenced) != PoisonType.Silenced && AttackDelay > 0 && (PetOwner == null || PetOwner.PetMode == PetMode.Both || PetOwner.PetMode == PetMode.Attack || PetOwner.PetMode == PetMode.PvP); } }
 
         public DateTime LifeLimit { get; set; } = DateTime.MinValue;
+        public DateTime PendingDespawnTime { get; set; } = DateTime.MaxValue;
+        public int PendingDespawnOwnerIndex { get; set; } = -1;
 
         public static MonsterObject GetMonster(MonsterInfo monsterInfo)
         {
@@ -1011,7 +1013,7 @@ namespace Zircon.Server.Models
         {
             if (Activated) return;
 
-            if (NearByPlayers.Count == 0 && MonsterInfo.ViewRange <= Config.MaxViewRange && !MonsterInfo.IsBoss && PetOwner == null) return;
+            if (NearByPlayers.Count == 0 && MonsterInfo.ViewRange <= Config.MaxViewRange && !MonsterInfo.IsBoss && PetOwner == null && PendingDespawnTime >= DateTime.MaxValue) return;
 
             Activated = true;
             SEnvir.ActiveObjects.Add(this);
@@ -1020,7 +1022,7 @@ namespace Zircon.Server.Models
         {
             if (!Activated) return;
 
-            if (NearByPlayers.Count > 0 || MonsterInfo.ViewRange > Config.MaxViewRange || Target != null || MonsterInfo.IsBoss || PetOwner != null || ActionList.Count > 0 || CurrentHP < Stats[Stat.Health]) return;
+            if (NearByPlayers.Count > 0 || MonsterInfo.ViewRange > Config.MaxViewRange || Target != null || MonsterInfo.IsBoss || PetOwner != null || PendingDespawnTime < DateTime.MaxValue || ActionList.Count > 0 || CurrentHP < Stats[Stat.Health]) return;
 
             Activated = false;
             SEnvir.ActiveObjects.Remove(this);
@@ -1101,6 +1103,16 @@ namespace Zircon.Server.Models
                 Despawn();
                 return;
             }
+
+            if (PendingDespawnTime < DateTime.MaxValue && SEnvir.Now > PendingDespawnTime)
+            {
+                Despawn();
+                return;
+            }
+
+            // Skip AI processing if pet is pending despawn (waiting for owner to relog)
+            if (PendingDespawnTime < DateTime.MaxValue)
+                return;
 
             if (Target == null || Target.Node == null || Target.Dead || Target.CurrentMap != CurrentMap || !Functions.InRange(CurrentLocation, Target.CurrentLocation, Config.MaxViewRange) ||
 	               ((Poison & PoisonType.Abyss) == PoisonType.Abyss && !Functions.InRange(CurrentLocation, Target.CurrentLocation, ViewRange)) || !CanAttackTarget(Target))
