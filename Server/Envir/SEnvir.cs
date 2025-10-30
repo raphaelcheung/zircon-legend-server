@@ -81,7 +81,8 @@ namespace Server.Envir
 
 
         #region Logging
-
+        public static bool OnlyAdminLogin { get; set; } = true;
+        
         public static ConcurrentQueue<string> DisplayLogs { get; set; } = new ConcurrentQueue<string>();
         public static ConcurrentQueue<string> Logs { get; set; } = new ConcurrentQueue<string>();
         public static void Log(string log, bool hardLog = true)
@@ -3329,14 +3330,14 @@ namespace Server.Envir
 
             if (string.IsNullOrEmpty(p.CheckSum))
             {
-                con.Enqueue(new S.Login { Result = LoginResult.Disabled });
+                con.Enqueue(new S.LoginSimple { Result = LoginResult.Disabled });
                 return;
             }
 
             if (dictDeviceBlock.TryGetValue(p.CheckSum, out var block) && block.BlockTime > Now.ToLocalTime())
             {
                 Log($"黑名单设备尝试登录被拒绝：{p.CheckSum} {block.BlockTime}");
-                con.Enqueue(new S.Login { Result = LoginResult.Banned, Duration = block.BlockTime - Now.ToLocalTime() });
+                con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Duration = block.BlockTime - Now.ToLocalTime() });
                 return;
             }
 
@@ -3367,6 +3368,12 @@ namespace Server.Envir
             else if (!account.Activated)
             {
                 con.Enqueue(new S.LoginSimple { Result = LoginResult.AccountNotActivated });
+                return;
+            }
+
+            if (OnlyAdminLogin && account.Identify == AccountIdentity.Normal)
+            {
+                con.Enqueue(new S.LoginSimple { Result = LoginResult.Disabled, Message = $"服务器正在维护中，请稍候再尝试登录..." });
                 return;
             }
 
@@ -3451,20 +3458,20 @@ namespace Server.Envir
                     {
                         AddBlock(p.CheckSum, Now.AddDays(30), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
                         IPBlocks[con.IPAddress] = Now.AddDays(3);
-                        con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(30) });
+                        con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(30) });
                     }
                     else if (account.WrongPasswordCount >= 8 && account.Identify > AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(7), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
                         IPBlocks[con.IPAddress] = Now.AddDays(1);
 
-                        con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(7) });
+                        con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(7) });
                     }
                     else if (account.WrongPasswordCount >= 5 && account.Identify > AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(1), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
                         IPBlocks[con.IPAddress] = Now.AddDays(1);
-                        con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(1) });
+                        con.Enqueue(new S.LoginSimple { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(1) });
                     }
 
                     con.Enqueue(new S.LoginSimple { Result = LoginResult.WrongPassword });
@@ -3563,6 +3570,12 @@ namespace Server.Envir
             else if (!account.Activated)
             {
                 con.Enqueue(new S.Login { Result = LoginResult.AccountNotActivated });
+                return;
+            }
+
+            if (OnlyAdminLogin && account.Identify == AccountIdentity.Normal)
+            {
+                con.Enqueue(new S.Login { Result = LoginResult.Disabled, Message = $"服务器正在维护中，请稍候再尝试登录..." });
                 return;
             }
 
@@ -4808,9 +4821,10 @@ namespace Server.Envir
 
             list.Clear();
 
-            for (int i = UserItemList.Count - 1; i >= 0; i--)
+            var userList = UserItemList.Binding.ToList();
+            for (int i = userList.Count - 1; i >= 0; i--)
             {
-                var item = UserItemList[i];
+                var item = userList[i];
                 if (item.Character == null 
                     && item.Account == null
                     && item.Companion == null
@@ -4821,24 +4835,25 @@ namespace Server.Envir
                 {
                     if (!full && checklist.ContainsKey(item.Index)) continue;
 
-                    item.Delete(true);
-                    UserItemList.Delete(i);
+                    item.Delete();
                     result++;
                 }
             }
 
+            userList.Clear();
             checklist.Clear();
 
-            for (int i = UserItemStatsList.Count - 1; i >= 0; i--)
+            var statsList = UserItemStatsList.Binding.ToList();
+            for (int i = statsList.Count - 1; i >= 0; i--)
             {
-                var itemStat = UserItemStatsList[i];
+                var itemStat = statsList[i];
                 if (itemStat.Item != null) continue;
 
-                itemStat.Delete(true);
-                UserItemStatsList.Delete(i);
+                itemStat.Delete();
                 result++;
             }
 
+            statsList.Clear();
             if (!full) return result;
 
             for(int i = GuildMemberInfoList.Count - 1; i >= 0; i--)

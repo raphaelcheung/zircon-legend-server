@@ -6,15 +6,6 @@ namespace Server.DBModels
     [UserObject]
     public sealed class UserItemStat : DBObject
     {
-        private static readonly LinkedList<UserItemStat> linkUserItems = new LinkedList<UserItemStat>();
-        public UserItemStat()
-        {
-            linkUserItems.AddLast(this);
-        }
-        ~UserItemStat()
-        {
-            linkUserItems.Remove(this);
-        }
 
         [Association("AddedStats")]
         public UserItem Item

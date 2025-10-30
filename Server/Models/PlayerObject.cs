@@ -2209,6 +2209,10 @@ namespace Zircon.Server.Models
                         if (!GameMaster || Character.Account.Identify < AccountIdentity.Operator) return;
                         ChangeBossCriticalChance(parts);
                         break;
+                    case "仅限管理员登录":
+                        if (Character.Account.Identify < AccountIdentity.Admin) return;
+                        OnlyAdminLogin(parts);
+                        break;
                 }
             }
             else if (text.StartsWith("#"))
@@ -2244,6 +2248,20 @@ namespace Zircon.Server.Models
                     }
                 }
             }
+        }
+        private void OnlyAdminLogin(string[] parts)
+        {
+            if (parts.Length <= 1)
+            {
+                Connection.ReceiveChat($"OnlyAdminLogin={SEnvir.OnlyAdminLogin}", MessageType.System);
+                return;
+            }
+
+            if (!bool.TryParse(parts[1], out var value))
+                return;
+
+            SEnvir.OnlyAdminLogin = value;
+            Connection.ReceiveChat($"OnlyAdminLogin={value}", MessageType.System);
         }
         private void ChangeBossCriticalChance(string[] parts)
         {
