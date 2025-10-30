@@ -7,10 +7,10 @@
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU;x64;x86</Platforms>
     <PlatformTarget>x64</PlatformTarget>
-    <BaseOutputPath>bin\</BaseOutputPath>
     <PackageOutputPath>$(OUTPUT)</PackageOutputPath>
     <SignAssembly>False</SignAssembly>
     <DelaySign>False</DelaySign>
+    <BaseOutputPath>bin\</BaseOutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -79,5 +79,9 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;%25USERPROFILE%25\Mir3\DeployServer&quot; /E /I /Y" />
+  </Target>
 
 </Project>
