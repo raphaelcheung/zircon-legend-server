@@ -1,4 +1,5 @@
 [submodule "Library"]
 	path = Library
 	url = https://gitee.com/raphaelcheung/zircon-legend-library.git
+	# url = https://gitee.com/zhouyi311/zircon-legend-library.git
 	branch = main
