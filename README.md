@@ -1,88 +1,88 @@
-# �ʯ������- ������ Zircon Mir3 Server
+# 皓石传奇三- 服务器 Zircon Mir3 Server
 
-����Դ��Ŀ����ѧϰ��Ϸ��������ֹ�����Լ��Ƿ���;��
+本开源项目仅供学习游戏技术，禁止商用以及非法用途。
 
-**����Ŀ��վΪ [Gitee-��ʯ������](https://gitee.com/raphaelcheung/zircon-legend-server.git)������ƽ̨��Ϊ����
-�汾����ֻ������վ�ϣ�**
+**本项目主站为 [Gitee-晧石传奇三](https://gitee.com/raphaelcheung/zircon-legend-server.git)，其他平台均为镜像。
+版本发布只放在主站上！**
 
-## ��Ŀ����
+## 项目背景
 
-����Ŀ�Ӽ��� 2019 ������������ Zircon �汾��չ������
-Ϊ���Ͳ���ɱ����������������˿�ƽ̨��docker�İ汾��
-����ԭ�������������ҵ��� **DevExpress** ���Ҳ�֧�ֿ�ƽ̨��
-�����ͬ����һͬ�����ȥ�������ݿⱣ����ԭ�湤�߼��ݿɱ༭��
+本项目从吉米 2019 年流传出来的 Zircon 版本发展而来，
+为降低部署成本，将服务器做成了跨平台可docker的版本，
+由于原版服务器依赖商业组件 **DevExpress** 并且不支持跨平台，
+因此连同界面一同剥离出去，仅数据库保持与原版工具兼容可编辑。
 
-**ע�⣺LOMCN�� 2025 �귢�����°湤�������ع������ݿ⣬�޷����ݣ�ֻ�ܺ��ϰ汾���߼���**
+**注意：LOMCN上 2025 年发布的新版工具由于重构了数据库，无法兼容，只能和老版本工具兼容**
 
-���ñ���Ŀ�����а����ı����� **�����** ��ף�����귢��ƣ�
+觉得本项目对你有帮助的别忘了 **点个星** ，祝你年年发大财！
 
-����������� ��[QQȺ��915941142](https://qm.qq.com/q/JeoJOJ4z4e)��
+技术交流请进 【[QQ群：915941142](https://qm.qq.com/q/JeoJOJ4z4e)】
 
-![ɨ���Ⱥ](Images/QQ%E7%BE%A4.jpg)
+![扫码加群](Images/QQ%E7%BE%A4.jpg)
 
-## ��Ϸ���
+## 游戏简介
 
-### �����Ĵ�������Ϸ
+### 完整的传奇三游戏
 
-- �����ĸ�ְҵ��սʿ����ʦ����ʿ���̿�<br/>
-<img src="Images/biqi.jpg" title="������ڽ�ͼ"><br/>
-<img src="Images/fashi.jpg" title="��ʦ��ͼ"><br/>
-<img src="Images/cike.jpg" title="�̿ͽ�ͼ"><br/>
+- 含了四个职业：战士、法师、道士、刺客<br/>
+<img src="Images/biqi.jpg" title="比奇城内截图"><br/>
+<img src="Images/fashi.jpg" title="法师截图"><br/>
+<img src="Images/cike.jpg" title="刺客截图"><br/>
 	
-- ���ܷḻ��ƽ��ÿ��ְҵ�� 38 ������<br/>
-<img src="Images/lianyue.jpg" title="���½�����ͼ"><br/>
+- 技能丰富，平均每个职业有 38 个技能<br/>
+<img src="Images/lianyue.jpg" title="莲月剑法截图"><br/>
 
 
-- ��ͼ�͵��߼���ḻ���浽 100��ûѹ����
+- 地图和道具及其丰富，玩到 100级没压力；
 
-- �������������� 3���Ժ󣬻���ͨ������ߵȼ�������һֱ���� 6����
+- 技能正常修炼到 3级以后，还可通过打出高等级技能书一直升到 6级；
 
-- ���������ξ��ɾ�����Ʒ�ʸߵ�װ����������Ҳ���ߣ�
+- 武器和首饰均可精炼，品质高的装备精炼上限也更高；
 
-- ��ʦ�г����ʿ�ĳ�����߿���������ȼ����������Է������ǳ�ʵ�ã�
+- 法师招宠与道士的宠物最高可升至暗金等级，各项属性翻倍，非常实用；
 
-- ��ɱ�����Ʒ�֮�࣬���ܵȼ�Խ�ߣ���ɱ�����Ĺ���Խ�죬ˬ֮��ˬ��
+- 刺杀剑术破防之余，技能等级越高，刺杀剑术的攻速越快，爽之又爽；
 
-### ֧�ֶ�ƽ̨����
+### 支持多平台部署
 
-�����֧���� Linux��Windows��Docker ƽ̨�ϲ���
+服务端支持在 Linux、Windows、Docker 平台上部署。
 
-<img src="Images/docker.jpg" title="Docker ���н�ͼ">
+<img src="Images/docker.jpg" title="Docker 运行截图">
 <br/>
 	
-### ��ݴ���
+### 便捷传送
 
-ÿ������ʯ�����Է���ش��͵������ͼ��<br/>
-<img src="Images/chuansong.jpg" title="Docker ���н�ͼ">
+每个传送石都可以方便地传送到任意地图。<br/>
+<img src="Images/chuansong.jpg" title="Docker 运行截图">
 <br/>
 
-## ����������
+## 服务器部署
 
-### �������������������ļ�
+### 下载运行依赖的数据文件
 
-�����˵�ͼ���ݱȽϴ�ѹ��֮����Ȼ�н� 800Mb�����ֻ�ܷ��������С�
+包含了地图数据比较大，压缩之后仍然有近 800Mb，因此只能放在网盘中。
 
-��[�ٶ�����](https://pan.baidu.com/s/1dKrpu6G4p4klMVOIMuhOdA?pwd=j1rm)��
+【[百度网盘](https://pan.baidu.com/s/1dKrpu6G4p4klMVOIMuhOdA?pwd=j1rm)】
 
-���������ܱ���г�������������������Ҳ���浽�� QQ Ⱥ�ļ��У���[QQȺ��915941142](https://qm.qq.com/q/JeoJOJ4z4e)��
+由于网盘总被和谐，这份运行依赖数据我也保存到了 QQ 群文件中，【[QQ群：915941142](https://qm.qq.com/q/JeoJOJ4z4e)】
 
-�����˺ţ� **zrf@zrf.zrf��raphael@gm.gm** �������Ϊ  **123456** �� ��ֱ�ӵ�¼���档
+内置账号： **zrf@zrf.zrf、raphael@gm.gm** ，密码均为  **123456** ， 可直接登录游玩。
 
-����  **raphael@gm.gm**  Ϊ����Ա�˺ţ���������������Ա��ɫ **raphael01��raphael02��raphael03** ����Ա����Ϊ  **123456** ��
+其中  **raphael@gm.gm**  为管理员账号，包含了三个管理员角色 **raphael01、raphael02、raphael03** 管理员密码为  **123456** 。
 
-��Ҳ���԰�` user.db `ɾ����ֱ���½��˺�  **raphael@gm.gm**  ��Ĭ�Ͼ߱�����ԱȨ�ޡ�
+你也可以把` user.db `删除，直接新建账号  **raphael@gm.gm**  会默认具备管理员权限。
 
-ȥ�汾 [����ҳ��](https://gitee.com/raphaelcheung/zircon-legend-server/releases) �������µķ����������ļ�` Server.ini `��������Ҫ�޸ķ����� IP �Լ��˿ڡ�
+去版本 [发布页面](https://gitee.com/raphaelcheung/zircon-legend-server/releases) 下载最新的服务器配置文件` Server.ini `，根据需要修改服务器 IP 以及端口。
 
-### ������Ϸ����
+### 部署游戏服务
 
-- #### �Ƽ��� docker-composer ����
+- #### 推荐用 docker-composer 部署。
 
-�������ƣ�` raphzhang/zirconlegend:latest `��ÿ�η���������µ� docker��
+镜像名称：` raphzhang/zirconlegend:latest `，每次发布都会更新到 docker。
 
-ע��Ҫ����һ������������Ӫ���ݽ�ѹ��ӳ�䵽������` /zircon/datas `Ŀ¼��
+注意要将上一步下载来的运营数据解压后映射到容器的` /zircon/datas `目录。
 
-�����ļ�` Server.ini `ͬ��ӳ�䵽������Ŀ¼` /zircon/datas `�¡�
+配置文件` Server.ini `同样映射到容器的目录` /zircon/datas `下。
 
 ```
 services:
@@ -106,90 +106,90 @@ networks:
 		external: true
 ```
 
-�ɹ����к��ܿ����������������ͱ�ʾ���гɹ���
+成功运行后能看到类似下面的输出就表示运行成功：
 
 ```
-�ʯ������ v1.9.0.25852
-��ѿ�Դ�Ĵ����������������������鹫�����QQȺ 915941142
-�ͻ��˸���·����
-��ͼ�ļ�·����./datas/Map/
-��������������ƣ�200
-[2025-01-28 14:37:52]: ����������.
-[2025-01-28 14:37:52]: Web ����������.
-[2025-01-28 14:37:52]: ת����������Ż���True
-[2025-01-28 14:37:52]: ���鴬ͨ���ͼ�������
-[2025-01-28 14:37:52]: ����֮��ͨ���ͼ�����������
-[2025-01-28 14:37:52]: ���غ�ʱ: 3 ��
+皓石传奇三 v1.9.0.25852
+免费开源的传奇三，技术交流或想体验公益服进QQ群 915941142
+客户端更新路径：
+地图文件路径：./datas/Map/
+最大连接数量限制：200
+[2025-01-28 14:37:52]: 网络已启动.
+[2025-01-28 14:37:52]: Web 服务已启动.
+[2025-01-28 14:37:52]: 转生玩家死亡优化：True
+[2025-01-28 14:37:52]: 幽灵船通向地图：神舰入口
+[2025-01-28 14:37:52]: 地狱之门通向地图：赤龙城入口
+[2025-01-28 14:37:52]: 加载耗时: 3 秒
 ```
 
-- #### Windows 10 ����
+- #### Windows 10 部署
 
-�½�һ��Ӣ������������Ŀ¼���� [����ҳ��](https://gitee.com/raphaelcheung/zircon-legend-server/releases) �������а���ѹ����Ŀ¼�¡�
+新建一个英文名服务器根目录，从 [发布页面](https://gitee.com/raphaelcheung/zircon-legend-server/releases) 下载运行包解压到根目录下。
 
-��Ŀ¼�½���һ����Ŀ¼` datas `��
+根目录下建立一个子目录` datas `。
 
-��ǰ�����ص���Ӫ���ݽ�ѹ��ͬ�����ļ�` Server.ini `������Ŀ¼` datas `�С�
+把前面下载的运营数据解压连同配置文件` Server.ini `放入子目录` datas `中。
 
-�ù���ԱȨ�����и�Ŀ¼��` Server.exe `��
+用管理员权限运行根目录的` Server.exe `。
 
-### �����Զ�����
+### 配置自动更新
 
-- Ҫʵ�ֿͻ��˵��Զ����£�Ҫ�� [������](https://gitee.com/raphaelcheung/zircon-legend-launcher)���ͻ��ˡ��������İ汾���� **v1.0.0** ���ϡ�
+- 要实现客户端的自动更新，要求 [启动器](https://gitee.com/raphaelcheung/zircon-legend-launcher)、客户端、服务器的版本均在 **v1.0.0** 以上。
 
-- ���ȱ�֤��������ֹͣ���е�״̬��
+- 首先保证服务器是停止运行的状态。
 
-- �Է����� Windows10 Ϊ������` datas `Ŀ¼�´���һ��` Client `Ŀ¼������Ҫ���µĿͻ����ļ����������С�
+- 以服务器 Windows10 为例，在` datas `目录下创建一个` Client `目录，将需要更新的客户端文件都放入其中。
 
-- �޸�����` Server.ini `��
+- 修改配置` Server.ini `：
 
 ```
 [System]
 ClientPath=./datas/Client
 ```
 
-- �����������󣬻���ɨ�����ɸ����嵥��������������׼�����ˡ�
+- 启动服务器后，会先扫描生成更新清单，这样服务器就准备好了。
 
-- �����Ҫ����������` Launcher.exe `��ͬ������` Client `Ŀ¼���ɸ��¡�
+- 如果需要更新启动器` Launcher.exe `，同样放入` Client `目录即可更新。
 
-### �������
+### 反向代理
 
-�����������` Nginx `���������Ϸ�����Ӷ�������Ϸ��������ȡ������ʵ�ͻ��� IP��
+如果你设置了` Nginx `反向代理游戏流量从而导致游戏服务器获取不到真实客户端 IP。
 
-����Ҫ��` Nginx `�Ͽ���` proxy_protocol `��ͬʱ�򿪷������������
+你需要在` Nginx `上开启` proxy_protocol `，同时打开服务器的配置项：
 ```
 [Network]
 UseProxy=True
 ```
 
-�������������ܻ�ȡ��ת����������ʵ IP ��ַ��
+这样服务器就能获取到转发流量的真实 IP 地址。
 
-### GM ����
+### GM 管理
 
-��[GM����ʹ��ָ��](GM����ʹ��ָ��.md)��
+【[GM命令使用指南](GM命令使用指南.md)】
 
-## �ͻ���
+## 客户端
 
-��ȡ�ͻ���ȥ���￴ ��[ZirconLegend-Client](https://gitee.com/raphaelcheung/zircon-legend-client)��
+获取客户端去这里看 【[ZirconLegend-Client](https://gitee.com/raphaelcheung/zircon-legend-client)】
 
-## ������ �������
+## 服务器 代码编译
 
-��������������
+开发环境依赖：
 
 - Microsoft Visual Studio Community 2022
 
 - .Net 8.0
 
-��װ��Щ����ȡȫ����롣
+安装这些后拉取全库代码。
 
-��Ŀ��������ģ�飬��ȡ��ʱ��Ҫѡ��` Recursive `��
+项目包含了子模块，拉取的时候要选中` Recursive `。
 
-�������ܰ���ģ��һ����ȡ������
+这样才能把子模块一并拉取下来。
 
-���ɴ��ڳ�������״̬���Ƽ���ȡ�����汾��<br/>
-<img src="Images/������ȡ.jpg" title="��ȡ����"><br/>
+主干处于持续开发状态，推荐拉取发布版本。<br/>
+<img src="Images/代码拉取.jpg" title="拉取代码"><br/>
 
-���������������ģ�飬
-���԰ѡ�[ZirconLegend-Library](https://gitee.com/raphaelcheung/zircon-legend-library)����������
-Ȼ���ƶ���` Library `Ŀ¼�¡�
+如果还是拉不下子模块，
+可以把【[ZirconLegend-Library](https://gitee.com/raphaelcheung/zircon-legend-library)】拉下来，
+然后移动到` Library `目录下。
 
-��Ŀ�ı�����������Ԥ��ã�ֱ�ӱ��뼴��
+项目的编译依赖都已预设好，直接编译即可
