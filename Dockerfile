@@ -1,13 +1,33 @@
-FROM ubuntu:22.04
-RUN apt-get update && apt-get install -y libicu-dev curl p7zip-full
+# Stage 1: Build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
 
-RUN cd /
+# Copy solution and project files
+COPY ["Zircon Server.sln", "./"]
+COPY ["Server/Server.csproj", "Server/"]
+COPY ["Library/Library/Library.csproj", "Library/Library/"]
 
-RUN curl -OL  https://gitee.com/raphaelcheung/zircon-legend-server/releases/download/v1.12.2/Server-v1.12.2-linux-x64.zip
+# Restore dependencies
+RUN dotnet restore "Zircon Server.sln"
 
-RUN 7z x Server-v1.12.2-linux-x64.zip -o/zircon
-RUN chmod -R 777 /zircon
+# Copy all source code
+COPY . .
 
+# Build and publish
+RUN dotnet publish "Server/Server.csproj" -c Release -o /app/publish --no-restore
+
+# Stage 2: Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /zircon
 
-CMD ["/zircon/Server"]
+# Copy published output
+COPY --from=build /app/publish .
+
+# Create necessary directories
+RUN mkdir -p datas Map
+
+# Expose ports: Game=7000, UserCount=3000, WebUI=7080
+EXPOSE 7000 3000 7080
+
+# Set entry point
+ENTRYPOINT ["./Server"]

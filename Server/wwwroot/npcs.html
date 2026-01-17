@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NPC管理 - 皓石传奇三管理后台</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <span class="sidebar-brand">皓石传奇三</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 主菜单 -->
+        <div class="nav-section">
+          <div class="nav-section-title">主菜单</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="9"></rect>
+              <rect x="14" y="3" width="7" height="5"></rect>
+              <rect x="14" y="12" width="7" height="9"></rect>
+              <rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+            <span>仪表盘</span>
+          </a>
+          <a href="players.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>玩家管理</span>
+          </a>
+          <a href="accounts.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>账号管理</span>
+          </a>
+          <a href="characters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
+            </svg>
+            <span>角色管理</span>
+          </a>
+        </div>
+
+        <!-- 游戏管理 -->
+        <div class="nav-section">
+          <div class="nav-section-title">游戏管理</div>
+          <a href="items.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            <span>物品管理</span>
+          </a>
+          <a href="maps.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
+            </svg>
+            <span>地图管理</span>
+          </a>
+          <a href="monsters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 9v4a7 7 0 0 1-14 0V9"></path>
+              <path d="M12 19v3"></path>
+              <path d="M8 22h8"></path>
+            </svg>
+            <span>怪物管理</span>
+          </a>
+          <a href="npcs.html" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="5"></circle>
+              <path d="M20 21a8 8 0 1 0-16 0"></path>
+            </svg>
+            <span>NPC管理</span>
+          </a>
+          <a href="magics.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>
+            </svg>
+            <span>技能管理</span>
+          </a>
+          <a href="classes.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <line x1="10" y1="9" x2="8" y2="9"></line>
+            </svg>
+            <span>职业管理</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-section">
+          <div class="nav-section-title">系统</div>
+          <a href="logs.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>系统日志</span>
+          </a>
+          <a href="settings.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>设置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <h1 class="page-title">NPC管理</h1>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="切换主题">
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <div class="user-menu" onclick="toggleUserMenu()">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <div class="user-info">
+              <div class="user-name" id="userName">管理员</div>
+              <div class="user-role" id="userRole">SuperAdmin</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <!-- 统计卡片 -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.25rem;">
+          <div class="stat-card animate-in">
+            <div class="stat-card-header">
+              <div class="stat-icon success">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="8" r="5"></circle>
+                  <path d="M20 21a8 8 0 1 0-16 0"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="totalNpcs">--</div>
+            <div class="stat-label">NPC总数</div>
+          </div>
+        </div>
+
+        <!-- 搜索栏 -->
+        <div class="card animate-in" style="margin-bottom: 1.25rem;">
+          <div class="card-body" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <input type="text" id="searchInput" class="form-input" placeholder="搜索NPC名称或地图..." onkeyup="handleSearchKeyup(event)">
+            </div>
+            <select id="mapFilter" class="form-select" onchange="filterNpcs()">
+              <option value="">全部地图</option>
+            </select>
+            <button class="btn btn-secondary" onclick="resetSearch()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+              </svg>
+              重置
+            </button>
+          </div>
+        </div>
+
+        <!-- NPC列表 -->
+        <div class="card animate-in animate-delay-1">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="5"></circle>
+                <path d="M20 21a8 8 0 1 0-16 0"></path>
+              </svg>
+              NPC列表
+            </h3>
+            <div class="card-actions">
+              <span id="filterCount" style="color: var(--text-tertiary); font-size: 0.875rem; margin-right: 1rem;"></span>
+              <button class="btn btn-ghost btn-sm" onclick="loadNpcs()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                刷新
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>NPC名称</th>
+                    <th>图像ID</th>
+                    <th>所在地图</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="npcsTable">
+                  <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-tertiary);">加载中...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 编辑NPC模态框 -->
+  <div class="modal-overlay" id="editModal" onclick="closeEditModal(event)">
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          编辑NPC
+        </h3>
+        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm">
+          <input type="hidden" id="editIndex">
+
+          <!-- Tab Navigation -->
+          <div class="tab-nav">
+            <button type="button" class="tab-btn active" data-tab="basic">基本信息</button>
+            <button type="button" class="tab-btn" data-tab="location">位置设置</button>
+            <button type="button" class="tab-btn" data-tab="buttons">按钮配置</button>
+            <button type="button" class="tab-btn" data-tab="goods">商品配置</button>
+          </div>
+
+          <!-- Tab: Basic Info -->
+          <div class="tab-content active" id="tab-basic">
+            <div class="form-section">
+              <div class="form-section-title">基本信息</div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">NPC名称</label>
+                  <input type="text" id="editName" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">图像ID</label>
+                  <input type="number" id="editImage" class="form-input" min="0">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">对话内容</div>
+              <div class="form-group">
+                <label class="form-label">入口页面描述</label>
+                <input type="text" id="editPageDesc" class="form-input" readonly>
+              </div>
+              <div class="form-group">
+                <label class="form-label">对话文本</label>
+                <textarea id="editPageSay" class="form-textarea" rows="4" placeholder="NPC对话内容..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Location -->
+          <div class="tab-content" id="tab-location">
+            <div class="form-section">
+              <div class="form-section-title">NPC位置</div>
+              <div class="form-group">
+                <label class="form-label">当前位置</label>
+                <input type="text" id="editCurrentLocation" class="form-input" readonly>
+              </div>
+              <div class="form-group">
+                <label class="form-label">选择新位置</label>
+                <select id="editRegion" class="form-select">
+                  <option value="">-- 保持当前位置 --</option>
+                </select>
+              </div>
+              <div class="form-hint">选择地图区域后，NPC将被移动到该区域</div>
+            </div>
+          </div>
+
+          <!-- Tab: Buttons -->
+          <div class="tab-content" id="tab-buttons">
+            <div class="form-section">
+              <div class="form-section-title">
+                按钮配置
+                <button type="button" class="btn btn-sm btn-primary" onclick="addButton()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  添加按钮
+                </button>
+              </div>
+              <div id="buttonsList" class="editable-list"></div>
+            </div>
+          </div>
+
+          <!-- Tab: Goods (Cascading) -->
+          <div class="tab-content" id="tab-goods">
+            <div class="form-section">
+              <div class="form-section-title">商品配置</div>
+
+              <!-- Page/Button Selector -->
+              <div class="form-group">
+                <label class="form-label">选择页面</label>
+                <select id="goodsPageSelect" class="form-select" onchange="onGoodsPageChange()">
+                  <option value="entry">入口页面</option>
+                </select>
+                <div class="form-hint">选择按钮后，显示该按钮目标页面的商品列表</div>
+              </div>
+
+              <!-- Goods List for Selected Page -->
+              <div class="form-section-title" style="margin-top: 1rem;">
+                <span id="goodsPageTitle">入口页面商品</span>
+                <button type="button" class="btn btn-sm btn-primary" onclick="addGood()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  添加商品
+                </button>
+              </div>
+              <div id="goodsList" class="editable-list"></div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveNpc()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加商品模态框 -->
+  <div class="modal-overlay" id="addGoodModal" onclick="closeAddGoodModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">添加商品</h3>
+        <button class="modal-close" onclick="closeAddGoodModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">搜索物品</label>
+          <input type="text" id="itemSearchInput" class="form-input" placeholder="输入物品名称搜索..." oninput="searchItems()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">选择物品</label>
+          <select id="addGoodItemSelect" class="form-select" size="8">
+            <option value="">先搜索物品...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">价格倍率</label>
+          <input type="number" id="addGoodRate" class="form-input" value="1" min="0" step="0.1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAddGoodModal()">取消</button>
+        <button class="btn btn-primary" onclick="confirmAddGood()">确认添加</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .form-input:read-only, .form-textarea:read-only {
+      background: var(--bg-secondary);
+      color: var(--text-tertiary);
+    }
+    .form-textarea {
+      resize: vertical;
+      font-family: inherit;
+    }
+    .form-select {
+      min-width: 180px;
+    }
+    .form-hint {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin-top: 0.25rem;
+    }
+    .map-badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+    .npc-image-id {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-family: 'Consolas', monospace;
+      background: rgba(107, 114, 128, 0.2);
+      color: #9ca3af;
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+    .modal.modal-lg {
+      max-width: 800px;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Tab styles */
+    .tab-nav {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    .form-section {
+      margin-bottom: 1.5rem;
+    }
+    .form-section:last-child {
+      margin-bottom: 0;
+    }
+    .form-section-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+    .form-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    /* Editable list styles */
+    .editable-list {
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      padding: 0.75rem;
+      min-height: 100px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .editable-list-empty {
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+      padding: 2rem;
+    }
+    .editable-list-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: 6px;
+      background: var(--bg-secondary);
+      margin-bottom: 0.5rem;
+    }
+    .editable-list-item:last-child {
+      margin-bottom: 0;
+    }
+    .editable-list-item.deleted {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+    .editable-list-item .item-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .editable-list-item .item-title {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .editable-list-item .item-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+    }
+    .editable-list-item .item-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .editable-list-item .item-input {
+      width: 80px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    /* Action buttons */
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover {
+      background: var(--bg-primary);
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+    .btn-icon.btn-danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border-color: #ef4444;
+    }
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+    .goods-count-badge {
+      font-size: 0.7rem;
+      padding: 0.1rem 0.4rem;
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+      border-radius: 10px;
+      margin-left: 0.5rem;
+    }
+  </style>
+
+  <script src="js/theme.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let allNpcs = [];
+    let filteredNpcs = [];
+    let allRegions = [];
+    let currentNpc = null;
+    let pendingButtonChanges = [];
+    let pendingGoodChanges = [];
+    let selectedButtonIndex = null; // null = entry page, number = button index
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!checkAuth()) {
+        window.location.href = 'index.html';
+        return;
+      }
+      loadUserInfo();
+      initTabs();
+      await Promise.all([loadNpcs(), loadMapRegions()]);
+    });
+
+    function loadUserInfo() {
+      const user = getUser();
+      if (user) {
+        document.getElementById('userName').textContent = user.email.split('@')[0];
+        document.getElementById('userRole').textContent = user.identity;
+        document.getElementById('userAvatar').textContent = user.email.charAt(0).toUpperCase();
+      }
+    }
+
+    function initTabs() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tabId = btn.dataset.tab;
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('tab-' + tabId).classList.add('active');
+        });
+      });
+    }
+
+    function handleSearchKeyup(event) {
+      filterNpcs();
+    }
+
+    function resetSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('mapFilter').value = '';
+      filteredNpcs = allNpcs;
+      renderNpcs(filteredNpcs);
+    }
+
+    async function loadMapRegions() {
+      try {
+        const data = await api.get('/api/game/mapregions');
+        allRegions = data.regions || [];
+
+        const regionSelect = document.getElementById('editRegion');
+        regionSelect.innerHTML = '<option value="">-- 保持当前位置 --</option>' +
+          allRegions.map(r => `<option value="${r.index}">${escapeHtml(r.serverDescription)}</option>`).join('');
+      } catch (error) {
+        console.error('加载地图区域失败:', error);
+      }
+    }
+
+    async function loadNpcs() {
+      try {
+        const data = await api.get('/api/game/npcs');
+        allNpcs = data.npcs || [];
+        document.getElementById('totalNpcs').textContent = data.total || 0;
+
+        const maps = [...new Set(allNpcs.map(n => n.mapName))].sort();
+        const mapSelect = document.getElementById('mapFilter');
+        mapSelect.innerHTML = '<option value="">全部地图</option>' +
+          maps.map(m => `<option value="${m}">${m}</option>`).join('');
+
+        filteredNpcs = allNpcs;
+        renderNpcs(filteredNpcs);
+      } catch (error) {
+        console.error('加载NPC列表失败:', error);
+        document.getElementById('npcsTable').innerHTML =
+          '<tr><td colspan="5" style="text-align: center; color: var(--error);">加载失败: ' + error.message + '</td></tr>';
+      }
+    }
+
+    function filterNpcs() {
+      const search = document.getElementById('searchInput').value.toLowerCase().trim();
+      const mapFilter = document.getElementById('mapFilter').value;
+
+      filteredNpcs = allNpcs.filter(npc => {
+        if (search) {
+          const npcName = (npc.name || '').toLowerCase();
+          const mapName = (npc.mapName || '').toLowerCase();
+          if (!npcName.includes(search) && !mapName.includes(search)) {
+            return false;
+          }
+        }
+        if (mapFilter && npc.mapName !== mapFilter) {
+          return false;
+        }
+        return true;
+      });
+
+      renderNpcs(filteredNpcs);
+    }
+
+    function renderNpcs(npcs) {
+      const tbody = document.getElementById('npcsTable');
+      const filterCountEl = document.getElementById('filterCount');
+
+      if (allNpcs.length > 0 && npcs.length !== allNpcs.length) {
+        filterCountEl.textContent = `显示 ${npcs.length} / ${allNpcs.length}`;
+      } else {
+        filterCountEl.textContent = '';
+      }
+
+      if (npcs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-tertiary);">暂无NPC数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = npcs.map(npc => `
+        <tr>
+          <td><code>${npc.index}</code></td>
+          <td><strong>${escapeHtml(npc.name)}</strong></td>
+          <td><span class="npc-image-id">${npc.image}</span></td>
+          <td><span class="map-badge">${escapeHtml(npc.mapName)}</span></td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-icon" onclick="openEditModal(${npc.index})" title="编辑">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Edit Modal
+    async function openEditModal(index) {
+      try {
+        const npc = await api.get(`/api/game/npcs/${index}`);
+        currentNpc = npc;
+        pendingButtonChanges = [];
+        pendingGoodChanges = [];
+        selectedButtonIndex = null;
+
+        document.getElementById('editIndex').value = npc.index;
+        document.getElementById('editName').value = npc.name || '';
+        document.getElementById('editImage').value = npc.image || 0;
+        document.getElementById('editPageDesc').value = npc.entryPageDescription || '';
+        document.getElementById('editPageSay').value = npc.entryPageSay || '';
+
+        // Location
+        document.getElementById('editCurrentLocation').value = npc.regionDescription
+          ? `${npc.mapName} - ${npc.regionDescription}`
+          : npc.mapName || '未设置';
+        document.getElementById('editRegion').value = '';
+
+        // Render buttons
+        renderButtonsList(npc.buttons || []);
+
+        // Populate goods page selector
+        populateGoodsPageSelector(npc);
+
+        // Reset to first tab
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector('.tab-btn[data-tab="basic"]').classList.add('active');
+        document.getElementById('tab-basic').classList.add('active');
+
+        document.getElementById('editModal').classList.add('show');
+      } catch (error) {
+        alert('加载NPC详情失败: ' + error.message);
+      }
+    }
+
+    function populateGoodsPageSelector(npc) {
+      const select = document.getElementById('goodsPageSelect');
+      const entryGoodsCount = (npc.goods || []).length;
+
+      let options = `<option value="entry">入口页面 (${entryGoodsCount} 商品)</option>`;
+
+      if (npc.buttons && npc.buttons.length > 0) {
+        npc.buttons.forEach(btn => {
+          const goodsCount = (btn.goods || []).length;
+          options += `<option value="${btn.index}">按钮 ${btn.buttonId}: ${escapeHtml(btn.destinationDescription || '无描述')} (${goodsCount} 商品)</option>`;
+        });
+      }
+
+      select.innerHTML = options;
+      selectedButtonIndex = null;
+      onGoodsPageChange();
+    }
+
+    function onGoodsPageChange() {
+      const select = document.getElementById('goodsPageSelect');
+      const value = select.value;
+
+      if (value === 'entry') {
+        selectedButtonIndex = null;
+        document.getElementById('goodsPageTitle').textContent = '入口页面商品';
+        renderGoodsList(currentNpc.goods || []);
+      } else {
+        selectedButtonIndex = parseInt(value);
+        const button = currentNpc.buttons.find(b => b.index === selectedButtonIndex);
+        if (button) {
+          document.getElementById('goodsPageTitle').textContent = `按钮 ${button.buttonId} 商品`;
+          renderGoodsList(button.goods || []);
+        }
+      }
+    }
+
+    function renderButtonsList(buttons) {
+      const container = document.getElementById('buttonsList');
+      if (buttons.length === 0) {
+        container.innerHTML = '<div class="editable-list-empty">暂无按钮配置</div>';
+        return;
+      }
+
+      container.innerHTML = buttons.map(btn => `
+        <div class="editable-list-item" data-index="${btn.index}">
+          <div class="item-content">
+            <div class="item-title">
+              按钮 ${btn.buttonId}
+              <span class="goods-count-badge">${(btn.goods || []).length} 商品</span>
+            </div>
+            <div class="item-subtitle">目标: ${escapeHtml(btn.destinationDescription || '无')}</div>
+          </div>
+          <div class="item-actions">
+            <input type="number" class="form-input item-input btn-id-input" value="${btn.buttonId}" min="0" title="按钮ID">
+            <button class="btn-icon btn-danger" onclick="markButtonDeleted(${btn.index})" title="删除">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderGoodsList(goods) {
+      const container = document.getElementById('goodsList');
+      if (goods.length === 0) {
+        container.innerHTML = '<div class="editable-list-empty">暂无商品配置</div>';
+        return;
+      }
+
+      container.innerHTML = goods.map(good => `
+        <div class="editable-list-item" data-index="${good.index}" data-button-index="${selectedButtonIndex ?? ''}">
+          <div class="item-content">
+            <div class="item-title">${escapeHtml(good.itemName)}</div>
+            <div class="item-subtitle">物品ID: ${good.itemIndex} | 价格: ${good.cost}</div>
+          </div>
+          <div class="item-actions">
+            <input type="number" class="form-input item-input good-rate-input" value="${good.rate}" min="0" step="0.1" title="价格倍率">
+            <button class="btn-icon btn-danger" onclick="markGoodDeleted(${good.index})" title="删除">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function markButtonDeleted(index) {
+      const item = document.querySelector(`#buttonsList .editable-list-item[data-index="${index}"]`);
+      if (item) {
+        item.classList.add('deleted');
+        pendingButtonChanges.push({ index, delete: true });
+      }
+    }
+
+    function markGoodDeleted(index) {
+      const item = document.querySelector(`#goodsList .editable-list-item[data-index="${index}"]`);
+      if (item) {
+        item.classList.add('deleted');
+        pendingGoodChanges.push({
+          index,
+          buttonIndex: selectedButtonIndex,
+          delete: true
+        });
+      }
+    }
+
+    function addButton() {
+      const buttonId = prompt('请输入按钮ID (数字):', '0');
+      if (buttonId === null) return;
+
+      const id = parseInt(buttonId);
+      if (isNaN(id) || id < 0) {
+        alert('请输入有效的按钮ID');
+        return;
+      }
+
+      pendingButtonChanges.push({ buttonId: id });
+
+      const container = document.getElementById('buttonsList');
+      if (container.querySelector('.editable-list-empty')) {
+        container.innerHTML = '';
+      }
+
+      const tempId = 'new-' + Date.now();
+      container.innerHTML += `
+        <div class="editable-list-item" data-temp-id="${tempId}">
+          <div class="item-content">
+            <div class="item-title">新按钮 ${id}</div>
+            <div class="item-subtitle">待保存</div>
+          </div>
+          <div class="item-actions">
+            <span style="color: var(--success); font-size: 0.75rem;">新增</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function addGood() {
+      document.getElementById('itemSearchInput').value = '';
+      document.getElementById('addGoodItemSelect').innerHTML = '<option value="">先搜索物品...</option>';
+      document.getElementById('addGoodRate').value = '1';
+      document.getElementById('addGoodModal').classList.add('show');
+    }
+
+    async function searchItems() {
+      const search = document.getElementById('itemSearchInput').value.trim();
+      if (search.length < 2) {
+        document.getElementById('addGoodItemSelect').innerHTML = '<option value="">至少输入2个字符...</option>';
+        return;
+      }
+
+      try {
+        const data = await api.get(`/api/game/items?search=${encodeURIComponent(search)}&pageSize=50`);
+        const items = data.items || [];
+
+        if (items.length === 0) {
+          document.getElementById('addGoodItemSelect').innerHTML = '<option value="">未找到物品</option>';
+          return;
+        }
+
+        document.getElementById('addGoodItemSelect').innerHTML = items.map(item =>
+          `<option value="${item.index}" data-name="${escapeHtml(item.name)}">${escapeHtml(item.name)} (ID: ${item.index})</option>`
+        ).join('');
+      } catch (error) {
+        console.error('搜索物品失败:', error);
+      }
+    }
+
+    function closeAddGoodModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('addGoodModal').classList.remove('show');
+    }
+
+    function confirmAddGood() {
+      const select = document.getElementById('addGoodItemSelect');
+      const itemIndex = parseInt(select.value);
+      const itemName = select.options[select.selectedIndex]?.dataset?.name || '';
+      const rate = parseFloat(document.getElementById('addGoodRate').value) || 1;
+
+      if (!itemIndex) {
+        alert('请选择一个物品');
+        return;
+      }
+
+      pendingGoodChanges.push({
+        itemIndex,
+        rate,
+        buttonIndex: selectedButtonIndex
+      });
+
+      const container = document.getElementById('goodsList');
+      if (container.querySelector('.editable-list-empty')) {
+        container.innerHTML = '';
+      }
+
+      const tempId = 'new-' + Date.now();
+      container.innerHTML += `
+        <div class="editable-list-item" data-temp-id="${tempId}">
+          <div class="item-content">
+            <div class="item-title">${escapeHtml(itemName)}</div>
+            <div class="item-subtitle">物品ID: ${itemIndex} | 倍率: ${rate}</div>
+          </div>
+          <div class="item-actions">
+            <span style="color: var(--success); font-size: 0.75rem;">新增</span>
+          </div>
+        </div>
+      `;
+
+      closeAddGoodModal();
+    }
+
+    function closeEditModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('editModal').classList.remove('show');
+      currentNpc = null;
+    }
+
+    async function saveNpc() {
+      const index = parseInt(document.getElementById('editIndex').value);
+      const regionValue = document.getElementById('editRegion').value;
+
+      // Collect button changes
+      const buttonUpdates = [...pendingButtonChanges];
+      document.querySelectorAll('#buttonsList .editable-list-item:not(.deleted)[data-index]').forEach(item => {
+        const idx = parseInt(item.dataset.index);
+        const input = item.querySelector('.btn-id-input');
+        if (input) {
+          const buttonId = parseInt(input.value);
+          const originalBtn = currentNpc.buttons.find(b => b.index === idx);
+          if (originalBtn && originalBtn.buttonId !== buttonId) {
+            buttonUpdates.push({ index: idx, buttonId });
+          }
+        }
+      });
+
+      // Collect good changes (need to scan all pages)
+      const goodUpdates = [...pendingGoodChanges];
+
+      // Also check for rate changes in visible goods list
+      document.querySelectorAll('#goodsList .editable-list-item:not(.deleted)[data-index]').forEach(item => {
+        const idx = parseInt(item.dataset.index);
+        const buttonIdx = item.dataset.buttonIndex === '' ? null : parseInt(item.dataset.buttonIndex);
+        const input = item.querySelector('.good-rate-input');
+        if (input) {
+          const rate = parseFloat(input.value);
+          // Find original good
+          let originalGood = null;
+          if (buttonIdx === null) {
+            originalGood = currentNpc.goods?.find(g => g.index === idx);
+          } else {
+            const button = currentNpc.buttons?.find(b => b.index === buttonIdx);
+            originalGood = button?.goods?.find(g => g.index === idx);
+          }
+          if (originalGood && originalGood.rate !== rate) {
+            goodUpdates.push({
+              index: idx,
+              itemIndex: originalGood.itemIndex,
+              rate,
+              buttonIndex: buttonIdx
+            });
+          }
+        }
+      });
+
+      const request = {
+        name: document.getElementById('editName').value.trim() || null,
+        image: parseInt(document.getElementById('editImage').value) || null,
+        entryPageSay: document.getElementById('editPageSay').value || null,
+        regionIndex: regionValue ? parseInt(regionValue) : null,
+        buttons: buttonUpdates.length > 0 ? buttonUpdates : null,
+        goods: goodUpdates.length > 0 ? goodUpdates : null
+      };
+
+      try {
+        const result = await api.put(`/api/game/npcs/${index}`, request);
+        alert(result.message || '保存成功');
+        closeEditModal();
+        loadNpcs();
+      } catch (error) {
+        alert('保存失败: ' + error.message);
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function toggleUserMenu() {
+      if (confirm('确定要退出登录吗？')) {
+        logout();
+        window.location.href = 'index.html';
+      }
+    }
+  </script>
+</body>
+</html>

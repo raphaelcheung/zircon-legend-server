@@ -108,3 +108,10 @@ Test/*.csproj
 Installers/MacOS/Scripts/Framework/postinstall
 IDE/MonoDevelop/MonoDevelop.MonoGame/templates/Common/MonoGame.Framework.dll.config
 *.suo
+
+# Claude Code
+.claude/
+CLAUDE.md
+/datas
+/Server/datas
+/nul

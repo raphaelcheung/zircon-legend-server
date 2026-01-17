@@ -2269,14 +2269,14 @@ namespace Zircon.Server.Models
         {
             if (parts.Length <= 1)
             {
-                Connection.ReceiveChat($"OnlyAdminLogin={SEnvir.OnlyAdminLogin}", MessageType.System);
+                Connection.ReceiveChat($"OnlyAdminLogin={Config.OnlyAdminLogin}", MessageType.System);
                 return;
             }
 
             if (!bool.TryParse(parts[1], out var value))
                 return;
 
-            SEnvir.OnlyAdminLogin = value;
+            Config.OnlyAdminLogin = value;
             Connection.ReceiveChat($"OnlyAdminLogin={value}", MessageType.System);
         }
         private void ChangeBossCriticalChance(string[] parts)

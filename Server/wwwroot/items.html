@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>物品管理 - 皓石传奇三管理后台</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <span class="sidebar-brand">皓石传奇三</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 主菜单 -->
+        <div class="nav-section">
+          <div class="nav-section-title">主菜单</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="9"></rect>
+              <rect x="14" y="3" width="7" height="5"></rect>
+              <rect x="14" y="12" width="7" height="9"></rect>
+              <rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+            <span>仪表盘</span>
+          </a>
+          <a href="players.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>玩家管理</span>
+          </a>
+          <a href="accounts.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>账号管理</span>
+          </a>
+          <a href="characters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
+            </svg>
+            <span>角色管理</span>
+          </a>
+        </div>
+
+        <!-- 游戏管理 -->
+        <div class="nav-section">
+          <div class="nav-section-title">游戏管理</div>
+          <a href="items.html" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            <span>物品管理</span>
+          </a>
+          <a href="maps.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
+            </svg>
+            <span>地图管理</span>
+          </a>
+          <a href="monsters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 9v4a7 7 0 0 1-14 0V9"></path>
+              <path d="M12 19v3"></path>
+              <path d="M8 22h8"></path>
+            </svg>
+            <span>怪物管理</span>
+          </a>
+          <a href="npcs.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="5"></circle>
+              <path d="M20 21a8 8 0 1 0-16 0"></path>
+            </svg>
+            <span>NPC管理</span>
+          </a>
+          <a href="magics.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>
+            </svg>
+            <span>技能管理</span>
+          </a>
+          <a href="classes.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <line x1="10" y1="9" x2="8" y2="9"></line>
+            </svg>
+            <span>职业管理</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-section">
+          <div class="nav-section-title">系统</div>
+          <a href="logs.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>系统日志</span>
+          </a>
+          <a href="settings.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>设置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <h1 class="page-title">物品管理</h1>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="切换主题">
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <div class="user-menu" onclick="toggleUserMenu()">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <div class="user-info">
+              <div class="user-name" id="userName">管理员</div>
+              <div class="user-role" id="userRole">SuperAdmin</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <!-- 统计卡片 -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.25rem;">
+          <div class="stat-card animate-in">
+            <div class="stat-card-header">
+              <div class="stat-icon info">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="totalItems">--</div>
+            <div class="stat-label">物品总数</div>
+          </div>
+        </div>
+
+        <!-- 搜索栏 -->
+        <div class="card animate-in" style="margin-bottom: 1.25rem;">
+          <div class="card-body" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <input type="text" id="searchInput" class="form-input" placeholder="搜索物品名称或ID..." onkeyup="handleSearchKeyup(event)">
+            </div>
+            <select id="typeFilter" class="form-select" onchange="doSearch()">
+              <option value="">全部类型</option>
+            </select>
+            <button class="btn btn-primary" onclick="doSearch()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              搜索
+            </button>
+            <button class="btn btn-secondary" onclick="resetSearch()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+              </svg>
+              重置
+            </button>
+          </div>
+        </div>
+
+        <!-- 物品列表 -->
+        <div class="card animate-in animate-delay-1">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+              物品列表
+            </h3>
+            <div class="card-actions">
+              <span id="pageInfo" style="color: var(--text-tertiary); font-size: 0.875rem; margin-right: 1rem;"></span>
+              <button class="btn btn-ghost btn-sm" onclick="loadItems()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                刷新
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>名称</th>
+                    <th>类型</th>
+                    <th>需求类型</th>
+                    <th>需求值</th>
+                    <th>价格</th>
+                    <th>堆叠</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="itemsTable">
+                  <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-tertiary);">加载中...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination" id="pagination"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 编辑物品弹窗 -->
+  <div class="modal" id="editModal">
+    <div class="modal-backdrop" onclick="closeEditModal()"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3 class="modal-title">编辑物品</h3>
+        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm">
+          <input type="hidden" id="editItemIndex">
+
+          <div class="form-grid">
+            <!-- 基本信息 -->
+            <div class="form-section">
+              <h4 class="form-section-title">基本信息</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>物品ID</label>
+                  <input type="text" id="editItemId" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                  <label>物品名称</label>
+                  <input type="text" id="editName" class="form-input" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>物品类型</label>
+                  <select id="editType" class="form-select"></select>
+                </div>
+                <div class="form-group">
+                  <label>稀有度</label>
+                  <select id="editRarity" class="form-select"></select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group full-width">
+                  <label>描述</label>
+                  <textarea id="editDescription" class="form-input" rows="2"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- 需求信息 -->
+            <div class="form-section">
+              <h4 class="form-section-title">需求信息</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>需求类型</label>
+                  <select id="editRequiredType" class="form-select"></select>
+                </div>
+                <div class="form-group">
+                  <label>需求值</label>
+                  <input type="number" id="editRequiredAmount" class="form-input" min="0">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>需求职业</label>
+                  <select id="editRequiredClass" class="form-select"></select>
+                </div>
+                <div class="form-group">
+                  <label>需求性别</label>
+                  <select id="editRequiredGender" class="form-select">
+                    <option value="None">无限制</option>
+                    <option value="Male">男</option>
+                    <option value="Female">女</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 数值属性 -->
+            <div class="form-section">
+              <h4 class="form-section-title">数值属性</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>价格</label>
+                  <input type="number" id="editPrice" class="form-input" min="0">
+                </div>
+                <div class="form-group">
+                  <label>堆叠数量</label>
+                  <input type="number" id="editStackSize" class="form-input" min="1">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>耐久度</label>
+                  <input type="number" id="editDurability" class="form-input" min="0">
+                </div>
+                <div class="form-group">
+                  <label>重量</label>
+                  <input type="number" id="editWeight" class="form-input" min="0">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>图像ID</label>
+                  <input type="number" id="editImage" class="form-input" min="0">
+                </div>
+                <div class="form-group">
+                  <label>形状ID</label>
+                  <input type="number" id="editShape" class="form-input" min="0">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>出售比例</label>
+                  <input type="number" id="editSellRate" class="form-input" min="0" max="1" step="0.01">
+                </div>
+                <div class="form-group">
+                  <label>BuffIcon</label>
+                  <input type="number" id="editBuffIcon" class="form-input" min="0">
+                </div>
+              </div>
+            </div>
+
+            <!-- 物品标记 -->
+            <div class="form-section">
+              <h4 class="form-section-title">物品标记</h4>
+              <div class="form-row checkbox-row">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editCanRepair">
+                  <span>可修理</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editCanSell">
+                  <span>可出售</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editCanStore">
+                  <span>可存储</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editCanTrade">
+                  <span>可交易</span>
+                </label>
+              </div>
+              <div class="form-row checkbox-row">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editCanDrop">
+                  <span>可丢弃</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editCanDeathDrop">
+                  <span>死亡掉落</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editCanAutoPot">
+                  <span>自动药水</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editStartItem">
+                  <span>初始物品</span>
+                </label>
+              </div>
+              <div class="form-row checkbox-row">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editBlockMonsterDrop">
+                  <span>禁止怪物掉落</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveItem()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 给予物品弹窗 -->
+  <div class="modal" id="giveModal">
+    <div class="modal-backdrop" onclick="closeGiveModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">给予物品</h3>
+        <button class="modal-close" onclick="closeGiveModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="giveForm">
+          <input type="hidden" id="giveItemIndex">
+          <div class="form-group">
+            <label>物品</label>
+            <input type="text" id="giveItemName" class="form-input" readonly>
+          </div>
+          <div class="form-group">
+            <label>角色名称</label>
+            <input type="text" id="giveCharacterName" class="form-input" required placeholder="输入角色名称">
+          </div>
+          <div class="form-group">
+            <label>数量</label>
+            <input type="number" id="giveCount" class="form-input" value="1" min="1" max="9999">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeGiveModal()">取消</button>
+        <button class="btn btn-primary" onclick="giveItem()">确认给予</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .form-input, .form-select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .form-input[readonly] {
+      background: var(--bg-secondary);
+      cursor: not-allowed;
+    }
+    .form-select {
+      min-width: 150px;
+    }
+    textarea.form-input {
+      resize: vertical;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+    .pagination button {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    .pagination button:hover:not(:disabled) {
+      background: var(--bg-primary);
+      border-color: var(--primary);
+    }
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .pagination button.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .pagination span {
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+    }
+    .item-type {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .item-type.weapon { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    .item-type.armour { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+    .item-type.helmet { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+    .item-type.necklace { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+    .item-type.bracelet { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .item-type.ring { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+    .item-type.potion, .item-type.consumable { background: rgba(14, 165, 233, 0.2); color: #0ea5e9; }
+    .item-type.default { background: rgba(107, 114, 128, 0.2); color: #6b7280; }
+
+    .action-btns {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn-icon {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+    }
+    .modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+    }
+    .modal-content {
+      position: relative;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    .modal-content.modal-large {
+      max-width: 800px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-title {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+    .modal-body {
+      padding: 1.5rem;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Form styles */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .form-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+    .form-section {
+      background: var(--bg-tertiary);
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    .form-section-title {
+      margin: 0 0 1rem 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    .form-row .form-group {
+      margin-bottom: 0.5rem;
+    }
+    .form-row .form-group.full-width {
+      grid-column: span 2;
+    }
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .checkbox-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+  </style>
+
+  <script src="js/theme.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Item type mapping - will be loaded from API
+    let itemTypeMap = {};
+    let reqTypeMap = {};
+    let reqClassMap = {};
+    let rarityMap = {};
+
+    let currentPage = 1;
+    let pageSize = 50;
+    let totalItems = 0;
+    let totalPages = 0;
+    let searchQuery = '';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!checkAuth()) {
+        window.location.href = 'index.html';
+        return;
+      }
+      loadUserInfo();
+
+      // Load enum data first, then items
+      await loadEnumData();
+      await loadItems();
+    });
+
+    function loadUserInfo() {
+      const user = getUser();
+      if (user) {
+        document.getElementById('userName').textContent = user.email.split('@')[0];
+        document.getElementById('userRole').textContent = user.identity;
+        document.getElementById('userAvatar').textContent = user.email.charAt(0).toUpperCase();
+      }
+    }
+
+    async function loadEnumData() {
+      try {
+        // Load all enum data in parallel
+        const [types, reqTypes, reqClasses, rarities] = await Promise.all([
+          api.get('/api/game/items/types'),
+          api.get('/api/game/items/required-types'),
+          api.get('/api/game/items/required-classes'),
+          api.get('/api/game/items/rarities')
+        ]);
+
+        // Build maps
+        types.forEach(t => itemTypeMap[t.value] = t.label);
+        reqTypes.forEach(t => reqTypeMap[t.value] = t.label);
+        reqClasses.forEach(t => reqClassMap[t.value] = t.label);
+        rarities.forEach(t => rarityMap[t.value] = t.label);
+
+        // Populate type filter
+        const typeFilter = document.getElementById('typeFilter');
+        typeFilter.innerHTML = '<option value="">全部类型</option>' +
+          types.map(t => `<option value="${t.value}">${t.label}</option>`).join('');
+
+        // Populate edit form selects
+        populateSelect('editType', types);
+        populateSelect('editRequiredType', reqTypes);
+        populateSelect('editRequiredClass', reqClasses);
+        populateSelect('editRarity', rarities);
+      } catch (error) {
+        console.error('加载枚举数据失败:', error);
+      }
+    }
+
+    function populateSelect(selectId, options) {
+      const select = document.getElementById(selectId);
+      select.innerHTML = options.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+    }
+
+    function handleSearchKeyup(event) {
+      if (event.key === 'Enter') {
+        doSearch();
+      }
+    }
+
+    function doSearch() {
+      searchQuery = document.getElementById('searchInput').value.trim();
+      currentPage = 1;
+      loadItems();
+    }
+
+    function resetSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('typeFilter').value = '';
+      searchQuery = '';
+      currentPage = 1;
+      loadItems();
+    }
+
+    async function loadItems() {
+      try {
+        let url = `/api/game/items?page=${currentPage}&pageSize=${pageSize}`;
+        if (searchQuery) {
+          url += `&search=${encodeURIComponent(searchQuery)}`;
+        }
+
+        const data = await api.get(url);
+        totalItems = data.total || 0;
+        totalPages = data.totalPages || 0;
+
+        document.getElementById('totalItems').textContent = totalItems.toLocaleString();
+        document.getElementById('pageInfo').textContent = `第 ${currentPage} / ${totalPages} 页，共 ${totalItems} 条`;
+
+        renderItems(data.items || []);
+        renderPagination();
+      } catch (error) {
+        console.error('加载物品列表失败:', error);
+        document.getElementById('itemsTable').innerHTML =
+          '<tr><td colspan="8" style="text-align: center; color: var(--error);">加载失败: ' + error.message + '</td></tr>';
+      }
+    }
+
+    function getItemTypeClass(type) {
+      const typeClasses = {
+        'Weapon': 'weapon',
+        'Armour': 'armour',
+        'Helmet': 'helmet',
+        'Necklace': 'necklace',
+        'Bracelet': 'bracelet',
+        'Ring': 'ring',
+        'Potion': 'potion',
+        'Consumable': 'consumable'
+      };
+      return typeClasses[type] || 'default';
+    }
+
+    function renderItems(items) {
+      const tbody = document.getElementById('itemsTable');
+      const typeFilter = document.getElementById('typeFilter').value;
+
+      // Client-side type filter
+      let filteredItems = items;
+      if (typeFilter) {
+        filteredItems = items.filter(item => item.type === typeFilter);
+      }
+
+      if (filteredItems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-tertiary);">暂无物品数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filteredItems.map(item => `
+        <tr>
+          <td><code>${item.index}</code></td>
+          <td><strong>${escapeHtml(item.name)}</strong></td>
+          <td><span class="item-type ${getItemTypeClass(item.type)}">${itemTypeMap[item.type] || item.type}</span></td>
+          <td>${reqTypeMap[item.requiredType] || item.requiredType}</td>
+          <td>${item.requiredAmount}</td>
+          <td>${item.price.toLocaleString()}</td>
+          <td>${item.stackSize}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn btn-primary btn-icon" onclick="openEditModal(${item.index})" title="编辑">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button class="btn btn-success btn-icon" onclick="openGiveModal(${item.index}, '${escapeHtml(item.name)}')" title="给予">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 12v10H4V12"></path>
+                  <path d="M2 7h20v5H2z"></path>
+                  <path d="M12 22V7"></path>
+                  <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+                  <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPagination() {
+      const pagination = document.getElementById('pagination');
+      if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+
+      // Previous button
+      html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">上一页</button>`;
+
+      // Page numbers
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+      if (endPage - startPage < maxVisible - 1) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+      }
+
+      if (startPage > 1) {
+        html += `<button onclick="goToPage(1)">1</button>`;
+        if (startPage > 2) {
+          html += `<span>...</span>`;
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          html += `<span>...</span>`;
+        }
+        html += `<button onclick="goToPage(${totalPages})">${totalPages}</button>`;
+      }
+
+      // Next button
+      html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">下一页</button>`;
+
+      pagination.innerHTML = html;
+    }
+
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      loadItems();
+    }
+
+    // Edit Modal Functions
+    async function openEditModal(index) {
+      try {
+        const item = await api.get(`/api/game/items/${index}`);
+
+        document.getElementById('editItemIndex').value = item.index;
+        document.getElementById('editItemId').value = item.index;
+        document.getElementById('editName').value = item.name || '';
+        document.getElementById('editType').value = item.type || 'Nothing';
+        document.getElementById('editRarity').value = item.rarity || 'Common';
+        document.getElementById('editDescription').value = item.description || '';
+        document.getElementById('editRequiredType').value = item.requiredType || 'Level';
+        document.getElementById('editRequiredAmount').value = item.requiredAmount || 0;
+        document.getElementById('editRequiredClass').value = item.requiredClass || 'All';
+        document.getElementById('editRequiredGender').value = item.requiredGender || 'None';
+        document.getElementById('editPrice').value = item.price || 0;
+        document.getElementById('editStackSize').value = item.stackSize || 1;
+        document.getElementById('editDurability').value = item.durability || 0;
+        document.getElementById('editWeight').value = item.weight || 0;
+        document.getElementById('editImage').value = item.image || 0;
+        document.getElementById('editShape').value = item.shape || 0;
+        document.getElementById('editSellRate').value = item.sellRate || 0.5;
+        document.getElementById('editBuffIcon').value = item.buffIcon || 0;
+        document.getElementById('editCanRepair').checked = item.canRepair || false;
+        document.getElementById('editCanSell').checked = item.canSell || false;
+        document.getElementById('editCanStore').checked = item.canStore || false;
+        document.getElementById('editCanTrade').checked = item.canTrade || false;
+        document.getElementById('editCanDrop').checked = item.canDrop || false;
+        document.getElementById('editCanDeathDrop').checked = item.canDeathDrop || false;
+        document.getElementById('editCanAutoPot').checked = item.canAutoPot || false;
+        document.getElementById('editStartItem').checked = item.startItem || false;
+        document.getElementById('editBlockMonsterDrop').checked = item.blockMonsterDrop || false;
+
+        document.getElementById('editModal').classList.add('show');
+      } catch (error) {
+        alert('加载物品详情失败: ' + error.message);
+      }
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('show');
+    }
+
+    async function saveItem() {
+      const index = document.getElementById('editItemIndex').value;
+      const data = {
+        name: document.getElementById('editName').value,
+        type: document.getElementById('editType').value,
+        rarity: document.getElementById('editRarity').value,
+        description: document.getElementById('editDescription').value,
+        requiredType: document.getElementById('editRequiredType').value,
+        requiredAmount: parseInt(document.getElementById('editRequiredAmount').value) || 0,
+        requiredClass: document.getElementById('editRequiredClass').value,
+        requiredGender: document.getElementById('editRequiredGender').value,
+        price: parseInt(document.getElementById('editPrice').value) || 0,
+        stackSize: parseInt(document.getElementById('editStackSize').value) || 1,
+        durability: parseInt(document.getElementById('editDurability').value) || 0,
+        weight: parseInt(document.getElementById('editWeight').value) || 0,
+        image: parseInt(document.getElementById('editImage').value) || 0,
+        shape: parseInt(document.getElementById('editShape').value) || 0,
+        sellRate: parseFloat(document.getElementById('editSellRate').value) || 0.5,
+        buffIcon: parseInt(document.getElementById('editBuffIcon').value) || 0,
+        canRepair: document.getElementById('editCanRepair').checked,
+        canSell: document.getElementById('editCanSell').checked,
+        canStore: document.getElementById('editCanStore').checked,
+        canTrade: document.getElementById('editCanTrade').checked,
+        canDrop: document.getElementById('editCanDrop').checked,
+        canDeathDrop: document.getElementById('editCanDeathDrop').checked,
+        canAutoPot: document.getElementById('editCanAutoPot').checked,
+        startItem: document.getElementById('editStartItem').checked,
+        blockMonsterDrop: document.getElementById('editBlockMonsterDrop').checked
+      };
+
+      try {
+        const result = await api.put(`/api/game/items/${index}`, data);
+        alert(result.message || '保存成功');
+        closeEditModal();
+        loadItems();
+      } catch (error) {
+        alert('保存失败: ' + error.message);
+      }
+    }
+
+    // Give Modal Functions
+    function openGiveModal(index, name) {
+      document.getElementById('giveItemIndex').value = index;
+      document.getElementById('giveItemName').value = name;
+      document.getElementById('giveCharacterName').value = '';
+      document.getElementById('giveCount').value = 1;
+      document.getElementById('giveModal').classList.add('show');
+    }
+
+    function closeGiveModal() {
+      document.getElementById('giveModal').classList.remove('show');
+    }
+
+    async function giveItem() {
+      const data = {
+        itemIndex: parseInt(document.getElementById('giveItemIndex').value),
+        characterName: document.getElementById('giveCharacterName').value.trim(),
+        count: parseInt(document.getElementById('giveCount').value) || 1
+      };
+
+      if (!data.characterName) {
+        alert('请输入角色名称');
+        return;
+      }
+
+      try {
+        const result = await api.post('/api/game/items/give', data);
+        alert(result.message || '给予成功');
+        closeGiveModal();
+      } catch (error) {
+        alert('给予失败: ' + error.message);
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function toggleUserMenu() {
+      if (confirm('确定要退出登录吗？')) {
+        logout();
+        window.location.href = 'index.html';
+      }
+    }
+  </script>
+</body>
+</html>

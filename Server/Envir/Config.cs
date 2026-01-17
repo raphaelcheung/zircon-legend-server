@@ -136,6 +136,7 @@ namespace Server.Envir
         public static byte 判断敏感词最大跳几个字符 { get; set; } = 2;
 
         [ConfigSection("Control")]
+        public static bool OnlyAdminLogin { get; set; } = true;
         public static bool AllowLogin { get; set; } 
         public static bool AllowNewAccount { get; set; } 
         public static bool AllowChangePassword { get; set; } 
@@ -252,6 +253,12 @@ namespace Server.Envir
         public static int CompanionRate { get; set; }
         public static int Boss掉落倍率 { get; set; } = 0;
         public static int 技能高等级经验倍率 { get; set; } = 100;
+
+        [ConfigSection("WebApi")]
+        public static bool WebApiEnabled { get; set; } = true;
+        public static int WebApiPort { get; set; } = 7080;
+        public static string WebApiJwtSecret { get; set; } = "ZirconLegendServer2024SecretKey32";
+        public static int WebApiJwtExpiration { get; set; } = 60;
 
     }
 }

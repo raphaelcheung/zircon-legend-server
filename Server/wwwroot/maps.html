@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>地图管理 - 皓石传奇三管理后台</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <span class="sidebar-brand">皓石传奇三</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">主菜单</div>
+          <a href="dashboard.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg><span>仪表盘</span></a>
+          <a href="players.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>玩家管理</span></a>
+          <a href="accounts.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span>账号管理</span></a>
+          <a href="characters.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg><span>角色管理</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">游戏管理</div>
+          <a href="items.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg><span>物品管理</span></a>
+          <a href="maps.html" class="nav-item active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg><span>地图管理</span></a>
+          <a href="monsters.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 9v4a7 7 0 0 1-14 0V9"></path><path d="M12 19v3"></path><path d="M8 22h8"></path></svg><span>怪物管理</span></a>
+          <a href="npcs.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 1 0-16 0"></path></svg><span>NPC管理</span></a>
+          <a href="magics.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg><span>技能管理</span></a>
+          <a href="classes.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg><span>职业管理</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">系统</div>
+          <a href="logs.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span>系统日志</span></a>
+          <a href="settings.html" class="nav-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span>设置</span></a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" onclick="toggleSidebar()"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+          <h1 class="page-title">地图管理</h1>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-toggle" onclick="toggleTheme()"><svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg><svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
+          <div class="user-menu" onclick="toggleUserMenu()">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <div class="user-info"><div class="user-name" id="userName">管理员</div><div class="user-role" id="userRole">SuperAdmin</div></div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.25rem;">
+          <div class="stat-card animate-in">
+            <div class="stat-card-header"><div class="stat-icon info"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg></div></div>
+            <div class="stat-value" id="totalMaps">--</div>
+            <div class="stat-label">地图总数</div>
+          </div>
+        </div>
+
+        <div class="card animate-in" style="margin-bottom: 1.25rem;">
+          <div class="card-body" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <input type="text" id="searchInput" class="form-input" placeholder="搜索地图名称或文件名..." onkeyup="handleSearchKeyup(event)">
+            </div>
+            <select id="rtFilter" class="form-select" onchange="filterMaps()">
+              <option value="">传送状态</option>
+              <option value="true">允许传送</option>
+              <option value="false">禁止传送</option>
+            </select>
+            <button class="btn btn-primary" onclick="filterMaps()">搜索</button>
+            <button class="btn btn-secondary" onclick="resetSearch()">重置</button>
+          </div>
+        </div>
+
+        <div class="card animate-in animate-delay-1">
+          <div class="card-header">
+            <h3 class="card-title"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg>地图列表</h3>
+            <div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="loadMaps()">刷新</button></div>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table class="data-table">
+                <thead><tr><th>ID</th><th>文件名</th><th>地图名称</th><th>允许传送</th><th>操作</th></tr></thead>
+                <tbody id="mapsTable"><tr><td colspan="5" style="text-align: center; color: var(--text-tertiary);">加载中...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal" id="editModal">
+    <div class="modal-backdrop" onclick="closeEditModal()"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header"><h3 class="modal-title">编辑地图</h3><button class="modal-close" onclick="closeEditModal()">&times;</button></div>
+      <div class="modal-body">
+        <form id="editForm">
+          <input type="hidden" id="editMapIndex">
+          <div class="form-grid">
+            <div class="form-section">
+              <h4 class="form-section-title">基本信息</h4>
+              <div class="form-row">
+                <div class="form-group"><label>地图ID</label><input type="text" id="editMapId" class="form-input" readonly></div>
+                <div class="form-group"><label>地图名称</label><input type="text" id="editMapName" class="form-input" required></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>文件名</label><input type="text" id="editFileName" class="form-input" readonly></div>
+                <div class="form-group"><label>尺寸</label><input type="text" id="editSize" class="form-input" readonly></div>
+              </div>
+            </div>
+            <div class="form-section">
+              <h4 class="form-section-title">实时状态</h4>
+              <div class="form-row">
+                <div class="form-group"><label>怪物数量</label><input type="text" id="editMonsterCount" class="form-input" readonly></div>
+                <div class="form-group"><label>玩家数量</label><input type="text" id="editPlayerCount" class="form-input" readonly></div>
+              </div>
+            </div>
+            <div class="form-section">
+              <h4 class="form-section-title">权限设置</h4>
+              <div class="form-row checkbox-row">
+                <label class="checkbox-label"><input type="checkbox" id="editAllowRT"><span>允许传送</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="editAllowTT"><span>允许合体</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="editAllowRecall"><span>允许召唤</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="editCanHorse"><span>允许骑马</span></label>
+              </div>
+              <div class="form-row checkbox-row">
+                <label class="checkbox-label"><input type="checkbox" id="editCanMine"><span>允许挖矿</span></label>
+                <label class="checkbox-label"><input type="checkbox" id="editCanMarriageRecall"><span>夫妻召唤</span></label>
+              </div>
+            </div>
+            <div class="form-section">
+              <h4 class="form-section-title">等级限制</h4>
+              <div class="form-row">
+                <div class="form-group"><label>最低等级</label><input type="number" id="editMinLevel" class="form-input" min="0"></div>
+                <div class="form-group"><label>最高等级</label><input type="number" id="editMaxLevel" class="form-input" min="0"></div>
+              </div>
+            </div>
+            <div class="form-section">
+              <h4 class="form-section-title">倍率设置</h4>
+              <div class="form-row">
+                <div class="form-group"><label>怪物血量倍率</label><input type="number" id="editMonsterHealth" class="form-input" min="0"></div>
+                <div class="form-group"><label>怪物伤害倍率</label><input type="number" id="editMonsterDamage" class="form-input" min="0"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>掉落倍率</label><input type="number" id="editDropRate" class="form-input" min="0"></div>
+                <div class="form-group"><label>经验倍率</label><input type="number" id="editExpRate" class="form-input" min="0"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>金币倍率</label><input type="number" id="editGoldRate" class="form-input" min="0"></div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveMap()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="teleportModal">
+    <div class="modal-backdrop" onclick="closeTeleportModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header"><h3 class="modal-title">传送玩家</h3><button class="modal-close" onclick="closeTeleportModal()">&times;</button></div>
+      <div class="modal-body">
+        <form id="teleportForm">
+          <input type="hidden" id="teleportMapIndex">
+          <div class="form-group"><label>目标地图</label><input type="text" id="teleportMapName" class="form-input" readonly></div>
+          <div class="form-group"><label>角色名称</label><input type="text" id="teleportCharacter" class="form-input" required placeholder="输入角色名称"></div>
+          <div class="form-row">
+            <div class="form-group"><label>X坐标 (可选)</label><input type="number" id="teleportX" class="form-input" placeholder="留空则随机"></div>
+            <div class="form-group"><label>Y坐标 (可选)</label><input type="number" id="teleportY" class="form-input" placeholder="留空则随机"></div>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 0.5rem;">提示：不填坐标将随机传送到安全位置</p>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeTeleportModal()">取消</button>
+        <button class="btn btn-primary" onclick="teleportPlayer()">传送</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .form-input, .form-select { padding: 0.5rem 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-tertiary); color: var(--text-primary); font-size: 0.875rem; width: 100%; box-sizing: border-box; }
+    .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary); }
+    .form-input[readonly] { background: var(--bg-secondary); cursor: not-allowed; }
+    .form-select { min-width: 120px; }
+    .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
+    .badge.success { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .badge.danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    .action-btns { display: flex; gap: 0.5rem; }
+    .btn-icon { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; }
+    .modal.show { display: flex; align-items: center; justify-content: center; }
+    .modal-backdrop { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); }
+    .modal-content { position: relative; background: var(--bg-secondary); border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); }
+    .modal-content.modal-large { max-width: 800px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); }
+    .modal-title { margin: 0; font-size: 1.25rem; font-weight: 600; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); line-height: 1; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); }
+    .form-grid { display: grid; gap: 1.5rem; }
+    .form-section { background: var(--bg-tertiary); padding: 1rem; border-radius: 8px; }
+    .form-section-title { margin: 0 0 1rem 0; font-size: 0.9rem; font-weight: 600; color: var(--primary); }
+    .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .form-row .form-group { margin-bottom: 0.5rem; }
+    .checkbox-row { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem; }
+    .checkbox-label input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+  </style>
+
+  <script src="js/theme.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let allMaps = [];
+    document.addEventListener('DOMContentLoaded', () => { if (!checkAuth()) { window.location.href = 'index.html'; return; } loadUserInfo(); loadMaps(); });
+    function loadUserInfo() { const user = getUser(); if (user) { document.getElementById('userName').textContent = user.email.split('@')[0]; document.getElementById('userRole').textContent = user.identity; document.getElementById('userAvatar').textContent = user.email.charAt(0).toUpperCase(); } }
+    function handleSearchKeyup(event) { if (event.key === 'Enter') filterMaps(); }
+    function resetSearch() { document.getElementById('searchInput').value = ''; document.getElementById('rtFilter').value = ''; renderMaps(allMaps); }
+    async function loadMaps() { try { const data = await api.get('/api/game/maps'); allMaps = data.maps || []; document.getElementById('totalMaps').textContent = (data.total || 0).toLocaleString(); renderMaps(allMaps); } catch (error) { console.error('加载失败:', error); document.getElementById('mapsTable').innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--error);">加载失败: ' + error.message + '</td></tr>'; } }
+    function filterMaps() { const search = document.getElementById('searchInput').value.toLowerCase(); const rtFilter = document.getElementById('rtFilter').value; let filtered = allMaps; if (search) { filtered = filtered.filter(m => (m.mapName && m.mapName.toLowerCase().includes(search)) || (m.fileName && m.fileName.toLowerCase().includes(search)) || m.index.toString().includes(search)); } if (rtFilter !== '') { const allowRT = rtFilter === 'true'; filtered = filtered.filter(m => m.allowRT === allowRT); } renderMaps(filtered); }
+    function renderMaps(maps) { const tbody = document.getElementById('mapsTable'); if (maps.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-tertiary);">暂无数据</td></tr>'; return; } tbody.innerHTML = maps.map(map => `<tr><td><code>${map.index}</code></td><td>${escapeHtml(map.fileName)}</td><td><strong>${escapeHtml(map.mapName)}</strong></td><td><span class="badge ${map.allowRT ? 'success' : 'danger'}">${map.allowRT ? '允许' : '禁止'}</span></td><td><div class="action-btns"><button class="btn btn-primary btn-icon" onclick="openEditModal(${map.index})" title="编辑">编辑</button><button class="btn btn-success btn-icon" onclick="openTeleportModal(${map.index}, '${escapeHtml(map.mapName)}')" title="传送">传送</button><button class="btn btn-danger btn-icon" onclick="clearMonsters(${map.index}, '${escapeHtml(map.mapName)}')" title="清怪">清怪</button></div></td></tr>`).join(''); }
+    async function openEditModal(index) { try { const map = await api.get(`/api/game/maps/${index}`); document.getElementById('editMapIndex').value = map.index; document.getElementById('editMapId').value = map.index; document.getElementById('editMapName').value = map.mapName || ''; document.getElementById('editFileName').value = map.fileName || ''; document.getElementById('editSize').value = `${map.width || 0} x ${map.height || 0}`; document.getElementById('editMonsterCount').value = map.monsterCount || 0; document.getElementById('editPlayerCount').value = map.playerCount || 0; document.getElementById('editAllowRT').checked = map.allowRT || false; document.getElementById('editAllowTT').checked = map.allowTT || false; document.getElementById('editAllowRecall').checked = map.allowRecall || false; document.getElementById('editCanHorse').checked = map.canHorse || false; document.getElementById('editCanMine').checked = map.canMine || false; document.getElementById('editCanMarriageRecall').checked = map.canMarriageRecall || false; document.getElementById('editMinLevel').value = map.minimumLevel || 0; document.getElementById('editMaxLevel').value = map.maximumLevel || 0; document.getElementById('editMonsterHealth').value = map.monsterHealth || 0; document.getElementById('editMonsterDamage').value = map.monsterDamage || 0; document.getElementById('editDropRate').value = map.dropRate || 0; document.getElementById('editExpRate').value = map.experienceRate || 0; document.getElementById('editGoldRate').value = map.goldRate || 0; document.getElementById('editModal').classList.add('show'); } catch (error) { alert('加载失败: ' + error.message); } }
+    function closeEditModal() { document.getElementById('editModal').classList.remove('show'); }
+    async function saveMap() { const index = document.getElementById('editMapIndex').value; const data = { mapName: document.getElementById('editMapName').value, allowRT: document.getElementById('editAllowRT').checked, allowTT: document.getElementById('editAllowTT').checked, allowRecall: document.getElementById('editAllowRecall').checked, canHorse: document.getElementById('editCanHorse').checked, canMine: document.getElementById('editCanMine').checked, canMarriageRecall: document.getElementById('editCanMarriageRecall').checked, minimumLevel: parseInt(document.getElementById('editMinLevel').value) || 0, maximumLevel: parseInt(document.getElementById('editMaxLevel').value) || 0, monsterHealth: parseInt(document.getElementById('editMonsterHealth').value) || 0, monsterDamage: parseInt(document.getElementById('editMonsterDamage').value) || 0, dropRate: parseInt(document.getElementById('editDropRate').value) || 0, experienceRate: parseInt(document.getElementById('editExpRate').value) || 0, goldRate: parseInt(document.getElementById('editGoldRate').value) || 0 }; try { const result = await api.put(`/api/game/maps/${index}`, data); alert(result.message || '保存成功'); closeEditModal(); loadMaps(); } catch (error) { alert('保存失败: ' + error.message); } }
+    function openTeleportModal(index, name) { document.getElementById('teleportMapIndex').value = index; document.getElementById('teleportMapName').value = name; document.getElementById('teleportCharacter').value = ''; document.getElementById('teleportX').value = ''; document.getElementById('teleportY').value = ''; document.getElementById('teleportModal').classList.add('show'); }
+    function closeTeleportModal() { document.getElementById('teleportModal').classList.remove('show'); }
+    async function teleportPlayer() { const data = { mapIndex: parseInt(document.getElementById('teleportMapIndex').value), characterName: document.getElementById('teleportCharacter').value.trim() }; const x = document.getElementById('teleportX').value; const y = document.getElementById('teleportY').value; if (x && y) { data.x = parseInt(x); data.y = parseInt(y); } if (!data.characterName) { alert('请输入角色名称'); return; } try { const result = await api.post('/api/game/maps/teleport', data); alert(result.message || '传送成功'); closeTeleportModal(); } catch (error) { alert('传送失败: ' + error.message); } }
+    async function clearMonsters(index, name) { if (!confirm(`确定要清除 ${name} 上的所有怪物吗？`)) return; try { const result = await api.post(`/api/game/maps/${index}/clear-monsters`); alert(result.message || '清除成功'); } catch (error) { alert('清除失败: ' + error.message); } }
+    function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function toggleUserMenu() { if (confirm('确定要退出登录吗？')) { logout(); window.location.href = 'index.html'; } }
+  </script>
+</body>
+</html>

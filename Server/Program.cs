@@ -2,6 +2,7 @@
 using System.Runtime;
 using Library;
 using Server.Envir;
+using Server.WebApi;
 using System.Reflection;
 
 ConfigReader.Load();
@@ -102,6 +103,10 @@ SEnvir.LoadBlock();
 SEnvir.LoadClientHash();
 var log = SEnvir.LoadRebirthInfo();
 if (!string.IsNullOrEmpty(log)) SEnvir.Log(log);
+
+// Start WebAPI server (must be before StartServer because EnvirLoop blocks)
+WebApiStartup.Start();
+
 SEnvir.StartServer();
 
 while(!stop) Thread.Sleep(100);
