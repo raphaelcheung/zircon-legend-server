@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -66,6 +66,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -80,8 +84,14 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(TargetDir)&quot; &quot;%25USERPROFILE%25\Mir3\DeployServer&quot; /E /I /Y" />
-  </Target>
+  <!-- 编译后复制 datas 目录到输出目录 -->
+  <ItemGroup>
+    <None Include="datas\**\*" CopyToOutputDirectory="PreserveNewest" LinkBase="datas" />
+  </ItemGroup>
+
+  <!-- 复制 wwwroot 静态文件到输出目录（如果存在） -->
+  <ItemGroup>
+    <None Include="wwwroot\**\*" CopyToOutputDirectory="PreserveNewest" LinkBase="wwwroot" Condition="Exists('wwwroot')" />
+  </ItemGroup>
 
 </Project>

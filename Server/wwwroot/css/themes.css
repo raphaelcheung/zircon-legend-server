@@ -1,0 +1,159 @@
+/* ========================================
+   皓石传奇三 - 管理后台主题系统
+   Zircon Mir3 Server Admin Theme System
+   ======================================== */
+
+:root {
+  /* 基础变量 */
+  --transition-speed: 0.3s;
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 72px;
+  --topbar-height: 64px;
+
+  /* 字体 */
+  --font-display: 'Rajdhani', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Inter', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+}
+
+/* ========================================
+   暗色主题 (默认)
+   ======================================== */
+[data-theme="dark"] {
+  /* 背景层次 */
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-tertiary: #1a1a25;
+  --bg-elevated: #22222f;
+  --bg-hover: #2a2a3a;
+
+  /* 边框 */
+  --border-primary: #2d2d3d;
+  --border-secondary: #3d3d50;
+  --border-accent: rgba(0, 240, 255, 0.3);
+
+  /* 文字 */
+  --text-primary: #f0f0f5;
+  --text-secondary: #a0a0b0;
+  --text-tertiary: #707080;
+  --text-inverse: #0a0a0f;
+
+  /* 主题色 - 霓虹青 */
+  --accent-primary: #00f0ff;
+  --accent-primary-rgb: 0, 240, 255;
+  --accent-primary-dark: #00b8c4;
+  --accent-primary-light: #7fffff;
+
+  /* 辅助色 - 霓虹紫 */
+  --accent-secondary: #a855f7;
+  --accent-secondary-rgb: 168, 85, 247;
+
+  /* 功能色 */
+  --color-success: #10b981;
+  --color-success-bg: rgba(16, 185, 129, 0.15);
+  --color-warning: #f59e0b;
+  --color-warning-bg: rgba(245, 158, 11, 0.15);
+  --color-error: #ef4444;
+  --color-error-bg: rgba(239, 68, 68, 0.15);
+  --color-info: #3b82f6;
+  --color-info-bg: rgba(59, 130, 246, 0.15);
+
+  /* 阴影 */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.3);
+  --shadow-glow-strong: 0 0 40px rgba(0, 240, 255, 0.5);
+
+  /* 渐变 */
+  --gradient-primary: linear-gradient(135deg, #00f0ff 0%, #a855f7 100%);
+  --gradient-bg: linear-gradient(180deg, #12121a 0%, #0a0a0f 100%);
+  --gradient-card: linear-gradient(145deg, #1a1a25 0%, #12121a 100%);
+
+  /* 特效 */
+  --grid-color: rgba(0, 240, 255, 0.03);
+  --scanline-opacity: 0.02;
+}
+
+/* ========================================
+   亮色主题
+   ======================================== */
+[data-theme="light"] {
+  /* 背景层次 */
+  --bg-primary: #f5f5f8;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #eeeef2;
+  --bg-elevated: #ffffff;
+  --bg-hover: #e8e8ee;
+
+  /* 边框 */
+  --border-primary: #d8d8e0;
+  --border-secondary: #c8c8d0;
+  --border-accent: rgba(79, 70, 229, 0.3);
+
+  /* 文字 */
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a60;
+  --text-tertiary: #8a8a9a;
+  --text-inverse: #ffffff;
+
+  /* 主题色 - 深靛蓝 */
+  --accent-primary: #4f46e5;
+  --accent-primary-rgb: 79, 70, 229;
+  --accent-primary-dark: #3730a3;
+  --accent-primary-light: #818cf8;
+
+  /* 辅助色 - 紫色 */
+  --accent-secondary: #7c3aed;
+  --accent-secondary-rgb: 124, 58, 237;
+
+  /* 功能色 */
+  --color-success: #059669;
+  --color-success-bg: rgba(5, 150, 105, 0.1);
+  --color-warning: #d97706;
+  --color-warning-bg: rgba(217, 119, 6, 0.1);
+  --color-error: #dc2626;
+  --color-error-bg: rgba(220, 38, 38, 0.1);
+  --color-info: #2563eb;
+  --color-info-bg: rgba(37, 99, 235, 0.1);
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.15);
+  --shadow-glow-strong: 0 0 40px rgba(79, 70, 229, 0.25);
+
+  /* 渐变 */
+  --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --gradient-bg: linear-gradient(180deg, #ffffff 0%, #f5f5f8 100%);
+  --gradient-card: linear-gradient(145deg, #ffffff 0%, #f5f5f8 100%);
+
+  /* 特效 */
+  --grid-color: rgba(79, 70, 229, 0.03);
+  --scanline-opacity: 0;
+}
+
+/* ========================================
+   主题切换动画
+   ======================================== */
+html {
+  color-scheme: dark light;
+}
+
+body,
+.sidebar,
+.topbar,
+.card,
+.btn,
+input,
+select,
+textarea {
+  transition:
+    background-color var(--transition-speed) ease,
+    border-color var(--transition-speed) ease,
+    color var(--transition-speed) ease,
+    box-shadow var(--transition-speed) ease;
+}

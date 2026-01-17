@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>设置 - 皓石传奇三管理后台</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <span class="sidebar-brand">皓石传奇三</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">主菜单</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="9"></rect>
+              <rect x="14" y="3" width="7" height="5"></rect>
+              <rect x="14" y="12" width="7" height="9"></rect>
+              <rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+            <span>仪表盘</span>
+          </a>
+          <a href="players.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>玩家管理</span>
+          </a>
+          <a href="accounts.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>账号管理</span>
+          </a>
+          <a href="characters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
+            </svg>
+            <span>角色管理</span>
+          </a>
+        </div>
+
+        <!-- 游戏管理 -->
+        <div class="nav-section">
+          <div class="nav-section-title">游戏管理</div>
+          <a href="items.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            <span>物品管理</span>
+          </a>
+          <a href="maps.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
+            </svg>
+            <span>地图管理</span>
+          </a>
+          <a href="monsters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 9v4a7 7 0 0 1-14 0V9"></path>
+              <path d="M12 19v3"></path>
+              <path d="M8 22h8"></path>
+            </svg>
+            <span>怪物管理</span>
+          </a>
+          <a href="npcs.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="5"></circle>
+              <path d="M20 21a8 8 0 1 0-16 0"></path>
+            </svg>
+            <span>NPC管理</span>
+          </a>
+          <a href="magics.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>
+            </svg>
+            <span>技能管理</span>
+          </a>
+          <a href="classes.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <line x1="10" y1="9" x2="8" y2="9"></line>
+            </svg>
+            <span>职业管理</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">系统</div>
+          <a href="logs.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>系统日志</span>
+          </a>
+          <a href="settings.html" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>设置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <h1 class="page-title">服务器设置</h1>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="切换主题">
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <div class="user-menu" onclick="toggleUserMenu()">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <div class="user-info">
+              <div class="user-name" id="userName">管理员</div>
+              <div class="user-role" id="userRole">SuperAdmin</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <!-- 分组导航 -->
+        <div class="config-nav" id="configNav">
+        </div>
+
+        <!-- 配置卡片容器 -->
+        <div id="configContainer" class="config-grid">
+          <div style="text-align: center; color: var(--text-tertiary); padding: 2rem;">加载中...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <style>
+    .config-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      padding: 1rem;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+    .config-nav-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border-color);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    .config-nav-btn:hover {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+    .config-nav-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 1rem;
+    }
+    .config-card {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 1rem;
+      border: 1px solid var(--border-color);
+      transition: border-color 0.2s;
+    }
+    .config-card:hover {
+      border-color: var(--primary);
+    }
+    .config-card.modified {
+      border-color: #f59e0b;
+    }
+    .config-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .config-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .config-tag {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .config-tag.restart {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+    .config-tag.runtime {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+    }
+    .config-tag.runtime-only {
+      background: rgba(147, 51, 234, 0.2);
+      color: #9333ea;
+    }
+    .config-desc {
+      font-size: 0.8rem;
+      color: var(--text-tertiary);
+      margin-bottom: 0.75rem;
+      line-height: 1.4;
+    }
+    .config-input-wrap {
+      position: relative;
+    }
+    .config-input {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 0.875rem;
+    }
+    .config-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .config-input.modified {
+      border-color: #f59e0b;
+    }
+    .config-checkbox-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .config-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+    }
+    .config-checkbox-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .config-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.75rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+    .config-key {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      font-family: 'Consolas', monospace;
+    }
+    .config-type {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+    .config-display-value {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-left: auto;
+      margin-right: 0.5rem;
+    }
+    .config-section-title {
+      grid-column: 1 / -1;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      padding: 1rem 0 0.5rem;
+      border-bottom: 2px solid var(--primary);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .config-section-title svg {
+      width: 20px;
+      height: 20px;
+      color: var(--primary);
+    }
+    .save-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+    }
+    .save-bar.show {
+      display: flex;
+    }
+    .save-bar-info {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    .save-bar-info strong {
+      color: #f59e0b;
+    }
+    .save-bar-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+    @media (max-width: 768px) {
+      .config-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <script src="js/theme.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // 配置元数据定义
+    const configMeta = {
+      'Network': {
+        name: '网络设置',
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>',
+        items: {
+          'IPAddress': { label: '监听地址', desc: '服务器监听的IP地址，0.0.0.0表示所有网卡', type: 'String', restart: true },
+          'Port': { label: '游戏端口', desc: '游戏服务器端口号 (1-65535)', type: 'UInt16', restart: true },
+          'TimeOut': { label: '连接超时', desc: '客户端连接超时时间', type: 'TimeSpan', restart: true },
+          'PingDelay': { label: '心跳间隔', desc: '心跳包发送间隔', type: 'TimeSpan', restart: false },
+          'UserCountPort': { label: '用户统计端口', desc: '用户统计服务端口', type: 'UInt16', restart: true },
+          'MaxPacket': { label: '最大包数/秒', desc: '每秒最大数据包数量，防刷机制', type: 'Int32', restart: false },
+          'PacketBanTime': { label: '超包封禁时长', desc: '超过包数限制后的封禁时间', type: 'TimeSpan', restart: false },
+          'UseProxy': { label: '使用代理', desc: '是否使用Nginx等反向代理', type: 'Boolean', restart: true },
+          'ConnectionLimit': { label: '最大连接数', desc: '服务器最大并发连接数 (1-65535)', type: 'Int32', restart: true }
+        }
+      },
+      'System': {
+        name: '系统设置',
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>',
+        items: {
+          'DBSaveDelay': { label: '数据保存间隔', desc: '数据库自动保存间隔时间', type: 'TimeSpan', restart: false },
+          'MapPath': { label: '地图路径', desc: '地图数据文件存放路径', type: 'String', restart: true },
+          'MasterPassword': { label: '管理密码', desc: '服务器管理员密码', type: 'String', restart: false },
+          'ClientPath': { label: '客户端路径', desc: '客户端自动更新文件路径', type: 'String', restart: true },
+          'TestServer': { label: '测试服务器', desc: '是否为测试服务器模式', type: 'Boolean', restart: true },
+          'StarterGuildName': { label: '新手行会名', desc: '新玩家默认加入的行会名称', type: 'String', restart: false },
+          'UpgradeChunkSize': { label: '更新块大小', desc: '客户端更新分块大小(字节)', type: 'Int32', restart: false },
+          '挖出的黑铁矿最小纯度': { label: '黑铁矿最小纯度', desc: '挖掘黑铁矿石的最小纯度', type: 'Int32', restart: false },
+          '挖出的黑铁矿最大纯度': { label: '黑铁矿最大纯度', desc: '挖掘黑铁矿石的最大纯度', type: 'Int32', restart: false },
+          '玩家数据备份间隔': { label: '数据备份间隔', desc: '玩家数据自动备份的时间间隔', type: 'TimeSpan', restart: false }
+        }
+      },
+      'Control': {
+        name: '功能开关',
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>',
+        items: {
+          'OnlyAdminLogin': { label: '仅限管理员登录', desc: '开启后仅管理员账号可以登录游戏，普通玩家无法登录（即时生效并持久化，对应GM指令：@仅限管理员登录）', type: 'Boolean', restart: false, runtime: true },
+          'AllowLogin': { label: '允许登录', desc: '是否允许玩家登录游戏', type: 'Boolean', restart: false },
+          'AllowNewAccount': { label: '允许注册', desc: '是否允许注册新账号', type: 'Boolean', restart: false },
+          'AllowChangePassword': { label: '允许改密码', desc: '是否允许玩家修改密码', type: 'Boolean', restart: false },
+          'AllowNewCharacter': { label: '允许创角', desc: '是否允许创建新角色', type: 'Boolean', restart: false },
+          'AllowDeleteCharacter': { label: '允许删角', desc: '是否允许删除角色', type: 'Boolean', restart: false },
+          'AllowStartGame': { label: '允许进入游戏', desc: '是否允许玩家进入游戏世界', type: 'Boolean', restart: false },
+          'RelogDelay': { label: '重登间隔', desc: '同一账号重新登录的最小间隔', type: 'TimeSpan', restart: false },
+          'AllowWarrior': { label: '允许战士', desc: '是否允许创建战士职业', type: 'Boolean', restart: false },
+          'AllowWizard': { label: '允许法师', desc: '是否允许创建法师职业', type: 'Boolean', restart: false },
+          'AllowTaoist': { label: '允许道士', desc: '是否允许创建道士职业', type: 'Boolean', restart: false },
+          'AllowAssassin': { label: '允许刺客', desc: '是否允许创建刺客职业', type: 'Boolean', restart: false }
+        }
+      },
+      'Players': {
+        name: '玩家设置',
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+        items: {
+          'MaxViewRange': { label: '最大视野', desc: '玩家的最大视野范围(格)', type: 'Int32', restart: false },
+          'ShoutDelay': { label: '喊话间隔', desc: '喊话频道发言间隔', type: 'TimeSpan', restart: false },
+          'GlobalDelay': { label: '世界喊话间隔', desc: '世界频道发言间隔', type: 'TimeSpan', restart: false },
+          'MaxLevel': { label: '最高等级', desc: '玩家可达到的最高等级', type: 'Int32', restart: false },
+          '技能初级阶段基础经验': { label: '技能基础经验', desc: '技能初级阶段的基础经验值', type: 'Int32', restart: false },
+          '技能最高等级': { label: '技能最高等级', desc: '技能可提升的最高等级', type: 'Int32', restart: false },
+          'BrownDuration': { label: '灰名时长', desc: '攻击他人后的灰名持续时间', type: 'TimeSpan', restart: false },
+          'PKPointRate': { label: 'PK点数减少率', desc: '每次减少的PK点数', type: 'Int32', restart: false },
+          'PKPointTickRate': { label: 'PK点恢复间隔', desc: 'PK点数自动恢复的间隔', type: 'TimeSpan', restart: false },
+          'RedPoint': { label: '红名点数', desc: '达到此PK点数变为红名', type: 'Int32', restart: false },
+          'AutoReviveDelay': { label: '自动复活延迟', desc: '死亡后自动复活的等待时间', type: 'TimeSpan', restart: false },
+          '最高转生次数': { label: '最高转生次数', desc: '玩家可转生的最大次数', type: 'Int32', restart: false },
+          '转生基础等级': { label: '转生基础等级', desc: '允许转生的最低等级要求', type: 'Int32', restart: false }
+        }
+      },
+      'Monsters': {
+        name: '怪物设置',
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>',
+        items: {
+          'DeadDuration': { label: '尸体消失时间', desc: '怪物死亡后尸体存在时间', type: 'TimeSpan', restart: false },
+          'HarvestDuration': { label: '可采集时间', desc: '怪物尸体可被采集的时间', type: 'TimeSpan', restart: false },
+          '不掉落低于本价格的普通药水': { label: '药水掉落最低价格', desc: '不掉落低于此价格的普通药水', type: 'Int32', restart: false },
+          'DropNothingTypeCommonItem': { label: '掉落普通物品', desc: '是否掉落无类型的普通物品', type: 'Boolean', restart: false },
+          '道具呼唤的怪物存活分钟': { label: '召唤怪物存活时间', desc: '道具召唤的怪物存活时间(分钟)', type: 'UInt32', restart: false },
+          '宠物不追击距离玩家多少格以外的敌人': { label: '宠物追击距离', desc: '宠物不追击超出此距离的敌人', type: 'UInt32', restart: false }
+        }
+      },
+      'Items': {
+        name: '物品设置',
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>',
+        items: {
+          'DropDuration': { label: '掉落物存在时间', desc: '地上掉落物品的存在时间', type: 'TimeSpan', restart: false },
+          'DropDistance': { label: '掉落距离', desc: '物品掉落的最大散落距离', type: 'Int32', restart: false },
+          'DropLayers': { label: '掉落层数', desc: '同一位置最大掉落物品层数', type: 'Int32', restart: false },
+          'MaxLuck': { label: '最大幸运值', desc: '装备幸运属性的上限', type: 'Int32', restart: false },
+          'MaxCurse': { label: '最大诅咒值', desc: '装备诅咒属性的上限(负数)', type: 'Int32', restart: false },
+          'LuckRate': { label: '幸运成功率', desc: '幸运属性提升成功率(%)', type: 'Int32', restart: false },
+          'CurseRate': { label: '诅咒几率', desc: '诅咒属性触发几率(%)', type: 'Int32', restart: false },
+          'MaxStrength': { label: '最大强化等级', desc: '装备强化的最高等级', type: 'Int32', restart: false },
+          '武器最高精炼等级': { label: '武器最高精炼等级', desc: '武器可精炼的最高等级', type: 'Int32', restart: false },
+          '武器精炼几率基数': { label: '精炼成功率基数', desc: '武器精炼的基础成功率', type: 'Int32', restart: false },
+          'MonsterDropGroupShare': { label: '组队共享掉落', desc: '组队时是否共享怪物掉落', type: 'Boolean', restart: false },
+          'MonsterDropProtectionDuration': { label: '掉落保护时间', desc: '掉落物品的拾取保护时间(秒)', type: 'Int32', restart: false }
+        }
+      },
+      'Rates': {
+        name: '倍率设置',
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
+        items: {
+          'ExperienceRate': { label: '经验倍率', desc: '经验获取倍率(0=默认)', type: 'Int32', restart: false },
+          'DropRate': { label: '掉落倍率', desc: '物品掉落倍率(0=默认)', type: 'Int32', restart: false },
+          'GoldRate': { label: '金币倍率', desc: '金币获取倍率(0=默认)', type: 'Int32', restart: false },
+          '技能低等级经验倍率': { label: '低级技能经验倍率', desc: '低等级技能的经验倍率', type: 'Int32', restart: false },
+          '技能高等级经验倍率': { label: '高级技能经验倍率', desc: '高等级技能的经验倍率', type: 'Int32', restart: false },
+          'CompanionRate': { label: '宠物经验倍率', desc: '宠物经验获取倍率(0=默认)', type: 'Int32', restart: false },
+          'Boss掉落倍率': { label: 'Boss掉落倍率', desc: 'Boss怪物的掉落倍率(0=默认)', type: 'Int32', restart: false }
+        }
+      },
+      'WebApi': {
+        name: 'WebAPI设置',
+        icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>',
+        items: {
+          'WebApiEnabled': { label: '启用WebAPI', desc: '是否启用Web管理API', type: 'Boolean', restart: true },
+          'WebApiPort': { label: 'WebAPI端口', desc: 'Web管理API监听端口', type: 'Int32', restart: true },
+          'WebApiJwtSecret': { label: 'JWT密钥', desc: 'JWT令牌签名密钥(至少32字符)', type: 'String', restart: true },
+          'WebApiJwtExpiration': { label: 'JWT过期时间', desc: 'JWT令牌过期时间(分钟)', type: 'Int32', restart: false }
+        }
+      }
+    };
+
+    let configData = {};
+    let originalData = {};
+    let runtimeData = {};
+    let originalRuntimeData = {};
+    let modifiedKeys = new Set();
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!checkAuth()) {
+        window.location.href = 'index.html';
+        return;
+      }
+      loadUserInfo();
+      renderNavButtons();
+      await loadConfig();
+    });
+
+    function loadUserInfo() {
+      const user = getUser();
+      if (user) {
+        document.getElementById('userName').textContent = user.email.split('@')[0];
+        document.getElementById('userRole').textContent = user.identity;
+        document.getElementById('userAvatar').textContent = user.email.charAt(0).toUpperCase();
+      }
+    }
+
+    function renderNavButtons() {
+      const nav = document.getElementById('configNav');
+      nav.innerHTML = '';
+      let isFirst = true;
+      for (const [section, meta] of Object.entries(configMeta)) {
+        const btn = document.createElement('button');
+        btn.className = 'config-nav-btn' + (isFirst ? ' active' : '');
+        btn.dataset.section = section;
+        btn.textContent = meta.name;
+        btn.onclick = () => filterBySection(section);
+        nav.appendChild(btn);
+        isFirst = false;
+      }
+    }
+
+    function filterBySection(section) {
+      document.querySelectorAll('.config-nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.section === section);
+      });
+      document.querySelectorAll('.config-section-group').forEach(group => {
+        group.style.display = group.dataset.section === section ? '' : 'none';
+      });
+    }
+
+    async function loadConfig() {
+      try {
+        // 并行加载 INI 配置和运行时配置
+        const [configResult, runtimeResult] = await Promise.all([
+          api.get('/api/config/sections'),
+          api.get('/api/config/runtime')
+        ]);
+
+        configData = configResult.sections || {};
+        originalData = JSON.parse(JSON.stringify(configData));
+
+        // 处理运行时配置
+        runtimeData = {
+          'OnlyAdminLogin': runtimeResult.onlyAdminLogin
+        };
+        originalRuntimeData = JSON.parse(JSON.stringify(runtimeData));
+
+        // 将运行时配置合并到 Control 分组数据中用于显示
+        if (!configData['Control']) configData['Control'] = {};
+        configData['Control']['OnlyAdminLogin'] = runtimeResult.onlyAdminLogin ? 'True' : 'False';
+
+        renderConfigCards();
+      } catch (error) {
+        console.error('加载配置失败:', error);
+        document.getElementById('configContainer').innerHTML =
+          '<div style="text-align: center; color: var(--error); padding: 2rem;">加载配置失败: ' + error.message + '</div>';
+      }
+    }
+
+    function renderConfigCards() {
+      const container = document.getElementById('configContainer');
+      container.innerHTML = '';
+
+      for (const [sectionKey, sectionMeta] of Object.entries(configMeta)) {
+        const sectionData = configData[sectionKey] || {};
+
+        // Section title
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'config-section-title config-section-group';
+        titleDiv.dataset.section = sectionKey;
+        titleDiv.innerHTML = `${sectionMeta.icon} ${sectionMeta.name}`;
+        container.appendChild(titleDiv);
+
+        // Config cards
+        for (const [key, meta] of Object.entries(sectionMeta.items)) {
+          const value = sectionData[key];
+          if (value === undefined) continue;
+
+          const card = createConfigCard(sectionKey, key, meta, value);
+          card.classList.add('config-section-group');
+          card.dataset.section = sectionKey;
+          container.appendChild(card);
+        }
+      }
+
+      // Add save bar
+      if (!document.getElementById('saveBar')) {
+        const saveBar = document.createElement('div');
+        saveBar.id = 'saveBar';
+        saveBar.className = 'save-bar';
+        saveBar.innerHTML = `
+          <div class="save-bar-info">
+            <strong id="modifiedCount">0</strong> 项配置已修改
+          </div>
+          <div class="save-bar-actions">
+            <button class="btn btn-secondary" onclick="resetChanges()">重置</button>
+            <button class="btn btn-primary" onclick="saveConfig()">保存配置</button>
+          </div>
+        `;
+        document.body.appendChild(saveBar);
+      }
+
+      // 默认只显示第一个分组
+      const firstSection = Object.keys(configMeta)[0];
+      if (firstSection) {
+        filterBySection(firstSection);
+      }
+    }
+
+    function createConfigCard(section, key, meta, value) {
+      const card = document.createElement('div');
+      card.className = 'config-card';
+      card.id = `card-${section}-${key}`;
+
+      const isBoolean = meta.type === 'Boolean';
+      const displayValue = formatDisplayValue(value, meta.type);
+
+      // 确定标签类型和文本
+      let tagClass, tagText;
+      if (meta.runtime) {
+        tagClass = 'runtime-only';
+        tagText = '运行时';
+      } else if (meta.restart) {
+        tagClass = 'restart';
+        tagText = '重启后';
+      } else {
+        tagClass = 'runtime';
+        tagText = '即时';
+      }
+
+      card.innerHTML = `
+        <div class="config-card-header">
+          <div class="config-title">
+            ${meta.label}
+            <span class="config-tag ${tagClass}">${tagText}</span>
+          </div>
+        </div>
+        <div class="config-desc">${meta.desc}</div>
+        <div class="config-input-wrap">
+          ${isBoolean ? `
+            <div class="config-checkbox-wrap">
+              <input type="checkbox" class="config-checkbox" id="input-${section}-${key}"
+                ${value === 'True' || value === true ? 'checked' : ''}
+                onchange="onConfigChange('${section}', '${key}', this.checked)">
+              <label class="config-checkbox-label" for="input-${section}-${key}">${value === 'True' || value === true ? '已启用' : '已禁用'}</label>
+            </div>
+          ` : `
+            <input type="text" class="config-input" id="input-${section}-${key}"
+              value="${escapeHtml(String(value))}"
+              onchange="onConfigChange('${section}', '${key}', this.value)"
+              onkeyup="onConfigChange('${section}', '${key}', this.value)">
+          `}
+        </div>
+        <div class="config-footer">
+          <span class="config-key">${meta.runtime ? '[运行时]' : `[${section}]`} ${key}</span>
+          ${!isBoolean ? `<span class="config-display-value">${displayValue}</span>` : ''}
+          <span class="config-type">${meta.type}</span>
+        </div>
+      `;
+
+      return card;
+    }
+
+    function formatDisplayValue(value, type) {
+      if (type === 'TimeSpan') {
+        // Parse TimeSpan format like "00:05:00" or "1.00:00:00"
+        const str = String(value);
+        if (str.includes('.')) {
+          const [days, time] = str.split('.');
+          const [h, m, s] = time.split(':').map(Number);
+          return `${days}天${h}时${m}分${s}秒`;
+        } else {
+          const parts = str.split(':').map(Number);
+          if (parts.length === 3) {
+            const [h, m, s] = parts;
+            if (h > 0) return `${h}小时${m}分${s}秒`;
+            if (m > 0) return `${m}分钟${s}秒`;
+            return `${s}秒`;
+          }
+        }
+      }
+      return '';
+    }
+
+    function onConfigChange(section, key, value) {
+      const fullKey = `${section}.${key}`;
+      const card = document.getElementById(`card-${section}-${key}`);
+      const input = document.getElementById(`input-${section}-${key}`);
+
+      // 获取原始值（区分运行时配置和 INI 配置）
+      let originalValue;
+      if (fullKey === 'Control.OnlyAdminLogin') {
+        originalValue = originalRuntimeData['OnlyAdminLogin'] ? 'True' : 'False';
+      } else {
+        originalValue = originalData[section]?.[key];
+      }
+
+      // Update checkbox label
+      if (input && input.type === 'checkbox') {
+        const label = input.nextElementSibling;
+        if (label) {
+          label.textContent = value ? '已启用' : '已禁用';
+        }
+        value = value ? 'True' : 'False';
+      }
+
+      // Track modifications
+      if (String(value) !== String(originalValue)) {
+        modifiedKeys.add(fullKey);
+        card?.classList.add('modified');
+        input?.classList.add('modified');
+      } else {
+        modifiedKeys.delete(fullKey);
+        card?.classList.remove('modified');
+        input?.classList.remove('modified');
+      }
+
+      // Update config data
+      if (!configData[section]) configData[section] = {};
+      configData[section][key] = value;
+
+      // Update save bar
+      updateSaveBar();
+    }
+
+    function updateSaveBar() {
+      const saveBar = document.getElementById('saveBar');
+      const countEl = document.getElementById('modifiedCount');
+      if (modifiedKeys.size > 0) {
+        saveBar.classList.add('show');
+        countEl.textContent = modifiedKeys.size;
+      } else {
+        saveBar.classList.remove('show');
+      }
+    }
+
+    function resetChanges() {
+      configData = JSON.parse(JSON.stringify(originalData));
+      // 恢复运行时配置
+      if (!configData['Control']) configData['Control'] = {};
+      configData['Control']['OnlyAdminLogin'] = originalRuntimeData['OnlyAdminLogin'] ? 'True' : 'False';
+      runtimeData = JSON.parse(JSON.stringify(originalRuntimeData));
+      modifiedKeys.clear();
+      renderConfigCards();
+      updateSaveBar();
+    }
+
+    async function saveConfig() {
+      if (modifiedKeys.size === 0) {
+        alert('没有修改需要保存');
+        return;
+      }
+
+      if (!confirm(`确定要保存 ${modifiedKeys.size} 项配置修改吗？部分配置需要重启服务器才能生效。`)) {
+        return;
+      }
+
+      try {
+        // 分离运行时配置和 INI 配置
+        const runtimeKeys = ['Control.OnlyAdminLogin'];
+
+        // Save each modified config
+        for (const fullKey of modifiedKeys) {
+          const [section, key] = fullKey.split('.');
+          const value = configData[section][key];
+
+          // 检查是否是运行时配置
+          if (runtimeKeys.includes(fullKey)) {
+            await api.put('/api/config/runtime', { key, value: String(value) });
+            runtimeData[key] = value === 'True' || value === true;
+          } else {
+            await api.put('/api/config/value', { section, key, value: String(value) });
+          }
+        }
+
+        alert('配置保存成功！部分配置需要重启服务器才能生效。');
+        originalData = JSON.parse(JSON.stringify(configData));
+        originalRuntimeData = JSON.parse(JSON.stringify(runtimeData));
+        modifiedKeys.clear();
+        renderConfigCards();
+        updateSaveBar();
+      } catch (error) {
+        alert('保存失败: ' + error.message);
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function toggleUserMenu() {
+      if (confirm('确定要退出登录吗？')) {
+        logout();
+        window.location.href = 'index.html';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -112,3 +112,6 @@ IDE/MonoDevelop/MonoDevelop.MonoGame/templates/Common/MonoGame.Framework.dll.con
 # Claude Code
 .claude/
 CLAUDE.md
+/datas
+/Server/datas
+/nul
