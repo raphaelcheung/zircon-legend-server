@@ -231,6 +231,13 @@
               物品列表
             </h3>
             <div class="card-actions">
+              <button class="btn btn-primary btn-sm" onclick="openAddModal()" title="新增物品">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                新增
+              </button>
               <span id="pageInfo" style="color: var(--text-tertiary); font-size: 0.875rem; margin-right: 1rem;"></span>
               <button class="btn btn-ghost btn-sm" onclick="loadItems()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -271,6 +278,178 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- 新增物品弹窗 -->
+  <div class="modal" id="addModal">
+    <div class="modal-backdrop" onclick="closeAddModal()"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3 class="modal-title">新增物品</h3>
+        <button class="modal-close" onclick="closeAddModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="addForm">
+          <div class="form-grid">
+            <!-- 基本信息 -->
+            <div class="form-section">
+              <h4 class="form-section-title">基本信息</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>物品ID</label>
+                  <input type="number" id="addItemIndex" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label>物品名称</label>
+                  <input type="text" id="addName" class="form-input" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>物品类型</label>
+                  <select id="addType" class="form-select"></select>
+                </div>
+                <div class="form-group">
+                  <label>稀有度</label>
+                  <select id="addRarity" class="form-select"></select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group full-width">
+                  <label>描述</label>
+                  <textarea id="addDescription" class="form-input" rows="2"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- 需求信息 -->
+            <div class="form-section">
+              <h4 class="form-section-title">需求信息</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>需求类型</label>
+                  <select id="addRequiredType" class="form-select"></select>
+                </div>
+                <div class="form-group">
+                  <label>需求值</label>
+                  <input type="number" id="addRequiredAmount" class="form-input" min="0">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>需求职业</label>
+                  <select id="addRequiredClass" class="form-select"></select>
+                </div>
+                <div class="form-group">
+                  <label>需求性别</label>
+                  <select id="addRequiredGender" class="form-select">
+                    <option value="None">无限制</option>
+                    <option value="Male">男</option>
+                    <option value="Female">女</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 数值属性 -->
+            <div class="form-section">
+              <h4 class="form-section-title">数值属性</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>价格</label>
+                  <input type="number" id="addPrice" class="form-input" min="0">
+                </div>
+                <div class="form-group">
+                  <label>堆叠数量</label>
+                  <input type="number" id="addStackSize" class="form-input" min="1">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>耐久度</label>
+                  <input type="number" id="addDurability" class="form-input" min="0">
+                </div>
+                <div class="form-group">
+                  <label>重量</label>
+                  <input type="number" id="addWeight" class="form-input" min="0">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>图像ID</label>
+                  <input type="number" id="addImage" class="form-input" min="0">
+                </div>
+                <div class="form-group">
+                  <label>形状ID</label>
+                  <input type="number" id="addShape" class="form-input" min="0">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>出售比例</label>
+                  <input type="number" id="addSellRate" class="form-input" min="0" max="1" step="0.01">
+                </div>
+                <div class="form-group">
+                  <label>BuffIcon</label>
+                  <input type="number" id="addBuffIcon" class="form-input" min="0">
+                </div>
+              </div>
+            </div>
+
+            <!-- 物品标记 -->
+            <div class="form-section">
+              <h4 class="form-section-title">物品标记</h4>
+              <div class="form-row checkbox-row">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="addCanRepair">
+                  <span>可修理</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="addCanSell">
+                  <span>可出售</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="addCanStore">
+                  <span>可存储</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="addCanTrade">
+                  <span>可交易</span>
+                </label>
+              </div>
+              <div class="form-row checkbox-row">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="addCanDrop">
+                  <span>可丢弃</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="addCanDeathDrop">
+                  <span>死亡掉落</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="addCanAutoPot">
+                  <span>自动药水</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="addStartItem">
+                  <span>初始物品</span>
+                </label>
+              </div>
+              <div class="form-row checkbox-row">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="addBlockMonsterDrop">
+                  <span>禁止怪物掉落</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAddModal()">取消</button>
+        <button class="btn btn-primary" onclick="addItem()">保存</button>
+      </div>
+    </div>
   </div>
 
   <!-- 编辑物品弹窗 -->
@@ -437,6 +616,53 @@
                 </label>
               </div>
             </div>
+
+            <!-- 怪物掉落列表 -->
+            <div class="form-section">
+              <h4 class="form-section-title">掉落该物品的怪物</h4>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span id="dropCount" style="color: var(--text-tertiary); font-size: 0.875rem;"></span>
+                <div class="action-btns">
+                  <button class="btn btn-danger btn-icon" type="button" onclick="batchDeleteItemDrops()" title="批量删除" id="batchDeleteBtn" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 0-2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    批量删除
+                  </button>
+                  <button class="btn btn-primary btn-icon" type="button" onclick="openAddDropModal()" title="新增掉落">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    新增
+                  </button>
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 40px;">
+                        <input type="checkbox" id="selectAllDrops" onclick="toggleSelectAllDrops()">
+                      </th>
+                      <th>怪物ID</th>
+                      <th>怪物名称</th>
+                      <th>掉落概率</th>
+                      <th>数量</th>
+                      <th>掉落组</th>
+                      <th>标志</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="monsterDropsTable">
+                    <tr>
+                      <td colspan="8" style="text-align: center; color: var(--text-tertiary);">加载中...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </form>
       </div>
@@ -475,6 +701,61 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeGiveModal()">取消</button>
         <button class="btn btn-primary" onclick="giveItem()">确认给予</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增掉落弹窗 -->
+  <div class="modal" id="addDropModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">新增掉落记录</h3>
+        <button class="modal-close" onclick="closeAddDropModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="addDropForm">
+          <input type="hidden" id="addDropItemIndex">
+          <div class="form-group">
+            <label>怪物</label>
+            <input type="text" id="addDropMonsterSearch" class="form-input" placeholder="输入怪物名称搜索..." style="margin-bottom: 8px;">
+            <select id="addDropMonster" class="form-select" required>
+              <option value="">请选择怪物</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>掉落概率 (1/N)</label>
+            <input type="number" id="addDropChance" class="form-input" value="1" min="1" required>
+            <small style="color: var(--text-tertiary); font-size: 0.75rem;">例如：输入100表示1/100的掉落概率</small>
+          </div>
+          <div class="form-group">
+            <label>掉落数量</label>
+            <input type="number" id="addDropAmount" class="form-input" value="1" min="1" required>
+          </div>
+          <div class="form-group">
+            <label>掉落组</label>
+            <input type="number" id="addDropDropSet" class="form-input" value="0" min="0">
+            <small style="color: var(--text-tertiary); font-size: 0.75rem;">相同掉落组的物品只会掉落其中一个</small>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="addDropPartOnly">
+              <span>仅掉落碎片</span>
+            </label>
+            <small style="color: var(--text-tertiary); font-size: 0.75rem;">启用后只掉落物品碎片而非完整物品</small>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="addDropEasterEvent">
+              <span>节日活动</span>
+            </label>
+            <small style="color: var(--text-tertiary); font-size: 0.75rem;">标记为节日活动掉落</small>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAddDropModal()">取消</button>
+        <button class="btn btn-primary" id="addDropSaveBtn" onclick="addDrop()">保存</button>
       </div>
     </div>
   </div>
@@ -563,6 +844,23 @@
     .btn-icon {
       padding: 0.25rem 0.5rem;
       font-size: 0.75rem;
+    }
+
+    /* Checkbox styles for batch delete */
+    .drop-checkbox, #selectAllDrops {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+    #batchDeleteBtn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #batchDeleteBtn:disabled:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-color);
+      color: var(--text-secondary);
     }
 
     /* Modal styles */
@@ -752,8 +1050,12 @@
         // Populate edit form selects
         populateSelect('editType', types);
         populateSelect('editRequiredType', reqTypes);
+        populateSelect('addRequiredType', reqTypes);
         populateSelect('editRequiredClass', reqClasses);
+        populateSelect('addRequiredClass', reqClasses);
         populateSelect('editRarity', rarities);
+        populateSelect('addRarity', rarities);
+        populateSelect('addType', types);
       } catch (error) {
         console.error('加载枚举数据失败:', error);
       }
@@ -847,13 +1149,13 @@
           <td>${item.stackSize}</td>
           <td>
             <div class="action-btns">
-              <button class="btn btn-primary btn-icon" onclick="openEditModal(${item.index})" title="编辑">
+              <button type="button" class="btn btn-primary btn-icon" onclick="openEditModal(${item.index})" title="编辑">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
               </button>
-              <button class="btn btn-success btn-icon" onclick="openGiveModal(${item.index}, '${escapeHtml(item.name)}')" title="给予">
+              <button type="button" class="btn btn-success btn-icon" onclick="openGiveModal(${item.index}, '${escapeHtml(item.name)}')" title="给予">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M20 12v10H4V12"></path>
                   <path d="M2 7h20v5H2z"></path>
@@ -919,6 +1221,446 @@
       loadItems();
     }
 
+    // Item Drops Functions
+    async function loadItemDrops(itemIndex) {
+      // console.log('开始加载物品掉落列表，物品ID:', itemIndex);
+
+      try {
+        const data = await api.get(`/api/game/items/${itemIndex}/drops`);
+        const drops = data.drops || [];
+
+        // console.log('物品掉落列表加载成功，数量:', drops.length);
+
+        document.getElementById('dropCount').textContent = `共 ${drops.length} 个怪物`;
+        renderItemDrops(drops);
+      } catch (error) {
+        console.error('加载怪物掉落失败:', error);
+        console.error('错误详情:', {
+          message: error.message,
+          response: error.response,
+          stack: error.stack
+        });
+        document.getElementById('monsterDropsTable').innerHTML =
+          '<tr><td colspan="7" style="text-align: center; color: var(--error);">加载失败: ' + error.message + '</td></tr>';
+      }
+    }
+
+    function renderItemDrops(drops) {
+      const tbody = document.getElementById('monsterDropsTable');
+      if (drops.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-tertiary);">暂无怪物掉落数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = drops.map(drop => {
+        // 生成标志徽章
+        const partOnlyBadge = drop.partOnly
+          ? '<span style="background: #3b82f6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-right: 4px;">碎片</span>'
+          : '';
+        const easterEventBadge = drop.easterEvent
+          ? '<span style="background: #22c55e; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">节日</span>'
+          : '';
+
+        return `
+        <tr data-monster-index="${drop.monsterIndex}" data-drop-id="${drop.dropId}">
+          <td>
+            <input type="checkbox" class="drop-checkbox" data-monster-index="${drop.monsterIndex}" data-drop-id="${drop.dropId}" onchange="updateBatchDeleteButton()">
+          </td>
+          <td><code>${drop.monsterIndex}</code></td>
+          <td><strong>${escapeHtml(drop.monsterName)}</strong></td>
+          <td><span>1/</span>${drop.chance}</td>
+          <td>${drop.amount}</td>
+          <td>${drop.dropSet !== undefined && drop.dropSet !== null ? drop.dropSet : '-'}</td>
+          <td>${partOnlyBadge}${easterEventBadge || '-'}</td>
+          <td>
+            <div class="action-btns">
+              <button class="btn btn-danger btn-icon" onclick="deleteItemDrop(${drop.monsterIndex}, ${drop.dropId})" title="删除">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 0-2-2h4a2 2 0 0 0 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+      }).join('');
+
+      // 重置全选复选框
+      document.getElementById('selectAllDrops').checked = false;
+      // 更新批量删除按钮状态
+      updateBatchDeleteButton();
+    }
+
+    async function deleteItemDrop(monsterIndex, dropId) {
+      const itemIndex = document.getElementById('editItemIndex').value;
+      if (!itemIndex) {
+        alert('无法获取物品ID');
+        return;
+      }
+
+      if (!confirm('确定要删除这个掉落记录吗？此操作不可恢复！')) {
+        return;
+      }
+
+      // console.log(`开始删除掉落记录: MonsterIndex=${monsterIndex}, DropId=${dropId}, ItemIndex=${itemIndex}`);
+
+      try {
+        const result = await api.delete(`/api/game/monsters/${monsterIndex}/drops/${dropId}`);
+        // console.log('删除掉落记录成功:', result);
+        alert(result.message || '删除成功');
+        // Reload drops for the current item
+        await loadItemDrops(parseInt(itemIndex));
+      } catch (error) {
+        console.error('删除掉落记录失败:', error);
+        console.error('错误详情:', {
+          message: error.message,
+          response: error.response,
+          stack: error.stack
+        });
+
+        // 提供更友好的错误信息
+        let errorMessage = error.message;
+        if (error.message.includes('掉落信息不存在')) {
+          errorMessage = '掉落记录不存在，可能已被删除';
+        } else if (error.message.includes('掉落信息不属于该怪物')) {
+          errorMessage = '掉落记录与怪物不匹配';
+        }
+        alert('删除失败: ' + errorMessage);
+      }
+    }
+
+    // 全选/取消全选掉落记录
+    function toggleSelectAllDrops() {
+      const selectAll = document.getElementById('selectAllDrops');
+      const checkboxes = document.querySelectorAll('.drop-checkbox');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+      });
+      updateBatchDeleteButton();
+    }
+
+    // 更新批量删除按钮状态
+    function updateBatchDeleteButton() {
+      const checkboxes = document.querySelectorAll('.drop-checkbox:checked');
+      const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+      if (batchDeleteBtn) {
+        batchDeleteBtn.disabled = checkboxes.length === 0;
+      }
+    }
+
+    // 批量删除掉落记录
+    async function batchDeleteItemDrops() {
+      const itemIndex = document.getElementById('editItemIndex').value;
+      if (!itemIndex) {
+        alert('无法获取物品ID');
+        return;
+      }
+
+      const checkboxes = document.querySelectorAll('.drop-checkbox:checked');
+      if (checkboxes.length === 0) {
+        alert('请先选择要删除的掉落记录');
+        return;
+      }
+
+      const selectedDrops = Array.from(checkboxes).map(checkbox => ({
+        monsterIndex: parseInt(checkbox.dataset.monsterIndex),
+        dropId: parseInt(checkbox.dataset.dropId)
+      }));
+
+      if (!confirm(`确定要删除选中的 ${selectedDrops.length} 个掉落记录吗？此操作不可恢复！`)) {
+        return;
+      }
+
+      const successCount = [];
+      const failedDrops = [];
+
+      try {
+        // 逐个删除掉落记录
+        for (const drop of selectedDrops) {
+          try {
+            await api.delete(`/api/game/monsters/${drop.monsterIndex}/drops/${drop.dropId}`);
+            successCount.push(drop);
+          } catch (error) {
+            console.error(`删除掉落记录失败 (MonsterIndex=${drop.monsterIndex}, DropId=${drop.dropId}):`, error);
+            failedDrops.push({
+              ...drop,
+              error: error.message
+            });
+          }
+        }
+
+        // 显示删除结果
+        if (failedDrops.length === 0) {
+          alert(`成功删除 ${successCount.length} 个掉落记录`);
+        } else {
+          alert(`删除完成：成功 ${successCount.length} 个，失败 ${failedDrops.length} 个`);
+        }
+
+        // 重新加载掉落列表
+        await loadItemDrops(parseInt(itemIndex));
+      } catch (error) {
+        console.error('批量删除掉落记录失败:', error);
+        alert('批量删除失败: ' + error.message);
+      }
+    }
+
+    async function openAddDropModal() {
+      // document.getElementById('editModal').classList.remove('show');
+      const itemIndex = document.getElementById('editItemIndex').value;
+      // console.log('打开新增掉落弹窗，物品ID:', itemIndex);
+      // 重置表单
+      document.getElementById('addDropItemIndex').value = itemIndex;
+      document.getElementById('addDropMonster').value = '';
+      document.getElementById('addDropChance').value = 1;
+      document.getElementById('addDropAmount').value = 1;
+      document.getElementById('addDropDropSet').value = 0;
+      document.getElementById('addDropPartOnly').checked = false;
+      document.getElementById('addDropEasterEvent').checked = false;
+      document.getElementById('addDropModal').classList.add('show');
+
+      // 重置搜索框
+      document.getElementById('addDropMonsterSearch').value = '';
+      
+      // 加载怪物列表函数
+      const loadMonsters = async (search = '') => {
+        try {
+          // console.log('正在加载怪物列表...');
+          const data = await api.get(`/api/game/monsters?page=1&pageSize=200${search ? '&search=' + encodeURIComponent(search) : ''}`);
+          const monsters = data.monsters || [];
+          // console.log('怪物列表加载成功，数量:', monsters.length);
+          const monsterSelect = document.getElementById('addDropMonster');
+          monsterSelect.innerHTML = '<option value="">请选择怪物</option>' +
+            monsters.map(m => `<option value="${m.index}">${m.index} - ${escapeHtml(m.name)}</option>`).join('');
+          
+          // 绑定选择事件，同步搜索框显示
+          monsterSelect.onchange = () => {
+            const selectedOption = monsterSelect.options[monsterSelect.selectedIndex];
+            if (selectedOption.value) {
+              // 格式：索引 - 名称，去掉索引部分
+              const text = selectedOption.text;
+              const match = text.match(/^\d+\s*-\s*(.+)$/);
+              if (match) {
+                document.getElementById('addDropMonsterSearch').value = match[1];
+              } else {
+                document.getElementById('addDropMonsterSearch').value = text;
+              }
+            } else {
+              document.getElementById('addDropMonsterSearch').value = '';
+            }
+          };
+        } catch (error) {
+          console.error('加载怪物列表失败:', error);
+          alert('加载怪物列表失败: ' + error.message);
+        }
+      };
+      
+      // 绑定搜索框输入事件（防抖处理）
+      const searchInput = document.getElementById('addDropMonsterSearch');
+      let debounceTimer;
+      searchInput.oninput = (e) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          loadMonsters(e.target.value.trim());
+        }, 300);
+      };
+      
+      // 初始加载所有怪物
+      await loadMonsters();
+    }
+
+    function closeAddDropModal() {
+      document.getElementById('addDropModal').classList.remove('show');
+    }
+
+    // Add Item Modal Functions
+    function openAddModal() {
+      // Reset form
+      document.getElementById('addItemIndex').value = '';
+      document.getElementById('addName').value = '';
+      document.getElementById('addType').value = 'Nothing';
+      document.getElementById('addRarity').value = 'Common';
+      document.getElementById('addDescription').value = '';
+      document.getElementById('addRequiredType').value = 'Level';
+      document.getElementById('addRequiredAmount').value = 0;
+      document.getElementById('addRequiredClass').value = 'All';
+      document.getElementById('addRequiredGender').value = 'None';
+      document.getElementById('addPrice').value = 0;
+      document.getElementById('addStackSize').value = 1;
+      document.getElementById('addDurability').value = 0;
+      document.getElementById('addWeight').value = 0;
+      document.getElementById('addImage').value = 0;
+      document.getElementById('addShape').value = 0;
+      document.getElementById('addSellRate').value = 0.5;
+      document.getElementById('addBuffIcon').value = 0;
+      document.getElementById('addCanRepair').checked = false;
+      document.getElementById('addCanSell').checked = false;
+      document.getElementById('addCanStore').checked = false;
+      document.getElementById('addCanTrade').checked = false;
+      document.getElementById('addCanDrop').checked = false;
+      document.getElementById('addCanDeathDrop').checked = false;
+      document.getElementById('addCanAutoPot').checked = false;
+      document.getElementById('addStartItem').checked = false;
+      document.getElementById('addBlockMonsterDrop').checked = false;
+      document.getElementById('addModal').classList.add('show');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.remove('show');
+    }
+
+    async function addItem() {
+      const data = {
+        index: parseInt(document.getElementById('addItemIndex').value),
+        name: document.getElementById('addName').value,
+        type: document.getElementById('addType').value,
+        rarity: document.getElementById('addRarity').value,
+        description: document.getElementById('addDescription').value,
+        requiredType: document.getElementById('addRequiredType').value,
+        requiredAmount: parseInt(document.getElementById('addRequiredAmount').value) || 0,
+        requiredClass: document.getElementById('addRequiredClass').value,
+        requiredGender: document.getElementById('addRequiredGender').value,
+        price: parseInt(document.getElementById('addPrice').value) || 0,
+        stackSize: parseInt(document.getElementById('addStackSize').value) || 1,
+        durability: parseInt(document.getElementById('addDurability').value) || 0,
+        weight: parseInt(document.getElementById('addWeight').value) || 0,
+        image: parseInt(document.getElementById('addImage').value) || 0,
+        shape: parseInt(document.getElementById('addShape').value) || 0,
+        effect: 'None',
+        sellRate: parseFloat(document.getElementById('addSellRate').value) || 0.5,
+        buffIcon: parseInt(document.getElementById('addBuffIcon').value) || 0,
+        partCount: 0,
+        canRepair: document.getElementById('addCanRepair').checked,
+        canSell: document.getElementById('addCanSell').checked,
+        canStore: document.getElementById('addCanStore').checked,
+        canTrade: document.getElementById('addCanTrade').checked,
+        canDrop: document.getElementById('addCanDrop').checked,
+        canDeathDrop: document.getElementById('addCanDeathDrop').checked,
+        canAutoPot: document.getElementById('addCanAutoPot').checked,
+        startItem: document.getElementById('addStartItem').checked,
+        blockMonsterDrop: document.getElementById('addBlockMonsterDrop').checked
+      };
+
+      if (isNaN(data.index) || data.index < 0) {
+        alert('请输入有效的物品ID');
+        return;
+      }
+
+      if (!data.name) {
+        alert('请输入物品名称');
+        return;
+      }
+
+      try {
+        // console.log('正在创建物品:', data);
+        const result = await api.post('/api/game/items', data);
+        // console.log('创建物品结果:', result);
+        alert(result.message || '新增成功');
+        closeAddModal();
+        loadItems();
+      } catch (error) {
+        console.error('新增物品失败:', error);
+        alert('新增失败: ' + error.message);
+      }
+    }
+
+    async function addDrop() {
+      const itemIndex = parseInt(document.getElementById('addDropItemIndex').value);
+      const monsterIndex = parseInt(document.getElementById('addDropMonster').value);
+      const chance = parseInt(document.getElementById('addDropChance').value);
+      const amount = parseInt(document.getElementById('addDropAmount').value);
+      const dropSet = parseInt(document.getElementById('addDropDropSet').value) || 0;
+      const partOnly = document.getElementById('addDropPartOnly').checked;
+      const easterEvent = document.getElementById('addDropEasterEvent').checked;
+
+      // console.log('addDrop参数:', { itemIndex, monsterIndex, chance, amount, dropSet, partOnly, easterEvent });
+
+      // 表单验证
+      if (!monsterIndex || isNaN(monsterIndex)) {
+        alert('请选择怪物');
+        document.getElementById('addDropMonster').focus();
+        return;
+      }
+
+      if (!itemIndex || isNaN(itemIndex)) {
+        alert('无法获取物品ID');
+        return;
+      }
+
+      if (isNaN(chance) || chance < 1) {
+        alert('掉落概率必须大于0');
+        document.getElementById('addDropChance').focus();
+        return;
+      }
+
+      if (isNaN(amount) || amount < 1) {
+        alert('掉落数量必须大于0');
+        document.getElementById('addDropAmount').focus();
+        return;
+      }
+
+      if (isNaN(dropSet) || dropSet < 0) {
+        alert('掉落组不能为负数');
+        document.getElementById('addDropDropSet').focus();
+        return;
+      }
+
+      try {
+        const requestData = {
+          itemIndex: itemIndex,
+          chance: chance,
+          amount: amount,
+          dropSet: dropSet,
+          partOnly: partOnly,
+          easterEvent: easterEvent
+        };
+
+        // console.log('发送请求到:', `/api/game/monsters/${monsterIndex}/drops`);
+        // console.log('请求数据:', requestData);
+
+        // 显示加载状态
+        const saveBtn = document.getElementById('addDropSaveBtn');
+        if (!saveBtn) {
+          console.error('无法找到保存按钮');
+          alert('系统错误，请刷新页面重试');
+          return;
+        }
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = '保存中...';
+        saveBtn.disabled = true;
+
+        const result = await api.post(`/api/game/monsters/${monsterIndex}/drops`, requestData);
+
+        // console.log('新增掉落结果:', result);
+        alert(result.message || '新增成功');
+        closeAddDropModal();
+        await loadItemDrops(itemIndex);
+      } catch (error) {
+        console.error('新增掉落失败:', error);
+        console.error('错误详情:', {
+          message: error.message,
+          response: error.response,
+          stack: error.stack
+        });
+
+        // 提供更友好的错误信息
+        let errorMessage = error.message;
+        if (error.message && error.message.includes('怪物不存在')) {
+          errorMessage = '选择的怪物不存在，请重新选择';
+        } else if (error.message && error.message.includes('物品不存在')) {
+          errorMessage = '物品不存在，请刷新页面重试';
+        }
+        alert('新增失败: ' + errorMessage);
+      } finally {
+        // 恢复按钮状态
+        const saveBtn = document.getElementById('addDropSaveBtn');
+        if (saveBtn) {
+          saveBtn.textContent = '保存';
+          saveBtn.disabled = false;
+        }
+      }
+    }
+
     // Edit Modal Functions
     async function openEditModal(index) {
       try {
@@ -952,12 +1694,14 @@
         document.getElementById('editStartItem').checked = item.startItem || false;
         document.getElementById('editBlockMonsterDrop').checked = item.blockMonsterDrop || false;
 
+        // Load item drops
+        await loadItemDrops(index);
+
         document.getElementById('editModal').classList.add('show');
       } catch (error) {
         alert('加载物品详情失败: ' + error.message);
       }
     }
-
     function closeEditModal() {
       document.getElementById('editModal').classList.remove('show');
     }

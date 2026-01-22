@@ -636,6 +636,115 @@ namespace Server.WebApi.Services
         }
 
         /// <summary>
+        /// Create new item
+        /// </summary>
+        public (bool success, string message, ItemInfoDetailDto? item) CreateItem(AddItemRequest request)
+        {
+            var items = SEnvir.ItemInfoList;
+            if (items == null) return (false, "服务器数据未就绪", null);
+
+            // Check if item index already exists
+            for (int i = 0; i < items.Count; i++)
+            {
+                if (items[i].Index == request.Index)
+                {
+                    return (false, $"物品ID {request.Index} 已存在", null);
+                }
+            }
+
+            // Check if requested index is valid
+            if (request.Index <= 0)
+            {
+                return (false, "物品ID必须大于0", null);
+            }
+
+            // Store current index
+            int oldIndex = items.Index;
+
+            try
+            {
+                // Set collection index to request.Index - 1 so that CreateNewObject creates item with request.Index
+                items.Index = request.Index - 1;
+
+                // Create new item (Index will be automatically set to request.Index)
+                var newItem = items.CreateNewObject();
+                newItem.ItemName = request.Name;
+
+            // Parse and set all properties
+            if (Enum.TryParse<ItemType>(request.Type, out var itemType)) newItem.ItemType = itemType;
+            if (Enum.TryParse<RequiredType>(request.RequiredType, out var reqType)) newItem.RequiredType = reqType;
+            newItem.RequiredAmount = request.RequiredAmount;
+            if (Enum.TryParse<RequiredClass>(request.RequiredClass, out var reqClass)) newItem.RequiredClass = reqClass;
+            if (Enum.TryParse<RequiredGender>(request.RequiredGender, out var reqGender)) newItem.RequiredGender = reqGender;
+            newItem.Price = request.Price;
+            newItem.StackSize = request.StackSize;
+            newItem.Shape = request.Shape;
+            if (Enum.TryParse<ItemEffect>(request.Effect, out var effect)) newItem.Effect = effect;
+            newItem.Image = request.Image;
+            newItem.Durability = request.Durability;
+            newItem.Weight = request.Weight;
+            newItem.SellRate = request.SellRate;
+            newItem.StartItem = request.StartItem;
+            newItem.CanRepair = request.CanRepair;
+            newItem.CanSell = request.CanSell;
+            newItem.CanStore = request.CanStore;
+            newItem.CanTrade = request.CanTrade;
+            newItem.CanDrop = request.CanDrop;
+            newItem.CanDeathDrop = request.CanDeathDrop;
+            newItem.CanAutoPot = request.CanAutoPot;
+            newItem.Description = request.Description;
+            if (Enum.TryParse<Rarity>(request.Rarity, out var rarity)) newItem.Rarity = rarity;
+            newItem.BuffIcon = request.BuffIcon;
+            newItem.PartCount = request.PartCount;
+            newItem.BlockMonsterDrop = request.BlockMonsterDrop;
+
+            SEnvir.Log($"创建新物品: Index={newItem.Index}, Name={newItem.ItemName}, Type={newItem.ItemType}");
+
+                return (true, "物品创建成功", new ItemInfoDetailDto
+            {
+                Index = newItem.Index,
+                Name = newItem.ItemName ?? "",
+                Type = newItem.ItemType.ToString(),
+                RequiredType = newItem.RequiredType.ToString(),
+                RequiredAmount = newItem.RequiredAmount,
+                RequiredClass = newItem.RequiredClass.ToString(),
+                RequiredGender = newItem.RequiredGender.ToString(),
+                Price = newItem.Price,
+                StackSize = newItem.StackSize,
+                Shape = newItem.Shape,
+                Effect = newItem.Effect.ToString(),
+                Image = newItem.Image,
+                Durability = newItem.Durability,
+                Weight = newItem.Weight,
+                SellRate = newItem.SellRate,
+                StartItem = newItem.StartItem,
+                CanRepair = newItem.CanRepair,
+                CanSell = newItem.CanSell,
+                CanStore = newItem.CanStore,
+                CanTrade = newItem.CanTrade,
+                CanDrop = newItem.CanDrop,
+                CanDeathDrop = newItem.CanDeathDrop,
+                CanAutoPot = newItem.CanAutoPot,
+                Description = newItem.Description ?? "",
+                Rarity = newItem.Rarity.ToString(),
+                BuffIcon = newItem.BuffIcon,
+                PartCount = newItem.PartCount,
+                BlockMonsterDrop = newItem.BlockMonsterDrop
+            });
+            }
+            catch (Exception ex)
+            {
+                SEnvir.Log($"创建物品失败: {ex.Message}");
+                return (false, $"创建失败: {ex.Message}", null);
+            }
+            finally
+            {
+                // Restore collection index to maximum index
+                items.Index = Math.Max(oldIndex, items.Index);
+            }
+        }
+
+        /// <summary>
         /// Give item to character
         /// </summary>
         public (bool success, string message) GiveItemToCharacter(string characterName, int itemIndex, int count = 1)
@@ -1851,7 +1960,6 @@ namespace Server.WebApi.Services
                     break;
                 }
             }
-
             if (monster == null) return (false, "怪物不存在");
 
             // Update properties
@@ -2026,6 +2134,493 @@ namespace Server.WebApi.Services
 
         #endregion
 
+        #region Item Drops
+
+        /// <summary>
+        /// Get monsters that drop this item
+        /// </summary>
+        public List<MonsterDropDto> GetItemDrops(int itemIndex)
+        {
+            var items = SEnvir.ItemInfoList;
+            if (items == null) return new List<MonsterDropDto>();
+
+            ItemInfo? item = null;
+            for (int i = 0; i < items.Count; i++)
+            {
+                if (items[i].Index == itemIndex)
+                {
+                    item = items[i];
+                    break;
+                }
+            }
+
+            if (item == null) return new List<MonsterDropDto>();
+
+            var drops = SEnvir.DropInfoList;
+            if (drops == null) return new List<MonsterDropDto>();
+
+            var result = new List<MonsterDropDto>();
+            for (int i = 0; i < drops.Count; i++)
+            {
+                var drop = drops[i];
+                if (drop.Item == item)
+                {
+                    result.Add(new MonsterDropDto
+                    {
+                        DropId = drop.Index,
+                        MonsterIndex = drop.Monster?.Index ?? 0,
+                        MonsterName = drop.Monster?.MonsterName ?? "",
+                        ItemIndex = itemIndex,
+                        ItemName = item.ItemName ?? "",
+                        Chance = drop.Chance,
+                        Amount = drop.Amount,
+                        DropSet = drop.DropSet,
+                        PartOnly = drop.PartOnly,
+                        EasterEvent = drop.EasterEvent
+                    });
+                }
+            }
+
+            return result.OrderBy(d => d.MonsterName).ToList();
+        }
+
+        #endregion
+
+        #region Monster Drops Management
+
+        /// <summary>
+        /// Get drops for a monster
+        /// </summary>
+        public List<DropInfoDto> GetMonsterDrops(int monsterIndex)
+        {
+            var monsters = SEnvir.MonsterInfoList;
+            if (monsters == null) return new List<DropInfoDto>();
+
+            MonsterInfo? monster = null;
+            for (int i = 0; i < monsters.Count; i++)
+            {
+                if (monsters[i].Index == monsterIndex)
+                {
+                    monster = monsters[i];
+                    break;
+                }
+            }
+
+            if (monster == null) return new List<DropInfoDto>();
+
+            var drops = SEnvir.DropInfoList;
+            if (drops == null) return new List<DropInfoDto>();
+
+            var result = new List<DropInfoDto>();
+            for (int i = 0; i < drops.Count; i++)
+            {
+                var drop = drops[i];
+                if (drop.Monster == monster)
+                {
+                    result.Add(new DropInfoDto
+                    {
+                        Index = drop.Index,
+                        ItemIndex = drop.Item?.Index ?? 0,
+                        ItemName = drop.Item?.ItemName ?? "",
+                        Chance = drop.Chance,
+                        Amount = drop.Amount,
+                        DropSet = drop.DropSet,
+                        PartOnly = drop.PartOnly,
+                        EasterEvent = drop.EasterEvent
+                    });
+                }
+            }
+
+            return result.OrderBy(d => d.ItemName).ToList();
+        }
+
+        /// <summary>
+        /// Add drop to monster
+        /// </summary>
+        public (bool success, string message, DropInfoDto? drop) AddMonsterDrop(int monsterIndex, AddDropRequest request)
+        {
+            var monsters = SEnvir.MonsterInfoList;
+            if (monsters == null) return (false, "服务器数据未就绪", null);
+
+            MonsterInfo? monster = null;
+            for (int i = 0; i < monsters.Count; i++)
+            {
+                if (monsters[i].Index == monsterIndex)
+                {
+                    monster = monsters[i];
+                    break;
+                }
+            }
+
+            if (monster == null) return (false, "怪物不存在", null);
+
+            var items = SEnvir.ItemInfoList;
+            if (items == null) return (false, "服务器数据未就绪", null);
+
+            ItemInfo? item = null;
+            for (int i = 0; i < items.Count; i++)
+            {
+                if (items[i].Index == request.ItemIndex)
+                {
+                    item = items[i];
+                    break;
+                }
+            }
+
+            if (item == null) return (false, "物品不存在", null);
+
+            var dropList = SEnvir.DropInfoList;
+            if (dropList == null) return (false, "掉落列表不可用", null);
+
+            var newDrop = dropList.CreateNewObject();
+            newDrop.Monster = monster;
+            newDrop.Item = item;
+            newDrop.Chance = request.Chance;
+            newDrop.Amount = request.Amount;
+            newDrop.DropSet = request.DropSet;
+            newDrop.PartOnly = request.PartOnly;
+            newDrop.EasterEvent = request.EasterEvent;
+
+            var dto = new DropInfoDto
+            {
+                Index = newDrop.Index,
+                ItemIndex = item.Index,
+                ItemName = item.ItemName ?? "",
+                Chance = newDrop.Chance,
+                Amount = newDrop.Amount,
+                DropSet = newDrop.DropSet,
+                PartOnly = newDrop.PartOnly,
+                EasterEvent = newDrop.EasterEvent
+            };
+
+            return (true, "添加成功", dto);
+        }
+
+        /// <summary>
+        /// Update monster drop
+        /// </summary>
+        public (bool success, string message) UpdateMonsterDrop(int monsterIndex, int dropId, UpdateDropRequest request)
+        {
+            var dropList = SEnvir.DropInfoList;
+            if (dropList == null) return (false, "掉落列表不可用");
+
+            DropInfo? drop = null;
+            for (int i = 0; i < dropList.Count; i++)
+            {
+                if (dropList[i].Index == dropId)
+                {
+                    drop = dropList[i];
+                    break;
+                }
+            }
+
+            if (drop == null) return (false, "掉落信息不存在");
+
+            // Verify the drop belongs to the monster
+            if (drop.Monster?.Index != monsterIndex)
+            {
+                return (false, "掉落信息不属于该怪物");
+            }
+
+            if (request.Chance.HasValue) drop.Chance = request.Chance.Value;
+            if (request.Amount.HasValue) drop.Amount = request.Amount.Value;
+            if (request.DropSet.HasValue) drop.DropSet = request.DropSet.Value;
+            if (request.PartOnly.HasValue) drop.PartOnly = request.PartOnly.Value;
+            if (request.EasterEvent.HasValue) drop.EasterEvent = request.EasterEvent.Value;
+
+            return (true, "更新成功");
+        }
+
+        /// <summary>
+        /// Delete monster drop
+        /// </summary>
+        public (bool success, string message) DeleteMonsterDrop(int monsterIndex, int dropId)
+        {
+            var dropList = SEnvir.DropInfoList;
+            if (dropList == null) return (false, "掉落列表不可用");
+
+            DropInfo? drop = null;
+            for (int i = 0; i < dropList.Count; i++)
+            {
+                if (dropList[i].Index == dropId)
+                {
+                    drop = dropList[i];
+                    break;
+                }
+            }
+
+            if (drop == null) return (false, $"掉落信息不存在，DropId={dropId}");
+
+            // Verify the drop matches the expected item
+            if (drop.Item == null)
+            {
+                return (false, "掉落信息未关联物品");
+            }
+
+            // Verify the drop belongs to the monster
+            if (drop.Monster?.Index != monsterIndex)
+            {
+                return (false, $"掉落信息不属于该怪物，期望MonsterIndex={monsterIndex}，实际MonsterIndex={drop.Monster?.Index}");
+            }
+
+            SEnvir.Log($"正在删除掉落记录: DropId={dropId}, MonsterIndex={monsterIndex}, ItemIndex={drop.Item.Index}, MonsterName={drop.Monster?.MonsterName}");
+
+            try
+            {
+                drop.Delete();
+                SEnvir.Log($"删除掉落记录成功: DropId={dropId}");
+                return (true, "删除成功");
+            }
+            catch (Exception ex)
+            {
+                SEnvir.Log($"删除掉落记录失败: DropId={dropId}, 错误={ex.Message}");
+                return (false, $"删除失败: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region Map Respawns Management
+
+        /// <summary>
+        /// Get respawns for a map
+        /// </summary>
+        public List<RespawnInfoDto> GetMapRespawns(int mapIndex)
+        {
+            var maps = SEnvir.MapInfoList;
+            if (maps == null) return new List<RespawnInfoDto>();
+
+            MapInfo? map = null;
+            for (int i = 0; i < maps.Count; i++)
+            {
+                if (maps[i].Index == mapIndex)
+                {
+                    map = maps[i];
+                    break;
+                }
+            }
+
+            if (map == null) return new List<RespawnInfoDto>();
+
+            var respawns = SEnvir.RespawnInfoList;
+            if (respawns == null) return new List<RespawnInfoDto>();
+
+            var result = new List<RespawnInfoDto>();
+            for (int i = 0; i < respawns.Count; i++)
+            {
+                var respawn = respawns[i];
+                if (respawn.Region?.Map == map)
+                {
+                    result.Add(new RespawnInfoDto
+                    {
+                        Index = respawn.Index,
+                        MonsterIndex = respawn.Monster?.Index ?? 0,
+                        MonsterName = respawn.Monster?.MonsterName ?? "",
+                        RegionIndex = respawn.Region?.Index,
+                        RegionDescription = respawn.Region?.Description ?? "",
+                        Delay = respawn.Delay,
+                        Count = respawn.Count,
+                        DropSet = respawn.DropSet,
+                        Announce = respawn.Announce,
+                        EasterEventChance = respawn.EasterEventChance
+                    });
+                }
+            }
+
+            return result.OrderBy(r => r.RegionDescription).ThenBy(r => r.MonsterName).ToList();
+        }
+
+        /// <summary>
+        /// Add respawn to map
+        /// </summary>
+        public (bool success, string message, RespawnInfoDto? respawn) AddMapRespawn(int mapIndex, AddRespawnRequest request)
+        {
+            var maps = SEnvir.MapInfoList;
+            if (maps == null) return (false, "服务器数据未就绪", null);
+
+            MapInfo? map = null;
+            for (int i = 0; i < maps.Count; i++)
+            {
+                if (maps[i].Index == mapIndex)
+                {
+                    map = maps[i];
+                    break;
+                }
+            }
+
+            if (map == null) return (false, "地图不存在", null);
+
+            var monsters = SEnvir.MonsterInfoList;
+            if (monsters == null) return (false, "服务器数据未就绪", null);
+
+            MonsterInfo? monster = null;
+            for (int i = 0; i < monsters.Count; i++)
+            {
+                if (monsters[i].Index == request.MonsterIndex)
+                {
+                    monster = monsters[i];
+                    break;
+                }
+            }
+
+            if (monster == null) return (false, "怪物不存在", null);
+
+            MapRegion? region = null;
+            if (request.RegionIndex.HasValue)
+            {
+                var regions = SEnvir.MapRegionList;
+                if (regions != null)
+                {
+                    for (int i = 0; i < regions.Count; i++)
+                    {
+                        if (regions[i].Index == request.RegionIndex.Value && regions[i].Map == map)
+                        {
+                            region = regions[i];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            var respawnList = SEnvir.RespawnInfoList;
+            if (respawnList == null) return (false, "刷新列表不可用", null);
+
+            var newRespawn = respawnList.CreateNewObject();
+            newRespawn.Monster = monster;
+            newRespawn.Region = region;
+            newRespawn.Delay = request.Delay;
+            newRespawn.Count = request.Count;
+            newRespawn.DropSet = request.DropSet;
+            newRespawn.Announce = request.Announce;
+            newRespawn.EasterEventChance = request.EasterEventChance;
+            newRespawn.EventSpawn = request.EventSpawn;
+
+            var dto = new RespawnInfoDto
+            {
+                Index = newRespawn.Index,
+                MonsterIndex = monster.Index,
+                MonsterName = monster.MonsterName ?? "",
+                RegionIndex = region?.Index,
+                RegionDescription = region?.Description ?? "",
+                Delay = newRespawn.Delay,
+                Count = newRespawn.Count,
+                DropSet = newRespawn.DropSet,
+                Announce = newRespawn.Announce,
+                EasterEventChance = newRespawn.EasterEventChance
+            };
+
+            return (true, "添加成功", dto);
+        }
+
+        /// <summary>
+        /// Update map respawn
+        /// </summary>
+        public (bool success, string message) UpdateMapRespawn(int mapIndex, int respawnId, UpdateRespawnRequest request)
+        {
+            var respawnList = SEnvir.RespawnInfoList;
+            if (respawnList == null) return (false, "刷新列表不可用");
+
+            RespawnInfo? respawn = null;
+            for (int i = 0; i < respawnList.Count; i++)
+            {
+                if (respawnList[i].Index == respawnId)
+                {
+                    respawn = respawnList[i];
+                    break;
+                }
+            }
+
+            if (respawn == null) return (false, "刷新信息不存在");
+
+            // Verify the respawn belongs to the map
+            if (respawn.Region?.Map?.Index != mapIndex)
+            {
+                return (false, "刷新信息不属于该地图");
+            }
+
+            // Update monster if changed
+            if (request.MonsterIndex.HasValue)
+            {
+                var monsters = SEnvir.MonsterInfoList;
+                if (monsters != null)
+                {
+                    MonsterInfo? newMonster = null;
+                    for (int i = 0; i < monsters.Count; i++)
+                    {
+                        if (monsters[i].Index == request.MonsterIndex.Value)
+                        {
+                            newMonster = monsters[i];
+                            break;
+                        }
+                    }
+                    if (newMonster != null)
+                    {
+                        respawn.Monster = newMonster;
+                    }
+                }
+            }
+
+            // Update region if changed
+            if (request.RegionIndex.HasValue)
+            {
+                var regions = SEnvir.MapRegionList;
+                if (regions != null)
+                {
+                    MapRegion? newRegion = null;
+                    for (int i = 0; i < regions.Count; i++)
+                    {
+                        if (regions[i].Index == request.RegionIndex.Value && regions[i].Map == respawn.Region?.Map)
+                        {
+                            newRegion = regions[i];
+                            break;
+                        }
+                    }
+                    respawn.Region = newRegion;
+                }
+            }
+
+            if (request.Delay.HasValue) respawn.Delay = request.Delay.Value;
+            if (request.Count.HasValue) respawn.Count = request.Count.Value;
+            if (request.DropSet.HasValue) respawn.DropSet = request.DropSet.Value;
+            if (request.Announce.HasValue) respawn.Announce = request.Announce.Value;
+            if (request.EasterEventChance.HasValue) respawn.EasterEventChance = request.EasterEventChance.Value;
+            if (request.EventSpawn.HasValue) respawn.EventSpawn = request.EventSpawn.Value;
+
+            return (true, "更新成功");
+        }
+
+        /// <summary>
+        /// Delete map respawn
+        /// </summary>
+        public (bool success, string message) DeleteMapRespawn(int mapIndex, int respawnId)
+        {
+            var respawnList = SEnvir.RespawnInfoList;
+            if (respawnList == null) return (false, "刷新列表不可用");
+
+            RespawnInfo? respawn = null;
+            for (int i = 0; i < respawnList.Count; i++)
+            {
+                if (respawnList[i].Index == respawnId)
+                {
+                    respawn = respawnList[i];
+                    break;
+                }
+            }
+
+            if (respawn == null) return (false, "刷新信息不存在");
+
+            // Verify the respawn belongs to the map
+            if (respawn.Region?.Map?.Index != mapIndex)
+            {
+                return (false, "刷新信息不属于该地图");
+            }
+
+            respawn.Delete();
+            return (true, "删除成功");
+        }
+
+        #endregion
+
         #region Helpers
 
         /// <summary>
@@ -2161,6 +2756,38 @@ namespace Server.WebApi.Services
         public int? BuffIcon { get; set; }
         public int? PartCount { get; set; }
         public bool? BlockMonsterDrop { get; set; }
+    }
+
+    public class AddItemRequest
+    {
+        public int Index { get; set; }
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "";
+        public string RequiredType { get; set; } = "Level";
+        public int RequiredAmount { get; set; } = 0;
+        public string RequiredClass { get; set; } = "All";
+        public string RequiredGender { get; set; } = "None";
+        public int Price { get; set; } = 0;
+        public int StackSize { get; set; } = 1;
+        public int Shape { get; set; } = 0;
+        public string Effect { get; set; } = "None";
+        public int Image { get; set; } = 0;
+        public int Durability { get; set; } = 0;
+        public int Weight { get; set; } = 0;
+        public decimal SellRate { get; set; } = 0.5m;
+        public bool StartItem { get; set; } = false;
+        public bool CanRepair { get; set; } = false;
+        public bool CanSell { get; set; } = false;
+        public bool CanStore { get; set; } = false;
+        public bool CanTrade { get; set; } = false;
+        public bool CanDrop { get; set; } = false;
+        public bool CanDeathDrop { get; set; } = false;
+        public bool CanAutoPot { get; set; } = false;
+        public string Description { get; set; } = "";
+        public string Rarity { get; set; } = "Common";
+        public int BuffIcon { get; set; } = 0;
+        public int PartCount { get; set; } = 0;
+        public bool BlockMonsterDrop { get; set; } = false;
     }
 
     public class GiveItemRequest
@@ -2463,6 +3090,90 @@ namespace Server.WebApi.Services
         public int? MaxMC { get; set; }
         public int? MinSC { get; set; }
         public int? MaxSC { get; set; }
+    }
+
+    // Drop and Respawn DTOs
+    public class MonsterDropDto
+    {
+        public int DropId { get; set; }
+        public int MonsterIndex { get; set; }
+        public string MonsterName { get; set; } = "";
+        public int ItemIndex { get; set; }
+        public string ItemName { get; set; } = "";
+        public int Chance { get; set; }
+        public int Amount { get; set; }
+        public int DropSet { get; set; }
+        public bool PartOnly { get; set; }
+        public bool EasterEvent { get; set; }
+    }
+
+    public class DropInfoDto
+    {
+        public int Index { get; set; }
+        public int ItemIndex { get; set; }
+        public string ItemName { get; set; } = "";
+        public int Chance { get; set; }
+        public int Amount { get; set; }
+        public int DropSet { get; set; }
+        public bool PartOnly { get; set; }
+        public bool EasterEvent { get; set; }
+    }
+
+    public class AddDropRequest
+    {
+        public int ItemIndex { get; set; }
+        public int Chance { get; set; }
+        public int Amount { get; set; } = 1;
+        public int DropSet { get; set; }
+        public bool PartOnly { get; set; }
+        public bool EasterEvent { get; set; }
+    }
+
+    public class UpdateDropRequest
+    {
+        public int? Chance { get; set; }
+        public int? Amount { get; set; }
+        public int? DropSet { get; set; }
+        public bool? PartOnly { get; set; }
+        public bool? EasterEvent { get; set; }
+    }
+
+    public class RespawnInfoDto
+    {
+        public int Index { get; set; }
+        public int MonsterIndex { get; set; }
+        public string MonsterName { get; set; } = "";
+        public int? RegionIndex { get; set; }
+        public string RegionDescription { get; set; } = "";
+        public int Delay { get; set; }
+        public int Count { get; set; }
+        public int DropSet { get; set; }
+        public bool Announce { get; set; }
+        public int EasterEventChance { get; set; }
+    }
+
+    public class AddRespawnRequest
+    {
+        public int MonsterIndex { get; set; }
+        public int? RegionIndex { get; set; }
+        public int Delay { get; set; }
+        public int Count { get; set; } = 1;
+        public int DropSet { get; set; }
+        public bool Announce { get; set; }
+        public int EasterEventChance { get; set; }
+        public bool EventSpawn { get; set; }
+    }
+
+    public class UpdateRespawnRequest
+    {
+        public int? MonsterIndex { get; set; }
+        public int? RegionIndex { get; set; }
+        public int? Delay { get; set; }
+        public int? Count { get; set; }
+        public int? DropSet { get; set; }
+        public bool? Announce { get; set; }
+        public int? EasterEventChance { get; set; }
+        public bool? EventSpawn { get; set; }
     }
 
     #endregion
