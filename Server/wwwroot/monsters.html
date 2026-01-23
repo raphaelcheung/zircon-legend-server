@@ -314,10 +314,6 @@
                 <input type="text" id="editName" class="form-input" readonly>
               </div>
               <div class="form-group">
-                <label class="form-label">AI</label>
-                <input type="number" id="editAi" class="form-input" min="1">
-              </div>
-              <div class="form-group">
                 <label class="form-label">等级</label>
                 <input type="number" id="editLevel" class="form-input" min="1">
               </div>
@@ -336,6 +332,62 @@
           <div class="form-section">
             <div class="form-section-title">战斗属性</div>
             <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">生命值HP</label>
+                <input type="number" id="editHealth" class="form-input" min="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">AI</label>
+                <input type="number" id="editAi" class="form-input" min="1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">命中</label>
+                <input type="number" id="editAccuracy" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">敏捷</label>
+                <input type="number" id="editAgility" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">最小攻击</label>
+                <input type="number" id="editMinDC" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">最大攻击</label>
+                <input type="number" id="editMaxDC" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">最小防御</label>
+                <input type="number" id="editMinAC" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">最大防御</label>
+                <input type="number" id="editMaxAC" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">最小道术</label>
+                <input type="number" id="editMinSC" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">最大道术</label>
+                <input type="number" id="editMaxSC" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">最小魔法</label>
+                <input type="number" id="editMinMC" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">最大魔法</label>
+                <input type="number" id="editMaxMC" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">最小魔防</label>
+                <input type="number" id="editMinMR" class="form-input" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">最大魔防</label>
+                <input type="number" id="editMaxMR" class="form-input" min="0">
+              </div>
               <div class="form-group">
                 <label class="form-label">攻击延迟(ms)</label>
                 <input type="number" id="editAttackDelay" class="form-input" min="0">
@@ -1391,12 +1443,44 @@
         document.getElementById('editViewRange').value = monster.viewRange;
         document.getElementById('editAttackDelay').value = monster.attackDelay || 0;
         document.getElementById('editMoveDelay').value = monster.moveDelay || 0;
+        document.getElementById('editCoolEye').value = monster.coolEye || 0;
         document.getElementById('editIsBoss').checked = monster.isBoss;
         document.getElementById('editUndead').checked = monster.undead;
-        document.getElementById('editCoolEye').checked = monster.coolEye;
         document.getElementById('editCanPush').checked = monster.canPush;
         document.getElementById('editCanTame').checked = monster.canTame;
         currentMonsterIndex = index;
+
+        // Load and populate stats if available
+        if (monster.stats) {
+          document.getElementById('editHealth').value = monster.stats.health || 0;
+          document.getElementById('editMinDC').value = monster.stats.minDC || 0;
+          document.getElementById('editMaxDC').value = monster.stats.maxDC || 0;
+          document.getElementById('editMinSC').value = monster.stats.minSC || 0;
+          document.getElementById('editMaxSC').value = monster.stats.maxSC || 0;
+          document.getElementById('editMinMC').value = monster.stats.minMC || 0;
+          document.getElementById('editMaxMC').value = monster.stats.maxMC || 0;
+          document.getElementById('editMinAC').value = monster.stats.minAC || 0;
+          document.getElementById('editMaxAC').value = monster.stats.maxAC || 0;
+          document.getElementById('editMinMR').value = monster.stats.minMR || 0;
+          document.getElementById('editMaxMR').value = monster.stats.maxMR || 0;
+          document.getElementById('editAccuracy').value = monster.stats.accuracy || 0;
+          document.getElementById('editAgility').value = monster.stats.agility || 0;
+        } else {
+          // Clear stats fields if no stats data
+          document.getElementById('editHealth').value = 0;
+          document.getElementById('editMinDC').value = 0;
+          document.getElementById('editMaxDC').value = 0;
+          document.getElementById('editMinSC').value = 0;
+          document.getElementById('editMaxSC').value = 0;
+          document.getElementById('editMinMC').value = 0;
+          document.getElementById('editMaxMC').value = 0;
+          document.getElementById('editMinAC').value = 0;
+          document.getElementById('editMaxAC').value = 0;
+          document.getElementById('editMinMR').value = 0;
+          document.getElementById('editMaxMR').value = 0;
+          document.getElementById('editAccuracy').value = 0;
+          document.getElementById('editAgility').value = 0;
+        }
 
         // Load monster drops when opening edit modal
         await loadMonsterDrops(index);
@@ -1414,68 +1498,108 @@
 
     async function saveMonster() {
       const index = parseInt(document.getElementById('editIndex').value);
-      // if (isNaN(index)) {
-      //   alert('无效的怪物索引');
-      //   return;
-      // }
+      if (isNaN(index)) {
+        alert('无效的怪物索引');
+        return;
+      }
 
-      // // 安全解析数值字段，提供默认值
-      // const safeParseInt = (value, defaultValue) => {
-      //   const parsed = parseInt(value);
-      //   return isNaN(parsed) ? defaultValue : parsed;
-      // };
+      // 安全解析数值字段，提供默认值
+      const safeParseInt = (value, defaultValue) => {
+        const parsed = parseInt(value);
+        return isNaN(parsed) ? defaultValue : parsed;
+      };
 
-      // const name = document.getElementById('editName').value.trim();
-      // if (!name) {
-      //   alert('怪物名称不能为空');
-      //   return;
-      // }
+      const name = document.getElementById('editName').value.trim();
+      if (!name) {
+        alert('怪物名称不能为空');
+        return;
+      }
+
+      // 收集怪物属性（Stats）
+      const stats = {
+        health: safeParseInt(document.getElementById('editHealth').value, 0),
+        minDC: safeParseInt(document.getElementById('editMinDC').value, 0),
+        maxDC: safeParseInt(document.getElementById('editMaxDC').value, 0),
+        minSC: safeParseInt(document.getElementById('editMinSC').value, 0),
+        maxSC: safeParseInt(document.getElementById('editMaxSC').value, 0),
+        minMC: safeParseInt(document.getElementById('editMinMC').value, 0),
+        maxMC: safeParseInt(document.getElementById('editMaxMC').value, 0),
+        minAC: safeParseInt(document.getElementById('editMinAC').value, 0),
+        maxAC: safeParseInt(document.getElementById('editMaxAC').value, 0),
+        minMR: safeParseInt(document.getElementById('editMinMR').value, 0),
+        maxMR: safeParseInt(document.getElementById('editMaxMR').value, 0),
+        accuracy: safeParseInt(document.getElementById('editAccuracy').value, 0),
+        agility: safeParseInt(document.getElementById('editAgility').value, 0)
+      };
 
       const request = {
         name: name,
-        ai: document.getElementById('editAi').value,
-        level: parseInt(document.getElementById('editLevel').value),
-        experience: parseInt(document.getElementById('editExperience').value),
-        viewRange: parseInt(document.getElementById('editViewRange').value),
-        attackDelay: parseInt(document.getElementById('editAttackDelay').value),
-        moveDelay: parseInt(document.getElementById('editMoveDelay').value),
+        ai: safeParseInt(document.getElementById('editAi').value, 1),
+        level: safeParseInt(document.getElementById('editLevel').value, 1),
+        experience: safeParseInt(document.getElementById('editExperience').value, 0),
+        viewRange: safeParseInt(document.getElementById('editViewRange').value, 1),
+        attackDelay: safeParseInt(document.getElementById('editAttackDelay').value, 0),
+        moveDelay: safeParseInt(document.getElementById('editMoveDelay').value, 0),
+        coolEye: safeParseInt(document.getElementById('editCoolEye').value, 0),
         isBoss: document.getElementById('editIsBoss').checked,
         undead: document.getElementById('editUndead').checked,
-        coolEye: document.getElementById('editCoolEye').checked,
         canPush: document.getElementById('editCanPush').checked,
-        canTame: document.getElementById('editCanTame').checked
+        canTame: document.getElementById('editCanTame').checked,
+        stats: stats
       };
 
-      // // 额外验证：等级至少为1
-      // if (request.level < 1) {
-      //   alert('怪物等级必须至少为1');
-      //   return;
-      // }
+      // 额外验证：等级至少为1
+      if (request.level < 1) {
+        alert('怪物等级必须至少为1');
+        return;
+      }
 
-      // // 经验值不能为负数
-      // if (request.experience < 0) {
-      //   alert('经验值不能为负数');
-      //   return;
-      // }
+      // 经验值不能为负数
+      if (request.experience < 0) {
+        alert('经验值不能为负数');
+        return;
+      }
 
-      // // 视野范围至少为1，且不超过30
-      // if (request.viewRange < 1 || request.viewRange > 30) {
-      //   alert('视野范围必须在1到30之间');
-      //   return;
-      // }
+      // 视野范围至少为1，且不超过30
+      if (request.viewRange < 1 || request.viewRange > 30) {
+        alert('视野范围必须在1到30之间');
+        return;
+      }
 
-      // // 攻击延迟和移动延迟不能为负数
-      // if (request.attackDelay < 0) {
-      //   alert('攻击延迟不能为负数');
-      //   return;
-      // }
-      // if (request.moveDelay < 0) {
-      //   alert('移动延迟不能为负数');
-      //   return;
-      // }
+      // 攻击延迟和移动延迟不能为负数
+      if (request.attackDelay < 0) {
+        alert('攻击延迟不能为负数');
+        return;
+      }
+      if (request.moveDelay < 0) {
+        alert('移动延迟不能为负数');
+        return;
+      }
+
+      // 验证最大攻击不小于最小攻击
+      if (request.stats.maxDC < request.stats.minDC) {
+        alert('最大攻击不能小于最小攻击');
+        return;
+      }
+      if (request.stats.maxSC < request.stats.minSC) {
+        alert('最大道术不能小于最小道术');
+        return;
+      }
+      if (request.stats.maxMC < request.stats.minMC) {
+        alert('最大魔法不能小于最小魔法');
+        return;
+      }
+      if (request.stats.maxAC < request.stats.minAC) {
+        alert('最大防御不能小于最小防御');
+        return;
+      }
+      if (request.stats.maxMR < request.stats.minMR) {
+        alert('最大魔防不能小于最小魔防');
+        return;
+      }
 
       try {
-        const result = await api.put(`/api/game/monsters/${currentMonsterIndex}`, request);
+        const result = await api.put(`/api/game/monsters/${index}`, request);
         alert(result.message || '保存成功');
         closeEditModal();
         loadMonsters();
