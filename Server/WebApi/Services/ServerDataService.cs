@@ -1939,8 +1939,66 @@ namespace Server.WebApi.Services
                 CoolEye = monster.CoolEye,
                 Undead = monster.Undead,
                 CanPush = monster.CanPush,
-                CanTame = monster.CanTame
+                CanTame = monster.CanTame,
+                Stats = GetMonsterStats(monster)
             };
+        }
+
+        /// <summary>
+        /// Get monster stats from MonsterInfo
+        /// </summary>
+        private MonsterStatDto GetMonsterStats(MonsterInfo monster)
+        {
+            var stats = new MonsterStatDto();
+
+            // Extract stats from MonsterInfoStats
+            foreach (MonsterInfoStat stat in monster.MonsterInfoStats)
+            {
+                switch (stat.Stat)
+                {
+                    case Stat.Health:
+                        stats.Health = stat.Amount;
+                        break;
+                    case Stat.MinDC:
+                        stats.MinDC = stat.Amount;
+                        break;
+                    case Stat.MaxDC:
+                        stats.MaxDC = stat.Amount;
+                        break;
+                    case Stat.MinSC:
+                        stats.MinSC = stat.Amount;
+                        break;
+                    case Stat.MaxSC:
+                        stats.MaxSC = stat.Amount;
+                        break;
+                    case Stat.MinMC:
+                        stats.MinMC = stat.Amount;
+                        break;
+                    case Stat.MaxMC:
+                        stats.MaxMC = stat.Amount;
+                        break;
+                    case Stat.MinAC:
+                        stats.MinAC = stat.Amount;
+                        break;
+                    case Stat.MaxAC:
+                        stats.MaxAC = stat.Amount;
+                        break;
+                    case Stat.MinMR:
+                        stats.MinMR = stat.Amount;
+                        break;
+                    case Stat.MaxMR:
+                        stats.MaxMR = stat.Amount;
+                        break;
+                    case Stat.Accuracy:
+                        stats.Accuracy = stat.Amount;
+                        break;
+                    case Stat.Agility:
+                        stats.Agility = stat.Amount;
+                        break;
+                }
+            }
+
+            return stats;
         }
 
         /// <summary>
@@ -1962,7 +2020,7 @@ namespace Server.WebApi.Services
             }
             if (monster == null) return (false, "怪物不存在");
 
-            // Update properties
+            // Update basic properties
             if (request.Name != null) monster.MonsterName = request.Name;
             if (request.Level.HasValue) monster.Level = request.Level.Value;
             if (request.IsBoss.HasValue) monster.IsBoss = request.IsBoss.Value;
@@ -1976,7 +2034,127 @@ namespace Server.WebApi.Services
             if (request.CanPush.HasValue) monster.CanPush = request.CanPush.Value;
             if (request.CanTame.HasValue) monster.CanTame = request.CanTame.Value;
 
+            // Update stats if provided
+            if (request.Stats != null)
+            {
+                UpdateMonsterStats(monster, request.Stats);
+            }
+
             return (true, "怪物更新成功");
+        }
+
+        /// <summary>
+        /// Update monster stats (Health, AC, DC, etc.)
+        /// </summary>
+        private void UpdateMonsterStats(MonsterInfo monster, MonsterStatDto stats)
+        {
+            // Clear existing stats and add new ones
+            monster.MonsterInfoStats.Clear();
+
+            // Add each stat if it has a value
+            if (stats.Health > 0)
+            {
+                var healthStat = monster.MonsterInfoStats.AddNew();
+                healthStat.Stat = Stat.Health;
+                healthStat.Amount = stats.Health;
+            }
+
+            if (stats.MinDC > 0 || stats.MaxDC > 0)
+            {
+                if (stats.MinDC > 0)
+                {
+                    var minDCStat = monster.MonsterInfoStats.AddNew();
+                    minDCStat.Stat = Stat.MinDC;
+                    minDCStat.Amount = stats.MinDC;
+                }
+                if (stats.MaxDC > 0)
+                {
+                    var maxDCStat = monster.MonsterInfoStats.AddNew();
+                    maxDCStat.Stat = Stat.MaxDC;
+                    maxDCStat.Amount = stats.MaxDC;
+                }
+            }
+
+            if (stats.MinSC > 0 || stats.MaxSC > 0)
+            {
+                if (stats.MinSC > 0)
+                {
+                    var minSCStat = monster.MonsterInfoStats.AddNew();
+                    minSCStat.Stat = Stat.MinSC;
+                    minSCStat.Amount = stats.MinSC;
+                }
+                if (stats.MaxSC > 0)
+                {
+                    var maxSCStat = monster.MonsterInfoStats.AddNew();
+                    maxSCStat.Stat = Stat.MaxSC;
+                    maxSCStat.Amount = stats.MaxSC;
+                }
+            }
+
+            if (stats.MinMC > 0 || stats.MaxMC > 0)
+            {
+                if (stats.MinMC > 0)
+                {
+                    var minMCStat = monster.MonsterInfoStats.AddNew();
+                    minMCStat.Stat = Stat.MinMC;
+                    minMCStat.Amount = stats.MinMC;
+                }
+                if (stats.MaxMC > 0)
+                {
+                    var maxMCStat = monster.MonsterInfoStats.AddNew();
+                    maxMCStat.Stat = Stat.MaxMC;
+                    maxMCStat.Amount = stats.MaxMC;
+                }
+            }
+
+            if (stats.MinAC > 0 || stats.MaxAC > 0)
+            {
+                if (stats.MinAC > 0)
+                {
+                    var minACStat = monster.MonsterInfoStats.AddNew();
+                    minACStat.Stat = Stat.MinAC;
+                    minACStat.Amount = stats.MinAC;
+                }
+                if (stats.MaxAC > 0)
+                {
+                    var maxACStat = monster.MonsterInfoStats.AddNew();
+                    maxACStat.Stat = Stat.MaxAC;
+                    maxACStat.Amount = stats.MaxAC;
+                }
+            }
+
+            if (stats.MinMR > 0 || stats.MaxMR > 0)
+            {
+                if (stats.MinMR > 0)
+                {
+                    var minMRStat = monster.MonsterInfoStats.AddNew();
+                    minMRStat.Stat = Stat.MinMR;
+                    minMRStat.Amount = stats.MinMR;
+                }
+                if (stats.MaxMR > 0)
+                {
+                    var maxMRStat = monster.MonsterInfoStats.AddNew();
+                    maxMRStat.Stat = Stat.MaxMR;
+                    maxMRStat.Amount = stats.MaxMR;
+                }
+            }
+
+            if (stats.Accuracy > 0)
+            {
+                var accuracyStat = monster.MonsterInfoStats.AddNew();
+                accuracyStat.Stat = Stat.Accuracy;
+                accuracyStat.Amount = stats.Accuracy;
+            }
+
+            if (stats.Agility > 0)
+            {
+                var agilityStat = monster.MonsterInfoStats.AddNew();
+                agilityStat.Stat = Stat.Agility;
+                agilityStat.Amount = stats.Agility;
+            }
+
+            // Refresh the monster's stats cache
+            monster.StatsChanged();
         }
 
         /// <summary>
@@ -2881,6 +3059,24 @@ namespace Server.WebApi.Services
         public bool Undead { get; set; }
         public bool CanPush { get; set; }
         public bool CanTame { get; set; }
+        public MonsterStatDto? Stats { get; set; }
+    }
+
+    public class MonsterStatDto
+    {
+        public int Health { get; set; }
+        public int MinDC { get; set; }
+        public int MaxDC { get; set; }
+        public int MinSC { get; set; }
+        public int MaxSC { get; set; }
+        public int MinMC { get; set; }
+        public int MaxMC { get; set; }
+        public int MinAC { get; set; }
+        public int MaxAC { get; set; }
+        public int MinMR { get; set; }
+        public int MaxMR { get; set; }
+        public int Accuracy { get; set; }
+        public int Agility { get; set; }
     }
 
     public class UpdateMonsterRequest
@@ -2897,6 +3093,7 @@ namespace Server.WebApi.Services
         public bool? Undead { get; set; }
         public bool? CanPush { get; set; }
         public bool? CanTame { get; set; }
+        public MonsterStatDto? Stats { get; set; }
     }
 
     public class SpawnMonsterRequest
