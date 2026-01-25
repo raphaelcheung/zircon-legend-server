@@ -17,6 +17,26 @@ namespace Server.WebApi.Services
     public class ServerDataService
     {
         /// <summary>
+        /// Lock for creating new items to prevent index conflicts in high concurrency scenarios
+        /// </summary>
+        private static readonly object _itemCreationLock = new object();
+
+        /// <summary>
+        /// Lock for updating item data to prevent race conditions
+        /// </summary>
+        private static readonly object _itemUpdateLock = new object();
+
+        /// <summary>
+        /// Lock for updating monster data to prevent race conditions
+        /// </summary>
+        private static readonly object _monsterUpdateLock = new object();
+
+        /// <summary>
+        /// Lock for updating NPC data to prevent race conditions
+        /// </summary>
+        private static readonly object _npcUpdateLock = new object();
+
+        /// <summary>
         /// Get server start time
         /// </summary>
         public DateTime ServerStartTime { get; } = DateTime.UtcNow;
@@ -588,51 +608,55 @@ namespace Server.WebApi.Services
         /// </summary>
         public (bool success, string message) UpdateItem(int index, UpdateItemRequest request)
         {
-            var items = SEnvir.ItemInfoList;
-            if (items == null) return (false, "服务器数据未就绪");
-
-            ItemInfo? item = null;
-            for (int i = 0; i < items.Count; i++)
+            // Use lock to prevent race conditions in high concurrency scenarios
+            lock (_itemUpdateLock)
             {
-                if (items[i].Index == index)
+                var items = SEnvir.ItemInfoList;
+                if (items == null) return (false, "服务器数据未就绪");
+
+                ItemInfo? item = null;
+                for (int i = 0; i < items.Count; i++)
                 {
-                    item = items[i];
-                    break;
+                    if (items[i].Index == index)
+                    {
+                        item = items[i];
+                        break;
+                    }
                 }
+
+                if (item == null) return (false, "物品不存在");
+
+                // Update properties
+                if (request.Name != null) item.ItemName = request.Name;
+                if (request.Type != null && Enum.TryParse<ItemType>(request.Type, out var itemType)) item.ItemType = itemType;
+                if (request.RequiredType != null && Enum.TryParse<RequiredType>(request.RequiredType, out var reqType)) item.RequiredType = reqType;
+                if (request.RequiredAmount.HasValue) item.RequiredAmount = request.RequiredAmount.Value;
+                if (request.RequiredClass != null && Enum.TryParse<RequiredClass>(request.RequiredClass, out var reqClass)) item.RequiredClass = reqClass;
+                if (request.RequiredGender != null && Enum.TryParse<RequiredGender>(request.RequiredGender, out var reqGender)) item.RequiredGender = reqGender;
+                if (request.Price.HasValue) item.Price = request.Price.Value;
+                if (request.StackSize.HasValue) item.StackSize = request.StackSize.Value;
+                if (request.Shape.HasValue) item.Shape = request.Shape.Value;
+                if (request.Effect != null && Enum.TryParse<ItemEffect>(request.Effect, out var effect)) item.Effect = effect;
+                if (request.Image.HasValue) item.Image = request.Image.Value;
+                if (request.Durability.HasValue) item.Durability = request.Durability.Value;
+                if (request.Weight.HasValue) item.Weight = request.Weight.Value;
+                if (request.SellRate.HasValue) item.SellRate = request.SellRate.Value;
+                if (request.StartItem.HasValue) item.StartItem = request.StartItem.Value;
+                if (request.CanRepair.HasValue) item.CanRepair = request.CanRepair.Value;
+                if (request.CanSell.HasValue) item.CanSell = request.CanSell.Value;
+                if (request.CanStore.HasValue) item.CanStore = request.CanStore.Value;
+                if (request.CanTrade.HasValue) item.CanTrade = request.CanTrade.Value;
+                if (request.CanDrop.HasValue) item.CanDrop = request.CanDrop.Value;
+                if (request.CanDeathDrop.HasValue) item.CanDeathDrop = request.CanDeathDrop.Value;
+                if (request.CanAutoPot.HasValue) item.CanAutoPot = request.CanAutoPot.Value;
+                if (request.Description != null) item.Description = request.Description;
+                if (request.Rarity != null && Enum.TryParse<Rarity>(request.Rarity, out var rarity)) item.Rarity = rarity;
+                if (request.BuffIcon.HasValue) item.BuffIcon = request.BuffIcon.Value;
+                if (request.PartCount.HasValue) item.PartCount = request.PartCount.Value;
+                if (request.BlockMonsterDrop.HasValue) item.BlockMonsterDrop = request.BlockMonsterDrop.Value;
+
+                return (true, "物品更新成功");
             }
-
-            if (item == null) return (false, "物品不存在");
-
-            // Update properties
-            if (request.Name != null) item.ItemName = request.Name;
-            if (request.Type != null && Enum.TryParse<ItemType>(request.Type, out var itemType)) item.ItemType = itemType;
-            if (request.RequiredType != null && Enum.TryParse<RequiredType>(request.RequiredType, out var reqType)) item.RequiredType = reqType;
-            if (request.RequiredAmount.HasValue) item.RequiredAmount = request.RequiredAmount.Value;
-            if (request.RequiredClass != null && Enum.TryParse<RequiredClass>(request.RequiredClass, out var reqClass)) item.RequiredClass = reqClass;
-            if (request.RequiredGender != null && Enum.TryParse<RequiredGender>(request.RequiredGender, out var reqGender)) item.RequiredGender = reqGender;
-            if (request.Price.HasValue) item.Price = request.Price.Value;
-            if (request.StackSize.HasValue) item.StackSize = request.StackSize.Value;
-            if (request.Shape.HasValue) item.Shape = request.Shape.Value;
-            if (request.Effect != null && Enum.TryParse<ItemEffect>(request.Effect, out var effect)) item.Effect = effect;
-            if (request.Image.HasValue) item.Image = request.Image.Value;
-            if (request.Durability.HasValue) item.Durability = request.Durability.Value;
-            if (request.Weight.HasValue) item.Weight = request.Weight.Value;
-            if (request.SellRate.HasValue) item.SellRate = request.SellRate.Value;
-            if (request.StartItem.HasValue) item.StartItem = request.StartItem.Value;
-            if (request.CanRepair.HasValue) item.CanRepair = request.CanRepair.Value;
-            if (request.CanSell.HasValue) item.CanSell = request.CanSell.Value;
-            if (request.CanStore.HasValue) item.CanStore = request.CanStore.Value;
-            if (request.CanTrade.HasValue) item.CanTrade = request.CanTrade.Value;
-            if (request.CanDrop.HasValue) item.CanDrop = request.CanDrop.Value;
-            if (request.CanDeathDrop.HasValue) item.CanDeathDrop = request.CanDeathDrop.Value;
-            if (request.CanAutoPot.HasValue) item.CanAutoPot = request.CanAutoPot.Value;
-            if (request.Description != null) item.Description = request.Description;
-            if (request.Rarity != null && Enum.TryParse<Rarity>(request.Rarity, out var rarity)) item.Rarity = rarity;
-            if (request.BuffIcon.HasValue) item.BuffIcon = request.BuffIcon.Value;
-            if (request.PartCount.HasValue) item.PartCount = request.PartCount.Value;
-            if (request.BlockMonsterDrop.HasValue) item.BlockMonsterDrop = request.BlockMonsterDrop.Value;
-
-            return (true, "物品更新成功");
         }
 
         /// <summary>
@@ -640,107 +664,111 @@ namespace Server.WebApi.Services
         /// </summary>
         public (bool success, string message, ItemInfoDetailDto? item) CreateItem(AddItemRequest request)
         {
-            var items = SEnvir.ItemInfoList;
-            if (items == null) return (false, "服务器数据未就绪", null);
-
-            // Check if item index already exists
-            for (int i = 0; i < items.Count; i++)
+            // Use lock to prevent index conflicts in high concurrency scenarios
+            lock (_itemCreationLock)
             {
-                if (items[i].Index == request.Index)
+                var items = SEnvir.ItemInfoList;
+                if (items == null) return (false, "服务器数据未就绪", null);
+
+                // Check if item index already exists
+                for (int i = 0; i < items.Count; i++)
                 {
-                    return (false, $"物品ID {request.Index} 已存在", null);
+                    if (items[i].Index == request.Index)
+                    {
+                        return (false, $"物品ID {request.Index} 已存在", null);
+                    }
                 }
-            }
 
-            // Check if requested index is valid
-            if (request.Index <= 0)
-            {
-                return (false, "物品ID必须大于0", null);
-            }
+                // Check if requested index is valid
+                if (request.Index <= 0)
+                {
+                    return (false, "物品ID必须大于0", null);
+                }
 
-            // Store current index
-            int oldIndex = items.Index;
+                // Store current index
+                int oldIndex = items.Index;
 
-            try
-            {
-                // Set collection index to request.Index - 1 so that CreateNewObject creates item with request.Index
-                items.Index = request.Index - 1;
+                try
+                {
+                    // Set collection index to request.Index - 1 so that CreateNewObject creates item with request.Index
+                    items.Index = request.Index - 1;
 
-                // Create new item (Index will be automatically set to request.Index)
-                var newItem = items.CreateNewObject();
-                newItem.ItemName = request.Name;
+                    // Create new item (Index will be automatically set to request.Index)
+                    var newItem = items.CreateNewObject();
+                    newItem.ItemName = request.Name;
 
-            // Parse and set all properties
-            if (Enum.TryParse<ItemType>(request.Type, out var itemType)) newItem.ItemType = itemType;
-            if (Enum.TryParse<RequiredType>(request.RequiredType, out var reqType)) newItem.RequiredType = reqType;
-            newItem.RequiredAmount = request.RequiredAmount;
-            if (Enum.TryParse<RequiredClass>(request.RequiredClass, out var reqClass)) newItem.RequiredClass = reqClass;
-            if (Enum.TryParse<RequiredGender>(request.RequiredGender, out var reqGender)) newItem.RequiredGender = reqGender;
-            newItem.Price = request.Price;
-            newItem.StackSize = request.StackSize;
-            newItem.Shape = request.Shape;
-            if (Enum.TryParse<ItemEffect>(request.Effect, out var effect)) newItem.Effect = effect;
-            newItem.Image = request.Image;
-            newItem.Durability = request.Durability;
-            newItem.Weight = request.Weight;
-            newItem.SellRate = request.SellRate;
-            newItem.StartItem = request.StartItem;
-            newItem.CanRepair = request.CanRepair;
-            newItem.CanSell = request.CanSell;
-            newItem.CanStore = request.CanStore;
-            newItem.CanTrade = request.CanTrade;
-            newItem.CanDrop = request.CanDrop;
-            newItem.CanDeathDrop = request.CanDeathDrop;
-            newItem.CanAutoPot = request.CanAutoPot;
-            newItem.Description = request.Description;
-            if (Enum.TryParse<Rarity>(request.Rarity, out var rarity)) newItem.Rarity = rarity;
-            newItem.BuffIcon = request.BuffIcon;
-            newItem.PartCount = request.PartCount;
-            newItem.BlockMonsterDrop = request.BlockMonsterDrop;
+                // Parse and set all properties
+                if (Enum.TryParse<ItemType>(request.Type, out var itemType)) newItem.ItemType = itemType;
+                if (Enum.TryParse<RequiredType>(request.RequiredType, out var reqType)) newItem.RequiredType = reqType;
+                newItem.RequiredAmount = request.RequiredAmount;
+                if (Enum.TryParse<RequiredClass>(request.RequiredClass, out var reqClass)) newItem.RequiredClass = reqClass;
+                if (Enum.TryParse<RequiredGender>(request.RequiredGender, out var reqGender)) newItem.RequiredGender = reqGender;
+                newItem.Price = request.Price;
+                newItem.StackSize = request.StackSize;
+                newItem.Shape = request.Shape;
+                if (Enum.TryParse<ItemEffect>(request.Effect, out var effect)) newItem.Effect = effect;
+                newItem.Image = request.Image;
+                newItem.Durability = request.Durability;
+                newItem.Weight = request.Weight;
+                newItem.SellRate = request.SellRate;
+                newItem.StartItem = request.StartItem;
+                newItem.CanRepair = request.CanRepair;
+                newItem.CanSell = request.CanSell;
+                newItem.CanStore = request.CanStore;
+                newItem.CanTrade = request.CanTrade;
+                newItem.CanDrop = request.CanDrop;
+                newItem.CanDeathDrop = request.CanDeathDrop;
+                newItem.CanAutoPot = request.CanAutoPot;
+                newItem.Description = request.Description;
+                if (Enum.TryParse<Rarity>(request.Rarity, out var rarity)) newItem.Rarity = rarity;
+                newItem.BuffIcon = request.BuffIcon;
+                newItem.PartCount = request.PartCount;
+                newItem.BlockMonsterDrop = request.BlockMonsterDrop;
 
-            SEnvir.Log($"创建新物品: Index={newItem.Index}, Name={newItem.ItemName}, Type={newItem.ItemType}");
+                SEnvir.Log($"创建新物品: Index={newItem.Index}, Name={newItem.ItemName}, Type={newItem.ItemType}");
 
-                return (true, "物品创建成功", new ItemInfoDetailDto
-            {
-                Index = newItem.Index,
-                Name = newItem.ItemName ?? "",
-                Type = newItem.ItemType.ToString(),
-                RequiredType = newItem.RequiredType.ToString(),
-                RequiredAmount = newItem.RequiredAmount,
-                RequiredClass = newItem.RequiredClass.ToString(),
-                RequiredGender = newItem.RequiredGender.ToString(),
-                Price = newItem.Price,
-                StackSize = newItem.StackSize,
-                Shape = newItem.Shape,
-                Effect = newItem.Effect.ToString(),
-                Image = newItem.Image,
-                Durability = newItem.Durability,
-                Weight = newItem.Weight,
-                SellRate = newItem.SellRate,
-                StartItem = newItem.StartItem,
-                CanRepair = newItem.CanRepair,
-                CanSell = newItem.CanSell,
-                CanStore = newItem.CanStore,
-                CanTrade = newItem.CanTrade,
-                CanDrop = newItem.CanDrop,
-                CanDeathDrop = newItem.CanDeathDrop,
-                CanAutoPot = newItem.CanAutoPot,
-                Description = newItem.Description ?? "",
-                Rarity = newItem.Rarity.ToString(),
-                BuffIcon = newItem.BuffIcon,
-                PartCount = newItem.PartCount,
-                BlockMonsterDrop = newItem.BlockMonsterDrop
-            });
-            }
-            catch (Exception ex)
-            {
-                SEnvir.Log($"创建物品失败: {ex.Message}");
-                return (false, $"创建失败: {ex.Message}", null);
-            }
-            finally
-            {
-                // Restore collection index to maximum index
-                items.Index = Math.Max(oldIndex, items.Index);
+                    return (true, "物品创建成功", new ItemInfoDetailDto
+                    {
+                        Index = newItem.Index,
+                        Name = newItem.ItemName ?? "",
+                        Type = newItem.ItemType.ToString(),
+                        RequiredType = newItem.RequiredType.ToString(),
+                        RequiredAmount = newItem.RequiredAmount,
+                        RequiredClass = newItem.RequiredClass.ToString(),
+                        RequiredGender = newItem.RequiredGender.ToString(),
+                        Price = newItem.Price,
+                        StackSize = newItem.StackSize,
+                        Shape = newItem.Shape,
+                        Effect = newItem.Effect.ToString(),
+                        Image = newItem.Image,
+                        Durability = newItem.Durability,
+                        Weight = newItem.Weight,
+                        SellRate = newItem.SellRate,
+                        StartItem = newItem.StartItem,
+                        CanRepair = newItem.CanRepair,
+                        CanSell = newItem.CanSell,
+                        CanStore = newItem.CanStore,
+                        CanTrade = newItem.CanTrade,
+                        CanDrop = newItem.CanDrop,
+                        CanDeathDrop = newItem.CanDeathDrop,
+                        CanAutoPot = newItem.CanAutoPot,
+                        Description = newItem.Description ?? "",
+                        Rarity = newItem.Rarity.ToString(),
+                        BuffIcon = newItem.BuffIcon,
+                        PartCount = newItem.PartCount,
+                        BlockMonsterDrop = newItem.BlockMonsterDrop
+                    });
+                }
+                catch (Exception ex)
+                {
+                    SEnvir.Log($"创建物品失败: {ex.Message}");
+                    return (false, $"创建失败: {ex.Message}", null);
+                }
+                finally
+                {
+                    // Restore collection index to maximum index
+                    items.Index = Math.Max(oldIndex, items.Index);
+                }
             }
         }
 
@@ -1080,220 +1108,224 @@ namespace Server.WebApi.Services
         /// </summary>
         public (bool success, string message) UpdateNpc(int index, UpdateNpcRequest request)
         {
-            var npcs = SEnvir.NPCInfoList;
-            if (npcs == null) return (false, "NPC列表为空");
-
-            NPCInfo? npcInfo = null;
-            for (int i = 0; i < npcs.Count; i++)
+            // Use lock to prevent race conditions in high concurrency scenarios
+            lock (_npcUpdateLock)
             {
-                if (npcs[i].Index == index)
+                var npcs = SEnvir.NPCInfoList;
+                if (npcs == null) return (false, "NPC列表为空");
+
+                NPCInfo? npcInfo = null;
+                for (int i = 0; i < npcs.Count; i++)
                 {
-                    npcInfo = npcs[i];
-                    break;
-                }
-            }
-
-            if (npcInfo == null) return (false, "NPC不存在");
-
-            try
-            {
-                // Update basic properties
-                if (request.Name != null)
-                    npcInfo.NPCName = request.Name;
-                if (request.Image.HasValue)
-                    npcInfo.Image = request.Image.Value;
-                if (request.EntryPageSay != null && npcInfo.EntryPage != null)
-                    npcInfo.EntryPage.Say = request.EntryPageSay;
-
-                // Update region (NPC location)
-                if (request.RegionIndex.HasValue)
-                {
-                    var regions = SEnvir.MapRegionList;
-                    if (regions != null)
+                    if (npcs[i].Index == index)
                     {
-                        MapRegion? newRegion = null;
-                        for (int i = 0; i < regions.Count; i++)
-                        {
-                            if (regions[i].Index == request.RegionIndex.Value)
-                            {
-                                newRegion = regions[i];
-                                break;
-                            }
-                        }
-                        if (newRegion != null)
-                        {
-                            npcInfo.Region = newRegion;
-                        }
-                        else
-                        {
-                            return (false, $"区域 {request.RegionIndex.Value} 不存在");
-                        }
+                        npcInfo = npcs[i];
+                        break;
                     }
                 }
 
-                // Update buttons
-                if (request.Buttons != null && npcInfo.EntryPage != null)
-                {
-                    var entryPage = npcInfo.EntryPage;
-                    var items = SEnvir.ItemInfoList;
+                if (npcInfo == null) return (false, "NPC不存在");
 
-                    foreach (var buttonUpdate in request.Buttons)
+                try
+                {
+                    // Update basic properties
+                    if (request.Name != null)
+                        npcInfo.NPCName = request.Name;
+                    if (request.Image.HasValue)
+                        npcInfo.Image = request.Image.Value;
+                    if (request.EntryPageSay != null && npcInfo.EntryPage != null)
+                        npcInfo.EntryPage.Say = request.EntryPageSay;
+
+                    // Update region (NPC location)
+                    if (request.RegionIndex.HasValue)
                     {
-                        if (buttonUpdate.Delete && buttonUpdate.Index.HasValue)
+                        var regions = SEnvir.MapRegionList;
+                        if (regions != null)
                         {
-                            // Find and delete existing button
-                            NPCButton? toDelete = null;
-                            foreach (var btn in entryPage.Buttons)
+                            MapRegion? newRegion = null;
+                            for (int i = 0; i < regions.Count; i++)
                             {
-                                if (btn.Index == buttonUpdate.Index.Value)
+                                if (regions[i].Index == request.RegionIndex.Value)
                                 {
-                                    toDelete = btn;
+                                    newRegion = regions[i];
                                     break;
                                 }
                             }
-                            if (toDelete != null)
+                            if (newRegion != null)
                             {
-                                entryPage.Buttons.Remove(toDelete);
-                                toDelete.Delete();
+                                npcInfo.Region = newRegion;
                             }
-                        }
-                        else if (buttonUpdate.Index.HasValue)
-                        {
-                            // Update existing button
-                            NPCButton? existingBtn = null;
-                            foreach (var btn in entryPage.Buttons)
+                            else
                             {
-                                if (btn.Index == buttonUpdate.Index.Value)
-                                {
-                                    existingBtn = btn;
-                                    break;
-                                }
+                                return (false, $"区域 {request.RegionIndex.Value} 不存在");
                             }
-                            if (existingBtn != null)
-                            {
-                                existingBtn.ButtonID = buttonUpdate.ButtonId;
-                                // Note: DestinationPage linking would require more complex logic
-                            }
-                        }
-                        else
-                        {
-                            // Create new button
-                            var newButton = entryPage.Buttons.AddNew();
-                            newButton.ButtonID = buttonUpdate.ButtonId;
                         }
                     }
-                }
 
-                // Update goods (supports both entry page and button destination pages)
-                if (request.Goods != null && npcInfo.EntryPage != null)
-                {
-                    var items = SEnvir.ItemInfoList;
-
-                    foreach (var goodUpdate in request.Goods)
+                    // Update buttons
+                    if (request.Buttons != null && npcInfo.EntryPage != null)
                     {
-                        // Determine target page (entry page or button's destination page)
-                        NPCPage? targetPage = null;
-                        if (goodUpdate.ButtonIndex.HasValue)
-                        {
-                            // Find button and get its destination page
-                            foreach (var btn in npcInfo.EntryPage.Buttons)
-                            {
-                                if (btn.Index == goodUpdate.ButtonIndex.Value)
-                                {
-                                    targetPage = btn.DestinationPage;
-                                    break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            targetPage = npcInfo.EntryPage;
-                        }
+                        var entryPage = npcInfo.EntryPage;
+                        var items = SEnvir.ItemInfoList;
 
-                        if (targetPage == null) continue;
-
-                        if (goodUpdate.Delete && goodUpdate.Index.HasValue)
+                        foreach (var buttonUpdate in request.Buttons)
                         {
-                            // Find and delete existing good
-                            NPCGood? toDelete = null;
-                            foreach (var good in targetPage.Goods)
+                            if (buttonUpdate.Delete && buttonUpdate.Index.HasValue)
                             {
-                                if (good.Index == goodUpdate.Index.Value)
+                                // Find and delete existing button
+                                NPCButton? toDelete = null;
+                                foreach (var btn in entryPage.Buttons)
                                 {
-                                    toDelete = good;
-                                    break;
+                                    if (btn.Index == buttonUpdate.Index.Value)
+                                    {
+                                        toDelete = btn;
+                                        break;
+                                    }
+                                }
+                                if (toDelete != null)
+                                {
+                                    entryPage.Buttons.Remove(toDelete);
+                                    toDelete.Delete();
                                 }
                             }
-                            if (toDelete != null)
+                            else if (buttonUpdate.Index.HasValue)
                             {
-                                targetPage.Goods.Remove(toDelete);
-                                toDelete.Delete();
+                                // Update existing button
+                                NPCButton? existingBtn = null;
+                                foreach (var btn in entryPage.Buttons)
+                                {
+                                    if (btn.Index == buttonUpdate.Index.Value)
+                                    {
+                                        existingBtn = btn;
+                                        break;
+                                    }
+                                }
+                                if (existingBtn != null)
+                                {
+                                    existingBtn.ButtonID = buttonUpdate.ButtonId;
+                                    // Note: DestinationPage linking would require more complex logic
+                                }
+                            }
+                            else
+                            {
+                                // Create new button
+                                var newButton = entryPage.Buttons.AddNew();
+                                newButton.ButtonID = buttonUpdate.ButtonId;
                             }
                         }
-                        else if (goodUpdate.Index.HasValue)
+                    }
+
+                    // Update goods (supports both entry page and button destination pages)
+                    if (request.Goods != null && npcInfo.EntryPage != null)
+                    {
+                        var items = SEnvir.ItemInfoList;
+
+                        foreach (var goodUpdate in request.Goods)
                         {
-                            // Update existing good
-                            NPCGood? existingGood = null;
-                            foreach (var good in targetPage.Goods)
+                            // Determine target page (entry page or button's destination page)
+                            NPCPage? targetPage = null;
+                            if (goodUpdate.ButtonIndex.HasValue)
                             {
-                                if (good.Index == goodUpdate.Index.Value)
+                                // Find button and get its destination page
+                                foreach (var btn in npcInfo.EntryPage.Buttons)
                                 {
-                                    existingGood = good;
-                                    break;
+                                    if (btn.Index == goodUpdate.ButtonIndex.Value)
+                                    {
+                                        targetPage = btn.DestinationPage;
+                                        break;
+                                    }
                                 }
                             }
-                            if (existingGood != null)
+                            else
                             {
-                                existingGood.Rate = goodUpdate.Rate;
-                                // Update item if changed
-                                if (items != null && existingGood.Item?.Index != goodUpdate.ItemIndex)
+                                targetPage = npcInfo.EntryPage;
+                            }
+
+                            if (targetPage == null) continue;
+
+                            if (goodUpdate.Delete && goodUpdate.Index.HasValue)
+                            {
+                                // Find and delete existing good
+                                NPCGood? toDelete = null;
+                                foreach (var good in targetPage.Goods)
                                 {
-                                    ItemInfo? newItem = null;
+                                    if (good.Index == goodUpdate.Index.Value)
+                                    {
+                                        toDelete = good;
+                                        break;
+                                    }
+                                }
+                                if (toDelete != null)
+                                {
+                                    targetPage.Goods.Remove(toDelete);
+                                    toDelete.Delete();
+                                }
+                            }
+                            else if (goodUpdate.Index.HasValue)
+                            {
+                                // Update existing good
+                                NPCGood? existingGood = null;
+                                foreach (var good in targetPage.Goods)
+                                {
+                                    if (good.Index == goodUpdate.Index.Value)
+                                    {
+                                        existingGood = good;
+                                        break;
+                                    }
+                                }
+                                if (existingGood != null)
+                                {
+                                    existingGood.Rate = goodUpdate.Rate;
+                                    // Update item if changed
+                                    if (items != null && existingGood.Item?.Index != goodUpdate.ItemIndex)
+                                    {
+                                        ItemInfo? newItem = null;
+                                        for (int i = 0; i < items.Count; i++)
+                                        {
+                                            if (items[i].Index == goodUpdate.ItemIndex)
+                                            {
+                                                newItem = items[i];
+                                                break;
+                                            }
+                                        }
+                                        if (newItem != null)
+                                        {
+                                            existingGood.Item = newItem;
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // Create new good
+                                if (items != null)
+                                {
+                                    ItemInfo? item = null;
                                     for (int i = 0; i < items.Count; i++)
                                     {
                                         if (items[i].Index == goodUpdate.ItemIndex)
                                         {
-                                            newItem = items[i];
+                                            item = items[i];
                                             break;
                                         }
                                     }
-                                    if (newItem != null)
+                                    if (item != null)
                                     {
-                                        existingGood.Item = newItem;
+                                        var newGood = targetPage.Goods.AddNew();
+                                        newGood.Item = item;
+                                        newGood.Rate = goodUpdate.Rate;
                                     }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // Create new good
-                            if (items != null)
-                            {
-                                ItemInfo? item = null;
-                                for (int i = 0; i < items.Count; i++)
-                                {
-                                    if (items[i].Index == goodUpdate.ItemIndex)
-                                    {
-                                        item = items[i];
-                                        break;
-                                    }
-                                }
-                                if (item != null)
-                                {
-                                    var newGood = targetPage.Goods.AddNew();
-                                    newGood.Item = item;
-                                    newGood.Rate = goodUpdate.Rate;
                                 }
                             }
                         }
                     }
-                }
 
-                return (true, "NPC更新成功");
-            }
-            catch (Exception ex)
-            {
-                return (false, $"更新失败: {ex.Message}");
+                    return (true, "NPC更新成功");
+                }
+                catch (Exception ex)
+                {
+                    return (false, $"更新失败: {ex.Message}");
+                }
             }
         }
 
@@ -2006,41 +2038,45 @@ namespace Server.WebApi.Services
         /// </summary>
         public (bool success, string message) UpdateMonster(int index, UpdateMonsterRequest request)
         {
-            var monsters = SEnvir.MonsterInfoList;
-            if (monsters == null) return (false, "服务器数据未就绪");
-
-            MonsterInfo? monster = null;
-            for (int i = 0; i < monsters.Count; i++)
+            // Use lock to prevent race conditions in high concurrency scenarios
+            lock (_monsterUpdateLock)
             {
-                if (monsters[i].Index == index)
+                var monsters = SEnvir.MonsterInfoList;
+                if (monsters == null) return (false, "服务器数据未就绪");
+
+                MonsterInfo? monster = null;
+                for (int i = 0; i < monsters.Count; i++)
                 {
-                    monster = monsters[i];
-                    break;
+                    if (monsters[i].Index == index)
+                    {
+                        monster = monsters[i];
+                        break;
+                    }
                 }
+                if (monster == null) return (false, "怪物不存在");
+
+                // Update basic properties
+                if (request.Name != null) monster.MonsterName = request.Name;
+                if (request.Level.HasValue) monster.Level = request.Level.Value;
+                if (request.IsBoss.HasValue) monster.IsBoss = request.IsBoss.Value;
+                if (request.Experience.HasValue) monster.Experience = request.Experience.Value;
+                if (request.ViewRange.HasValue) monster.ViewRange = request.ViewRange.Value;
+                if (request.AI.HasValue) monster.AI = request.AI.Value;
+                if (request.AttackDelay.HasValue) monster.AttackDelay = request.AttackDelay.Value;
+                if (request.MoveDelay.HasValue) monster.MoveDelay = request.MoveDelay.Value;
+                if (request.CoolEye.HasValue) monster.CoolEye = request.CoolEye.Value;
+                if (request.Undead.HasValue) monster.Undead = request.Undead.Value;
+                if (request.CanPush.HasValue) monster.CanPush = request.CanPush.Value;
+                if (request.CanTame.HasValue) monster.CanTame = request.CanTame.Value;
+
+                // Update stats if provided
+                if (request.Stats != null)
+                {
+                    UpdateMonsterStats(monster, request.Stats);
+                }
+
+                return (true, "怪物更新成功");
             }
-            if (monster == null) return (false, "怪物不存在");
-
-            // Update basic properties
-            if (request.Name != null) monster.MonsterName = request.Name;
-            if (request.Level.HasValue) monster.Level = request.Level.Value;
-            if (request.IsBoss.HasValue) monster.IsBoss = request.IsBoss.Value;
-            if (request.Experience.HasValue) monster.Experience = request.Experience.Value;
-            if (request.ViewRange.HasValue) monster.ViewRange = request.ViewRange.Value;
-            if (request.AI.HasValue) monster.AI = request.AI.Value;
-            if (request.AttackDelay.HasValue) monster.AttackDelay = request.AttackDelay.Value;
-            if (request.MoveDelay.HasValue) monster.MoveDelay = request.MoveDelay.Value;
-            if (request.CoolEye.HasValue) monster.CoolEye = request.CoolEye.Value;
-            if (request.Undead.HasValue) monster.Undead = request.Undead.Value;
-            if (request.CanPush.HasValue) monster.CanPush = request.CanPush.Value;
-            if (request.CanTame.HasValue) monster.CanTame = request.CanTame.Value;
-
-            // Update stats if provided
-            if (request.Stats != null)
-            {
-                UpdateMonsterStats(monster, request.Stats);
-            }
-
-            return (true, "怪物更新成功");
         }
 
         /// <summary>
