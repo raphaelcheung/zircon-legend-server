@@ -2,6 +2,7 @@ using Library;
 using Server.WebApi.Auth;
 using Server.WebApi.Services;
 using System.Security.Claims;
+using Server.Envir;
 
 namespace Server.WebApi.Endpoints
 {
@@ -22,12 +23,18 @@ namespace Server.WebApi.Endpoints
             group.MapGet("/items/required-classes", GetRequiredClasses);
             group.MapGet("/items/rarities", GetRarities);
             group.MapGet("/items/{index:int}", GetItemDetail);
+            group.MapGet("/items/{index:int}/drops", GetItemDrops);
+            group.MapPost("/items", CreateItem);
             group.MapPut("/items/{index:int}", UpdateItem);
             group.MapPost("/items/give", GiveItem);
 
             // Maps
             group.MapGet("/maps", GetMaps);
             group.MapGet("/maps/{index:int}", GetMapDetail);
+            group.MapGet("/maps/{index:int}/respawns", GetMapRespawns);
+            group.MapPost("/maps/{index:int}/respawns", AddMapRespawn);
+            group.MapPut("/maps/{index:int}/respawns/{respawnId:int}", UpdateMapRespawn);
+            group.MapDelete("/maps/{index:int}/respawns/{respawnId:int}", DeleteMapRespawn);
             group.MapPut("/maps/{index:int}", UpdateMap);
             group.MapPost("/maps/teleport", TeleportPlayer);
             group.MapPost("/maps/{index:int}/clear-monsters", ClearMonstersOnMap);
@@ -35,6 +42,10 @@ namespace Server.WebApi.Endpoints
             // Monsters
             group.MapGet("/monsters", GetMonsters);
             group.MapGet("/monsters/{index:int}", GetMonsterDetail);
+            group.MapGet("/monsters/{index:int}/drops", GetMonsterDrops);
+            group.MapPost("/monsters/{index:int}/drops", AddMonsterDrop);
+            group.MapPut("/monsters/{index:int}/drops/{dropId:int}", UpdateMonsterDrop);
+            group.MapDelete("/monsters/{index:int}/drops/{dropId:int}", DeleteMonsterDrop);
             group.MapPut("/monsters/{index:int}", UpdateMonster);
             group.MapPost("/monsters/{index:int}/clear", ClearMonstersByType);
             group.MapPost("/monsters/spawn", SpawnMonsterNearPlayer);
@@ -110,6 +121,38 @@ namespace Server.WebApi.Endpoints
             }
 
             return Results.Ok(item);
+        }
+
+        /// <summary>
+        /// Create new item
+        /// </summary>
+        private static IResult CreateItem(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            AddItemRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            if (request.Index <= 0)
+            {
+                return Results.BadRequest(new { message = "物品ID必须大于0" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return Results.BadRequest(new { message = "物品名称不能为空" });
+            }
+
+            var (success, message, item) = dataService.CreateItem(request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message, item });
         }
 
         /// <summary>
@@ -814,6 +857,221 @@ namespace Server.WebApi.Endpoints
             }
 
             var (success, message) = dataService.DeleteBaseStat(index);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        #endregion
+
+        #region Item Drops
+
+        /// <summary>
+        /// Get monsters that drop this item
+        /// </summary>
+        private static IResult GetItemDrops(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var drops = dataService.GetItemDrops(index);
+            return Results.Ok(new
+            {
+                total = drops.Count,
+                drops
+            });
+        }
+
+        #endregion
+
+        #region Monster Drops Management
+
+        /// <summary>
+        /// Get drops for a monster
+        /// </summary>
+        private static IResult GetMonsterDrops(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var drops = dataService.GetMonsterDrops(index);
+            return Results.Ok(new
+            {
+                total = drops.Count,
+                drops
+            });
+        }
+
+        /// <summary>
+        /// Add drop to monster
+        /// </summary>
+        private static IResult AddMonsterDrop(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            AddDropRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message, drop) = dataService.AddMonsterDrop(index, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message, drop });
+        }
+
+        /// <summary>
+        /// Update monster drop
+        /// </summary>
+        private static IResult UpdateMonsterDrop(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            int dropId,
+            UpdateDropRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.UpdateMonsterDrop(index, dropId, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        /// <summary>
+        /// Delete monster drop
+        /// </summary>
+        private static IResult DeleteMonsterDrop(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            int dropId)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.DeleteMonsterDrop(index, dropId);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        #endregion
+
+        #region Map Respawns Management
+
+        /// <summary>
+        /// Get respawns for a map
+        /// </summary>
+        private static IResult GetMapRespawns(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var respawns = dataService.GetMapRespawns(index);
+            return Results.Ok(new
+            {
+                total = respawns.Count,
+                respawns
+            });
+        }
+
+        /// <summary>
+        /// Add respawn to map
+        /// </summary>
+        private static IResult AddMapRespawn(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            AddRespawnRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message, respawn) = dataService.AddMapRespawn(index, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message, respawn });
+        }
+
+        /// <summary>
+        /// Update map respawn
+        /// </summary>
+        private static IResult UpdateMapRespawn(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            int respawnId,
+            UpdateRespawnRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.UpdateMapRespawn(index, respawnId, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        /// <summary>
+        /// Delete map respawn
+        /// </summary>
+        private static IResult DeleteMapRespawn(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            int respawnId)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.DeleteMapRespawn(index, respawnId);
             if (!success)
             {
                 return Results.BadRequest(new { message });

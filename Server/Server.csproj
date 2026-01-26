@@ -40,7 +40,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <Deterministic>False</Deterministic>
-    <NoWarn>1701;1702;CS4014</NoWarn>
+    <NoWarn>1701;1702;CS4014;CS8600;CS8601;CS8602;CS8603;CS8625;CS8622;CS8604;CS8618;CS0168;CS0219;SYSLIB0023;SYSLIB0041;SYSLIB0014</NoWarn>
     <DebugType>embedded</DebugType>
     <IsPublishable>True</IsPublishable>
   </PropertyGroup>
