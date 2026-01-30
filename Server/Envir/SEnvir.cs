@@ -651,6 +651,7 @@ namespace Server.Envir
         public static DBCollection<GuildMemberInfo> GuildMemberInfoList;
         public static DBCollection<UserQuest> UserQuestList;
         public static DBCollection<UserQuestTask> UserQuestTaskList;
+        public static DBCollection<QuestInfo> QuestInfoList;
         public static DBCollection<CompanionInfo> CompanionInfoList;
         public static DBCollection<CompanionLevelInfo> CompanionLevelInfoList;
         public static DBCollection<UserCompanion> UserCompanionList;
@@ -881,6 +882,7 @@ namespace Server.Envir
             GuildMemberInfoList = Session.GetCollection<GuildMemberInfo>();
             UserQuestList = Session.GetCollection<UserQuest>();
             UserQuestTaskList = Session.GetCollection<UserQuestTask>();
+            QuestInfoList = Session.GetCollection<QuestInfo>();
             CompanionSkillInfoList = Session.GetCollection<CompanionSkillInfo>();
 
             CompanionInfoList = Session.GetCollection<CompanionInfo>();

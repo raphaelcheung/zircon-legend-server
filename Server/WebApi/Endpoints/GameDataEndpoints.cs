@@ -69,6 +69,20 @@ namespace Server.WebApi.Endpoints
             group.MapPost("/basestats", CreateBaseStat);
             group.MapPut("/basestats/{index:int}", UpdateBaseStat);
             group.MapDelete("/basestats/{index:int}", DeleteBaseStat);
+
+            // Quests
+            group.MapGet("/quests", GetQuests);
+            group.MapGet("/quests/{index:int}", GetQuestDetail);
+            group.MapPost("/quests", CreateQuest);
+            group.MapPut("/quests/{index:int}", UpdateQuest);
+            group.MapDelete("/quests/{index:int}", DeleteQuest);
+
+            // Store
+            group.MapGet("/store", GetStoreItems);
+            group.MapGet("/store/{index:int}", GetStoreItemDetail);
+            group.MapPost("/store", AddStoreItem);
+            group.MapPut("/store/{index:int}", UpdateStoreItem);
+            group.MapDelete("/store/{index:int}", DeleteStoreItem);
         }
 
         /// <summary>
@@ -647,6 +661,154 @@ namespace Server.WebApi.Endpoints
 
         #endregion
 
+        #region Store Management
+
+        /// <summary>
+        /// Get store items list with pagination
+        /// </summary>
+        private static IResult GetStoreItems(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int page = 1,
+            int pageSize = 50,
+            string? search = null)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 200) pageSize = 50;
+
+            var (items, total) = dataService.GetStoreItems(page, pageSize, search);
+
+            return Results.Ok(new
+            {
+                total,
+                page,
+                pageSize,
+                totalPages = (int)Math.Ceiling((double)total / pageSize),
+                items
+            });
+        }
+
+        /// <summary>
+        /// Get store item detail by index
+        /// </summary>
+        private static IResult GetStoreItemDetail(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var item = dataService.GetStoreItemDetail(index);
+            if (item == null)
+            {
+                return Results.NotFound(new { message = "商城商品不存在" });
+            }
+
+            return Results.Ok(item);
+        }
+
+        /// <summary>
+        /// Add new store item
+        /// </summary>
+        private static IResult AddStoreItem(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            AddStoreItemRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            if (request.ItemIndex <= 0)
+            {
+                return Results.BadRequest(new { message = "物品ID必须大于0" });
+            }
+
+            if (request.Price < 0)
+            {
+                return Results.BadRequest(new { message = "价格不能为负数" });
+            }
+
+            if (request.HuntGoldPrice < 0)
+            {
+                return Results.BadRequest(new { message = "猎金价格不能为负数" });
+            }
+
+            var (success, message, item) = dataService.AddStoreItem(request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message, item });
+        }
+
+        /// <summary>
+        /// Update store item
+        /// </summary>
+        private static IResult UpdateStoreItem(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            UpdateStoreItemRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            if (request.Price.HasValue && request.Price.Value < 0)
+            {
+                return Results.BadRequest(new { message = "价格不能为负数" });
+            }
+
+            if (request.HuntGoldPrice.HasValue && request.HuntGoldPrice.Value < 0)
+            {
+                return Results.BadRequest(new { message = "猎金价格不能为负数" });
+            }
+
+            var (success, message) = dataService.UpdateStoreItem(index, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        /// <summary>
+        /// Delete store item
+        /// </summary>
+        private static IResult DeleteStoreItem(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.DeleteStoreItem(index);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        #endregion
+
         #region Magic Management
 
         /// <summary>
@@ -888,6 +1050,139 @@ namespace Server.WebApi.Endpoints
                 total = drops.Count,
                 drops
             });
+        }
+
+        #endregion
+
+        #region Quest Management
+
+        /// <summary>
+        /// Get quests list with pagination
+        /// </summary>
+        private static IResult GetQuests(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int page = 1,
+            int pageSize = 50,
+            string? search = null)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 200) pageSize = 50;
+
+            var (quests, total) = dataService.GetQuests(page, pageSize, search);
+
+            return Results.Ok(new
+            {
+                total,
+                page,
+                pageSize,
+                totalPages = (int)Math.Ceiling((double)total / pageSize),
+                quests
+            });
+        }
+
+        /// <summary>
+        /// Get quest detail by index
+        /// </summary>
+        private static IResult GetQuestDetail(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var quest = dataService.GetQuestDetail(index);
+            if (quest == null)
+            {
+                return Results.NotFound(new { message = "任务不存在" });
+            }
+
+            return Results.Ok(quest);
+        }
+
+        /// <summary>
+        /// Create new quest
+        /// </summary>
+        private static IResult CreateQuest(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            AddQuestRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            if (string.IsNullOrWhiteSpace(request.QuestName))
+            {
+                return Results.BadRequest(new { message = "任务名称不能为空" });
+            }
+
+            var (success, message, quest) = dataService.CreateQuest(request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message, quest });
+        }
+
+        /// <summary>
+        /// Update quest by index
+        /// </summary>
+        private static IResult UpdateQuest(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            UpdateQuestRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            if (string.IsNullOrWhiteSpace(request.QuestName))
+            {
+                return Results.BadRequest(new { message = "任务名称不能为空" });
+            }
+
+            var (success, message) = dataService.UpdateQuest(index, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        /// <summary>
+        /// Delete quest by index
+        /// </summary>
+        private static IResult DeleteQuest(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.DeleteQuest(index);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
         }
 
         #endregion
