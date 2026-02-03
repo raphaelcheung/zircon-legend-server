@@ -37,6 +37,26 @@ namespace Server.WebApi.Services
         private static readonly object _npcUpdateLock = new object();
 
         /// <summary>
+        /// Lock for creating new store items to prevent index conflicts in high concurrency scenarios
+        /// </summary>
+        private static readonly object _storeCreationLock = new object();
+
+        /// <summary>
+        /// Lock for updating store data to prevent race conditions
+        /// </summary>
+        private static readonly object _storeUpdateLock = new object();
+
+        /// <summary>
+        /// Lock for creating new quests to prevent index conflicts in high concurrency scenarios
+        /// </summary>
+        private static readonly object _questCreationLock = new object();
+
+        /// <summary>
+        /// Lock for updating quest data to prevent race conditions
+        /// </summary>
+        private static readonly object _questUpdateLock = new object();
+
+        /// <summary>
         /// Get server start time
         /// </summary>
         public DateTime ServerStartTime { get; } = DateTime.UtcNow;
@@ -352,7 +372,7 @@ namespace Server.WebApi.Services
             if (account == null) return false;
 
             account.Banned = false;
-            account.BanReason = null;
+            account.BanReason = "";
             account.ExpiryDate = DateTime.MinValue;
             return true;
         }
@@ -1574,6 +1594,538 @@ namespace Server.WebApi.Services
             return (true, "删除成功");
         }
 
+        #endregion
+
+        #region Quests
+
+        /// <summary>
+        /// Get quests with pagination
+        /// </summary>
+        public (List<QuestInfoDto> quests, int total) GetQuests(int page, int pageSize, string? search = null)
+        {
+            var quests = SEnvir.QuestInfoList;
+            if (quests == null) return (new List<QuestInfoDto>(), 0);
+
+            var query = new List<QuestInfo>();
+            for (int i = 0; i < quests.Count; i++)
+            {
+                var quest = quests[i];
+                if (string.IsNullOrEmpty(search) ||
+                    quest.QuestName?.Contains(search, StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    query.Add(quest);
+                }
+            }
+
+            var total = query.Count;
+            var result = query
+                .OrderBy(q => q.Index)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(q => new QuestInfoDto
+                {
+                    Index = q.Index,
+                    QuestName = q.QuestName ?? "",
+                    StartNPC = q.StartNPC != null ? new NpcInfoDto
+                    {
+                        Index = q.StartNPC.Index,
+                        Name = q.StartNPC.NPCName ?? ""
+                    } : null,
+                    FinishNPC = q.FinishNPC != null ? new NpcInfoDto
+                    {
+                        Index = q.FinishNPC.Index,
+                        Name = q.FinishNPC.NPCName ?? ""
+                    } : null,
+                    TasksCount = q.Tasks?.Count ?? 0,
+                    RewardsCount = q.Rewards?.Count ?? 0
+                })
+                .ToList();
+
+            return (result, total);
+        }
+
+        /// <summary>
+        /// Get quest detail by index
+        /// </summary>
+        public QuestInfoDetailDto? GetQuestDetail(int index)
+        {
+            var quests = SEnvir.QuestInfoList;
+            if (quests == null) return null;
+
+            QuestInfo? questInfo = null;
+            for (int i = 0; i < quests.Count; i++)
+            {
+                if (quests[i].Index == index)
+                {
+                    questInfo = quests[i];
+                    break;
+                }
+            }
+
+            if (questInfo == null) return null;
+
+            var dto = new QuestInfoDetailDto
+            {
+                Index = questInfo.Index,
+                QuestName = questInfo.QuestName ?? "",
+                AcceptText = questInfo.AcceptText ?? "",
+                ProgressText = questInfo.ProgressText ?? "",
+                CompletedText = questInfo.CompletedText ?? "",
+                ArchiveText = questInfo.ArchiveText ?? "",
+                StartNPC = questInfo.StartNPC != null ? new NpcInfoDto
+                {
+                    Index = questInfo.StartNPC.Index,
+                    Name = questInfo.StartNPC.NPCName ?? ""
+                } : null,
+                FinishNPC = questInfo.FinishNPC != null ? new NpcInfoDto
+                {
+                    Index = questInfo.FinishNPC.Index,
+                    Name = questInfo.FinishNPC.NPCName ?? ""
+                } : null
+            };
+
+            // Load requirements
+            if (questInfo.Requirements != null)
+            {
+                foreach (var req in questInfo.Requirements)
+                {
+                    dto.Requirements.Add(new QuestRequirementDto
+                    {
+                        Requirement = req.Requirement.ToString(),
+                        IntParameter1 = req.IntParameter1,
+                        QuestParameter = req.QuestParameter != null ? new QuestInfoDto
+                        {
+                            Index = req.QuestParameter.Index,
+                            QuestName = req.QuestParameter.QuestName ?? ""
+                        } : null,
+                        Class = req.Class.ToString()
+                    });
+                }
+            }
+
+            // Load tasks
+            if (questInfo.Tasks != null)
+            {
+                foreach (var task in questInfo.Tasks)
+                {
+                    var taskDto = new QuestTaskDto
+                    {
+                        Task = task.Task.ToString(),
+                        ItemParameter = task.ItemParameter != null ? new ItemInfoDto
+                        {
+                            Index = task.ItemParameter.Index,
+                            Name = task.ItemParameter.ItemName ?? ""
+                        } : null,
+                        MobDescription = task.MobDescription,
+                        Amount = task.Amount
+                    };
+
+                    // Load monster details
+                    if (task.MonsterDetails != null)
+                    {
+                        foreach (var detail in task.MonsterDetails)
+                        {
+                            taskDto.MonsterDetails.Add(new QuestTaskMonsterDetailsDto
+                            {
+                                Index = detail.Index,
+                                MonsterIndex = detail.Monster?.Index,
+                                MonsterName = detail.Monster?.MonsterName,
+                                MapIndex = detail.Map?.Index,
+                                MapName = detail.Map?.Description,
+                                Chance = detail.Chance,
+                                Amount = detail.Amount,
+                                DropSet = detail.DropSet
+                            });
+                        }
+                    }
+
+                    dto.Tasks.Add(taskDto);
+                }
+            }
+
+            // Load rewards
+            if (questInfo.Rewards != null)
+            {
+                foreach (var reward in questInfo.Rewards)
+                {
+                    dto.Rewards.Add(new QuestRewardDto
+                    {
+                        Index = reward.Index,
+                        Item = reward.Item != null ? new ItemInfoDto
+                        {
+                            Index = reward.Item.Index,
+                            Name = reward.Item.ItemName ?? ""
+                        } : null,
+                        Amount = reward.Amount,
+                        Class = reward.Class.ToString(),
+                        Choice = reward.Choice,
+                        Bound = reward.Bound,
+                        Duration = reward.Duration
+                    });
+                }
+            }
+
+            return dto;
+        }
+
+        /// <summary>
+        /// Create new quest
+        /// </summary>
+        public (bool success, string message, QuestInfoDetailDto? quest) CreateQuest(AddQuestRequest request)
+        {
+            // Use lock to prevent index conflicts in high concurrency scenarios
+            lock (_questCreationLock)
+            {
+                var quests = SEnvir.QuestInfoList;
+                if (quests == null) return (false, "服务器数据未就绪", null);
+
+                if (string.IsNullOrWhiteSpace(request.QuestName))
+                {
+                    return (false, "任务名称不能为空", null);
+                }
+
+                var newQuest = quests.CreateNewObject();
+                newQuest.QuestName = request.QuestName;
+
+                // Set NPCs
+                var npcs = SEnvir.NPCInfoList;
+                if (npcs != null)
+                {
+                    for (int i = 0; i < npcs.Count; i++)
+                    {
+                        if (npcs[i].Index == request.StartNPC)
+                        {
+                            newQuest.StartNPC = npcs[i];
+                            break;
+                        }
+                    }
+                    for (int i = 0; i < npcs.Count; i++)
+                    {
+                        if (npcs[i].Index == request.FinishNPC)
+                        {
+                            newQuest.FinishNPC = npcs[i];
+                            break;
+                        }
+                    }
+                }
+
+                // Save to database
+                SEnvir.SaveUserDatas();
+
+                return (true, "任务创建成功", GetQuestDetail(newQuest.Index));
+            }
+        }
+
+        /// <summary>
+        /// Update quest by index
+        /// </summary>
+        public (bool success, string message) UpdateQuest(int index, UpdateQuestRequest request)
+        {
+            // Use lock to prevent race conditions in high concurrency scenarios
+            lock (_questUpdateLock)
+            {
+                var quests = SEnvir.QuestInfoList;
+                if (quests == null) return (false, "服务器数据未就绪");
+
+                QuestInfo? questInfo = null;
+                for (int i = 0; i < quests.Count; i++)
+                {
+                    if (quests[i].Index == index)
+                    {
+                        questInfo = quests[i];
+                        break;
+                    }
+                }
+
+                if (questInfo == null) return (false, "任务不存在");
+
+                // Update basic properties
+                if (request.QuestName != null) questInfo.QuestName = request.QuestName;
+                if (request.AcceptText != null) questInfo.AcceptText = request.AcceptText;
+                if (request.ProgressText != null) questInfo.ProgressText = request.ProgressText;
+                if (request.CompletedText != null) questInfo.CompletedText = request.CompletedText;
+                if (request.ArchiveText != null) questInfo.ArchiveText = request.ArchiveText;
+
+                // Update NPCs
+                var npcs = SEnvir.NPCInfoList;
+                if (npcs != null && request.StartNPC.HasValue)
+                {
+                    for (int i = 0; i < npcs.Count; i++)
+                    {
+                        if (npcs[i].Index == request.StartNPC.Value)
+                        {
+                            questInfo.StartNPC = npcs[i];
+                            break;
+                        }
+                    }
+                }
+                if (npcs != null && request.FinishNPC.HasValue)
+                {
+                    for (int i = 0; i < npcs.Count; i++)
+                    {
+                        if (npcs[i].Index == request.FinishNPC.Value)
+                        {
+                            questInfo.FinishNPC = npcs[i];
+                            break;
+                        }
+                    }
+                }
+
+                // Note: Requirements, Tasks, and Rewards update logic would be more complex
+                // and would require handling create/update/delete operations for child collections
+                // For now, we only update basic quest properties
+
+                // Save to database
+                SEnvir.SaveUserDatas();
+
+                return (true, "任务更新成功");
+            }
+        }
+
+        /// <summary>
+        /// Delete quest by index
+        /// </summary>
+        public (bool success, string message) DeleteQuest(int index)
+        {
+            // Use lock to prevent race conditions in high concurrency scenarios
+            lock (_questUpdateLock)
+            {
+                var quests = SEnvir.QuestInfoList;
+                if (quests == null) return (false, "任务列表不可用");
+
+                QuestInfo? quest = null;
+                for (int i = 0; i < quests.Count; i++)
+                {
+                    if (quests[i].Index == index)
+                    {
+                        quest = quests[i];
+                        break;
+                    }
+                }
+
+                if (quest == null) return (false, "任务不存在");
+
+                // Check if any user quest references this quest
+                var userQuests = SEnvir.UserQuestList;
+                if (userQuests != null)
+                {
+                    for (int i = 0; i < userQuests.Count; i++)
+                    {
+                        if (userQuests[i].QuestInfo == quest)
+                        {
+                            return (false, "该任务正在被玩家使用，无法删除");
+                        }
+                    }
+                }
+
+                quest.Delete();
+
+                // Save to database
+                SEnvir.SaveUserDatas();
+
+                return (true, "删除成功");
+            }
+        }
+
+        #endregion
+
+        #region Store
+
+        /// <summary>
+        /// Get store items with pagination
+        /// </summary>
+        public (List<StoreInfoDto> items, int total) GetStoreItems(int page, int pageSize, string? search = null)
+        {
+            var storeItems = SEnvir.StoreInfoList;
+            if (storeItems == null) return (new List<StoreInfoDto>(), 0);
+
+            var query = new List<StoreInfo>();
+            for (int i = 0; i < storeItems.Count; i++)
+            {
+                var storeItem = storeItems[i];
+                if (string.IsNullOrEmpty(search) ||
+                    (storeItem.Item?.ItemName?.Contains(search, StringComparison.OrdinalIgnoreCase) == true))
+                {
+                    query.Add(storeItem);
+                }
+            }
+
+            var total = query.Count;
+            var result = query
+                .OrderBy(s => s.Index)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(s => new StoreInfoDto
+                {
+                    Index = s.Index,
+                    ItemIndex = s.Item?.Index ?? 0,
+                    ItemName = s.Item?.ItemName ?? "",
+                    Price = s.Price,
+                    HuntGoldPrice = s.HuntGoldPrice,
+                    Filter = s.Filter ?? "",
+                    Available = s.Available,
+                    Duration = s.Duration
+                })
+                .ToList();
+
+            return (result, total);
+        }
+
+        /// <summary>
+        /// Get store item detail by index
+        /// </summary>
+        public StoreInfoDto? GetStoreItemDetail(int index)
+        {
+            var storeItems = SEnvir.StoreInfoList;
+            if (storeItems == null) return null;
+
+            StoreInfo? storeItem = null;
+            for (int i = 0; i < storeItems.Count; i++)
+            {
+                if (storeItems[i].Index == index)
+                {
+                    storeItem = storeItems[i];
+                    break;
+                }
+            }
+
+            if (storeItem == null) return null;
+
+            return new StoreInfoDto
+            {
+                Index = storeItem.Index,
+                ItemIndex = storeItem.Item?.Index ?? 0,
+                ItemName = storeItem.Item?.ItemName ?? "",
+                Price = storeItem.Price,
+                HuntGoldPrice = storeItem.HuntGoldPrice,
+                Filter = storeItem.Filter ?? "",
+                Available = storeItem.Available,
+                Duration = storeItem.Duration
+            };
+        }
+
+        /// <summary>
+        /// Add new store item
+        /// </summary>
+        public (bool success, string message, StoreInfoDto? item) AddStoreItem(AddStoreItemRequest request)
+        {
+            // Use lock to prevent index conflicts in high concurrency scenarios
+            lock (_storeCreationLock)
+            {
+                var storeItems = SEnvir.StoreInfoList;
+                if (storeItems == null) return (false, "服务器数据未就绪", null);
+
+                // Find item info
+                var items = SEnvir.ItemInfoList;
+                if (items == null) return (false, "物品列表不可用", null);
+
+                ItemInfo? itemInfo = null;
+                for (int i = 0; i < items.Count; i++)
+                {
+                    if (items[i].Index == request.ItemIndex)
+                    {
+                        itemInfo = items[i];
+                        break;
+                    }
+                }
+
+                if (itemInfo == null) return (false, $"物品ID {request.ItemIndex} 不存在", null);
+
+                // Check if item already exists in store
+                for (int i = 0; i < storeItems.Count; i++)
+                {
+                    if (storeItems[i].Item == itemInfo)
+                    {
+                        return (false, $"物品 {itemInfo.ItemName} 已在商城中", null);
+                    }
+                }
+
+                var newStoreItem = storeItems.CreateNewObject();
+                newStoreItem.Item = itemInfo;
+                newStoreItem.Price = request.Price;
+                newStoreItem.HuntGoldPrice = request.HuntGoldPrice;
+                newStoreItem.Filter = request.Filter;
+                newStoreItem.Available = request.Available;
+                newStoreItem.Duration = request.Duration;
+
+                // Save to database
+                SEnvir.SaveUserDatas();
+
+                return (true, "商城商品添加成功", GetStoreItemDetail(newStoreItem.Index));
+            }
+        }
+
+        /// <summary>
+        /// Update store item
+        /// </summary>
+        public (bool success, string message) UpdateStoreItem(int index, UpdateStoreItemRequest request)
+        {
+            // Use lock to prevent race conditions in high concurrency scenarios
+            lock (_storeUpdateLock)
+            {
+                var storeItems = SEnvir.StoreInfoList;
+                if (storeItems == null) return (false, "服务器数据未就绪");
+
+                StoreInfo? storeItem = null;
+                for (int i = 0; i < storeItems.Count; i++)
+                {
+                    if (storeItems[i].Index == index)
+                    {
+                        storeItem = storeItems[i];
+                        break;
+                    }
+                }
+
+                if (storeItem == null) return (false, "商城商品不存在");
+
+                // Update properties
+                if (request.Price.HasValue) storeItem.Price = request.Price.Value;
+                if (request.HuntGoldPrice.HasValue) storeItem.HuntGoldPrice = request.HuntGoldPrice.Value;
+                if (request.Filter != null) storeItem.Filter = request.Filter;
+                if (request.Available.HasValue) storeItem.Available = request.Available.Value;
+                if (request.Duration.HasValue) storeItem.Duration = request.Duration.Value;
+
+                // Save to database
+                SEnvir.SaveUserDatas();
+
+                return (true, "商城商品更新成功");
+            }
+        }
+
+        /// <summary>
+        /// Delete store item
+        /// </summary>
+        public (bool success, string message) DeleteStoreItem(int index)
+        {
+            // Use lock to prevent race conditions in high concurrency scenarios
+            lock (_storeUpdateLock)
+            {
+                var storeItems = SEnvir.StoreInfoList;
+                if (storeItems == null) return (false, "商城列表不可用");
+
+                StoreInfo? storeItem = null;
+                for (int i = 0; i < storeItems.Count; i++)
+                {
+                    if (storeItems[i].Index == index)
+                    {
+                        storeItem = storeItems[i];
+                        break;
+                    }
+                }
+
+                if (storeItem == null) return (false, "商城商品不存在");
+
+                storeItem.Delete();
+
+                // Save to database
+                SEnvir.SaveUserDatas();
+
+                return (true, "删除成功");
+            }
+        }
+
+        #endregion
+
         private string GetClassDescription(MirClass mirClass)
         {
             return mirClass switch
@@ -1733,7 +2285,6 @@ namespace Server.WebApi.Services
             }
         }
 
-        #endregion
 
         #region Map Management
 
@@ -3410,4 +3961,126 @@ namespace Server.WebApi.Services
     }
 
     #endregion
+
+    #region Quest
+
+    public class QuestInfoDto
+    {
+        public int Index { get; set; }
+        public string QuestName { get; set; } = "";
+        public NpcInfoDto? StartNPC { get; set; }
+        public NpcInfoDto? FinishNPC { get; set; }
+        public int TasksCount { get; set; }
+        public int RewardsCount { get; set; }
+    }
+
+    public class QuestInfoDetailDto : QuestInfoDto
+    {
+        public string AcceptText { get; set; } = "";
+        public string ProgressText { get; set; } = "";
+        public string CompletedText { get; set; } = "";
+        public string ArchiveText { get; set; } = "";
+        public List<QuestRequirementDto> Requirements { get; set; } = new();
+        public List<QuestTaskDto> Tasks { get; set; } = new();
+        public List<QuestRewardDto> Rewards { get; set; } = new();
+    }
+
+    public class QuestRequirementDto
+    {
+        public string Requirement { get; set; } = "";
+        public int IntParameter1 { get; set; }
+        public QuestInfoDto? QuestParameter { get; set; }
+        public string Class { get; set; } = "";
+    }
+
+    public class QuestTaskDto
+    {
+        public string Task { get; set; } = "";
+        public ItemInfoDto? ItemParameter { get; set; }
+        public string? MobDescription { get; set; }
+        public int Amount { get; set; }
+        public List<QuestTaskMonsterDetailsDto> MonsterDetails { get; set; } = new();
+    }
+
+    public class QuestTaskMonsterDetailsDto
+    {
+        public int Index { get; set; }
+        public int? MonsterIndex { get; set; }
+        public string? MonsterName { get; set; }
+        public int? MapIndex { get; set; }
+        public string? MapName { get; set; }
+        public int Chance { get; set; }
+        public int Amount { get; set; }
+        public int DropSet { get; set; }
+    }
+
+    public class QuestRewardDto
+    {
+        public int Index { get; set; }
+        public ItemInfoDto? Item { get; set; }
+        public int Amount { get; set; }
+        public string Class { get; set; } = "";
+        public bool Choice { get; set; }
+        public bool Bound { get; set; }
+        public int Duration { get; set; }
+    }
+
+    public class AddQuestRequest
+    {
+        public string QuestName { get; set; } = "";
+        public int StartNPC { get; set; }
+        public int FinishNPC { get; set; }
+    }
+
+    public class UpdateQuestRequest
+    {
+        public string? QuestName { get; set; }
+        public string? AcceptText { get; set; }
+        public string? ProgressText { get; set; }
+        public string? CompletedText { get; set; }
+        public string? ArchiveText { get; set; }
+        public int? StartNPC { get; set; }
+        public int? FinishNPC { get; set; }
+        public List<QuestRequirementDto>? Requirements { get; set; }
+        public List<QuestTaskDto>? Tasks { get; set; }
+        public List<QuestRewardDto>? Rewards { get; set; }
+    }
+
+    #endregion
+
+    #region Store
+
+    public class StoreInfoDto
+    {
+        public int Index { get; set; }
+        public int ItemIndex { get; set; }
+        public string ItemName { get; set; } = "";
+        public int Price { get; set; }
+        public int HuntGoldPrice { get; set; }
+        public string Filter { get; set; } = "";
+        public bool Available { get; set; }
+        public int Duration { get; set; }
+    }
+
+    public class AddStoreItemRequest
+    {
+        public int ItemIndex { get; set; }
+        public int Price { get; set; }
+        public int HuntGoldPrice { get; set; }
+        public string Filter { get; set; } = "";
+        public bool Available { get; set; } = true;
+        public int Duration { get; set; } = 0;
+    }
+
+    public class UpdateStoreItemRequest
+    {
+        public int? Price { get; set; }
+        public int? HuntGoldPrice { get; set; }
+        public string? Filter { get; set; }
+        public bool? Available { get; set; }
+        public int? Duration { get; set; }
+    }
+
+    #endregion
 }
+

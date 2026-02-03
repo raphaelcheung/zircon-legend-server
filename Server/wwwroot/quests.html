@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>任务管理 - 皓石传奇三管理后台</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <span class="sidebar-brand">皓石传奇三</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 主菜单 -->
+        <div class="nav-section">
+          <div class="nav-section-title">主菜单</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="9"></rect>
+              <rect x="14" y="3" width="7" height="5"></rect>
+              <rect x="14" y="12" width="7" height="9"></rect>
+              <rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+            <span>仪表盘</span>
+          </a>
+          <a href="players.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>玩家管理</span>
+          </a>
+          <a href="accounts.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>账号管理</span>
+          </a>
+          <a href="characters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
+            </svg>
+            <span>角色管理</span>
+          </a>
+        </div>
+
+        <!-- 游戏管理 -->
+        <div class="nav-section">
+          <div class="nav-section-title">游戏管理</div>
+          <a href="items.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            <span>物品管理</span>
+          </a>
+          <a href="maps.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
+            </svg>
+            <span>地图管理</span>
+          </a>
+          <a href="monsters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 9v4a7 7 0 0 1-14 0V9"></path>
+              <path d="M12 19v3"></path>
+              <path d="M8 22h8"></path>
+            </svg>
+            <span>怪物管理</span>
+          </a>
+          <a href="npcs.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="5"></circle>
+              <path d="M20 21a8 8 0 1 0-16 0"></path>
+            </svg>
+            <span>NPC管理</span>
+          </a>
+          <a href="magics.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>
+            </svg>
+            <span>技能管理</span>
+          </a>
+          <a href="classes.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <line x1="10" y1="9" x2="8" y2="9"></line>
+            </svg>
+            <span>职业管理</span>
+          </a>
+          <a href="quests.html" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <path d="M16 13H8"></path>
+              <path d="M16 17H8"></path>
+              <path d="M10 9H8"></path>
+            </svg>
+            <span>任务管理</span>
+          </a>
+          <a href="store.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span>商城管理</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-section">
+          <div class="nav-section-title">系统</div>
+          <a href="logs.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>系统日志</span>
+          </a>
+          <a href="settings.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>设置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <h1 class="page-title">任务管理</h1>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="切换主题">
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <div class="user-menu" onclick="toggleUserMenu()">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <div class="user-info">
+              <div class="user-name" id="userName">管理员</div>
+              <div class="user-role" id="userRole">SuperAdmin</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <!-- 统计卡片 -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.25rem;">
+          <div class="stat-card animate-in">
+            <div class="stat-card-header">
+              <div class="stat-icon info">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <path d="M16 13H8"></path>
+                  <path d="M16 17H8"></path>
+                  <path d="M10 9H8"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="totalQuests">--</div>
+            <div class="stat-label">任务总数</div>
+          </div>
+        </div>
+
+        <!-- 搜索栏 -->
+        <div class="card animate-in" style="margin-bottom: 1.25rem;">
+          <div class="card-body" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <input type="text" id="searchInput" class="form-input" placeholder="搜索任务名称..." onkeyup="handleSearchKeyup(event)">
+            </div>
+            <button class="btn btn-primary" onclick="doSearch()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              搜索
+            </button>
+            <button class="btn btn-secondary" onclick="resetSearch()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+              </svg>
+              重置
+            </button>
+          </div>
+        </div>
+
+        <!-- 任务列表 -->
+        <div class="card animate-in animate-delay-1">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M16 13H8"></path>
+                <path d="M16 17H8"></path>
+                <path d="M10 9H8"></path>
+              </svg>
+              任务列表
+            </h3>
+            <div class="card-actions">
+              <button class="btn btn-primary btn-sm" onclick="openAddModal()" title="新增任务">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                新增
+              </button>
+              <span id="pageInfo" style="color: var(--text-tertiary); font-size: 0.875rem; margin-right: 1rem;"></span>
+              <button class="btn btn-ghost btn-sm" onclick="loadQuests()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                刷新
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>任务名称</th>
+                    <th>开始NPC</th>
+                    <th>结束NPC</th>
+                    <th>任务数</th>
+                    <th>奖励数</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="questsTable">
+                  <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-tertiary);">加载中...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination" id="pagination"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 编辑任务模态框 -->
+  <div class="modal-overlay" id="editModal" onclick="closeEditModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          编辑任务
+        </h3>
+        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm">
+          <input type="hidden" id="editIndex">
+
+          <!-- 基本信息 -->
+          <div class="form-section">
+            <div class="form-section-title">基本信息</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">任务名称</label>
+                <input type="text" id="editQuestName" class="form-input">
+              </div>
+              <div class="form-group">
+                <label class="form-label">开始NPC</label>
+                <select id="editStartNPC" class="form-select">
+                  <option value="">请选择</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">结束NPC</label>
+                <select id="editFinishNPC" class="form-select">
+                  <option value="">请选择</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 任务文本 -->
+          <div class="form-section">
+            <div class="form-section-title">任务文本</div>
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label class="form-label">接受任务文本</label>
+                <textarea id="editAcceptText" class="form-input" rows="2"></textarea>
+              </div>
+              <div class="form-group full-width">
+                <label class="form-label">进行中任务文本</label>
+                <textarea id="editProgressText" class="form-input" rows="2"></textarea>
+              </div>
+              <div class="form-group full-width">
+                <label class="form-label">完成任务文本</label>
+                <textarea id="editCompletedText" class="form-input" rows="2"></textarea>
+              </div>
+              <div class="form-group full-width">
+                <label class="form-label">归档文本</label>
+                <textarea id="editArchiveText" class="form-input" rows="2"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- 任务要求 -->
+          <div class="form-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <div class="form-section-title" style="margin: 0;">任务要求</div>
+              <button type="button" class="btn btn-primary btn-sm" onclick="openAddRequirementModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                添加要求
+              </button>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>要求类型</th>
+                    <th>整数参数</th>
+                    <th>任务参数</th>
+                    <th>职业限制</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="requirementsTable">
+                  <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-tertiary);">暂无要求</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 任务目标 -->
+          <div class="form-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <div class="form-section-title" style="margin: 0;">任务目标</div>
+              <button type="button" class="btn btn-primary btn-sm" onclick="openAddTaskModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                添加目标
+              </button>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>任务类型</th>
+                    <th>物品/怪物</th>
+                    <th>数量</th>
+                    <th>详情数</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="tasksTable">
+                  <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-tertiary);">暂无目标</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 任务奖励 -->
+          <div class="form-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <div class="form-section-title" style="margin: 0;">任务奖励</div>
+              <button type="button" class="btn btn-primary btn-sm" onclick="openAddRewardModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                添加奖励
+              </button>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>物品</th>
+                    <th>数量</th>
+                    <th>职业限制</th>
+                    <th>可选</th>
+                    <th>绑定</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="rewardsTable">
+                  <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-tertiary);">暂无奖励</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveQuest()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增任务模态框 -->
+  <div class="modal-overlay" id="addModal" onclick="closeAddModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          新增任务
+        </h3>
+        <button class="modal-close" onclick="closeAddModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="addForm">
+          <div class="form-group">
+            <label class="form-label">任务名称 <span class="required">*</span></label>
+            <input type="text" id="addQuestName" class="form-input" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">开始NPC</label>
+              <select id="addStartNPC" class="form-select">
+                <option value="">请选择</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">结束NPC</label>
+              <select id="addFinishNPC" class="form-select">
+                <option value="">请选择</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAddModal()">取消</button>
+        <button class="btn btn-primary" onclick="addQuest()">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加要求模态框 -->
+  <div class="modal-overlay" id="requirementModal" onclick="closeRequirementModal(event)">
+    <div class="modal modal-sm" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">添加任务要求</h3>
+        <button class="modal-close" onclick="closeRequirementModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="requirementForm">
+          <div class="form-group">
+            <label class="form-label">要求类型</label>
+            <select id="reqRequirement" class="form-select">
+              <option value="MinLevel">最小等级</option>
+              <option value="MaxLevel">最大等级</option>
+              <option value="NotAccepted">未接受</option>
+              <option value="HaveCompleted">已完成</option>
+              <option value="HaveNotCompleted">未完成</option>
+              <option value="Class">职业</option>
+            </select>
+          </div>
+          <div class="form-group" id="reqIntParam1Group">
+            <label class="form-label">整数参数</label>
+            <input type="number" id="reqIntParameter1" class="form-input" value="0">
+          </div>
+          <div class="form-group" id="reqQuestParamGroup">
+            <label class="form-label">前置任务</label>
+            <select id="reqQuestParameter" class="form-select">
+              <option value="">请选择</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">职业限制</label>
+            <select id="reqClass" class="form-select">
+              <option value="All">所有职业</option>
+              <option value="Warrior">战士</option>
+              <option value="Wizard">法师</option>
+              <option value="Taoist">道士</option>
+              <option value="Archer">弓手</option>
+              <option value="Assassin">刺客</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeRequirementModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveRequirement()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加任务目标模态框 -->
+  <div class="modal-overlay" id="taskModal" onclick="closeTaskModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">添加任务目标</h3>
+        <button class="modal-close" onclick="closeTaskModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="taskForm">
+          <div class="form-group">
+            <label class="form-label">任务类型</label>
+            <select id="taskTask" class="form-select" onchange="toggleTaskType()">
+              <option value="KillMonster">击杀怪物</option>
+              <option value="GainItem">获得物品</option>
+            </select>
+          </div>
+          <div class="form-group" id="taskItemGroup">
+            <label class="form-label">物品</label>
+            <input type="text" id="taskItemSearch" class="form-input" placeholder="搜索物品..." style="margin-bottom: 8px;" autocomplete="off" oninput="handleItemSearch(event, 'taskItemParameter')">
+            <select id="taskItemParameter" class="form-select">
+              <option value="">请选择物品</option>
+            </select>
+          </div>
+          <div class="form-group" id="taskMobGroup" style="display: none;">
+            <label class="form-label">怪物</label>
+            <input type="text" id="taskMobSearch" class="form-input" placeholder="搜索怪物..." style="margin-bottom: 8px;" autocomplete="off" oninput="handleMonsterSearch(event, 'taskMobParameter')">
+            <select id="taskMobParameter" class="form-select">
+              <option value="">请选择怪物</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">数量</label>
+            <input type="number" id="taskAmount" class="form-input" value="1" min="1">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeTaskModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveTask()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加奖励模态框 -->
+  <div class="modal-overlay" id="rewardModal" onclick="closeRewardModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">添加任务奖励</h3>
+        <button class="modal-close" onclick="closeRewardModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="rewardForm">
+          <div class="form-group">
+            <label class="form-label">物品</label>
+            <input type="text" id="rewardItemSearch" class="form-input" placeholder="搜索物品..." style="margin-bottom: 8px;" autocomplete="off" oninput="handleItemSearch(event, 'rewardItem')">
+            <select id="rewardItem" class="form-select">
+              <option value="">请选择物品</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">数量</label>
+              <input type="number" id="rewardAmount" class="form-input" value="1" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">持续时间</label>
+              <input type="number" id="rewardDuration" class="form-input" value="0" min="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">职业限制</label>
+              <select id="rewardClass" class="form-select">
+                <option value="All">所有职业</option>
+                <option value="Warrior">战士</option>
+                <option value="Wizard">法师</option>
+                <option value="Taoist">道士</option>
+                <option value="Archer">弓手</option>
+                <option value="Assassin">刺客</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row checkbox-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="rewardChoice">
+              <span>可选奖励</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="rewardBound">
+              <span>绑定物品</span>
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeRewardModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveReward()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .form-input, .form-select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+    .pagination button {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    .pagination button:hover:not(:disabled) {
+      background: var(--bg-primary);
+      border-color: var(--primary);
+    }
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .pagination button.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .pagination span {
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+    .modal.modal-sm {
+      max-width: 500px;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+    .form-section {
+      margin-bottom: 1.5rem;
+    }
+    .form-section:last-child {
+      margin-bottom: 0;
+    }
+    .form-section-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .form-group.full-width {
+      grid-column: span 2;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .form-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .required {
+      color: var(--error);
+    }
+    .checkbox-row {
+      display: flex;
+      gap: 1.5rem;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .checkbox-label input[type="checkbox"] {
+      accent-color: var(--primary);
+      width: 1rem;
+      height: 1rem;
+    }
+
+    /* Action buttons */
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover {
+      background: var(--bg-primary);
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+    .btn-icon.danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error);
+      border-color: var(--error);
+    }
+  </style>
+
+  <script src="js/theme.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let currentPage = 1;
+    let pageSize = 50;
+    let totalQuests = 0;
+    let totalPages = 0;
+    let searchQuery = '';
+    let currentQuestIndex = 0;
+    let currentRequirements = [];
+    let currentTasks = [];
+    let currentRewards = [];
+    let allNPCs = [];
+    let allItems = [];
+    let allMonsters = [];
+    let allQuests = [];
+    let searchTimer = null;
+    let itemSearchTimers = new Map();
+    let monsterSearchTimers = new Map();
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!checkAuth()) {
+        window.location.href = 'index.html';
+        return;
+      }
+      loadUserInfo();
+      await Promise.all([
+        loadNPCs(),
+        loadItems(),
+        loadMonsters(),
+        loadQuests()
+      ]);
+    });
+
+    function loadUserInfo() {
+      const user = getUser();
+      if (user) {
+        document.getElementById('userName').textContent = user.email.split('@')[0];
+        document.getElementById('userRole').textContent = user.identity;
+        document.getElementById('userAvatar').textContent = user.email.charAt(0).toUpperCase();
+      }
+    }
+
+    async function loadNPCs() {
+      try {
+        const data = await api.get('/api/game/npcs?page=1&pageSize=500');
+        allNPCs = data.npcs || [];
+        populateNPCSelects();
+      } catch (error) {
+        console.error('加载NPC列表失败:', error);
+      }
+    }
+
+    async function loadItems() {
+      try {
+        const data = await api.get('/api/game/items?page=1&pageSize=500');
+        const items = data.items || [];
+        const itemMap = new Map();
+        items.forEach(item => {
+          if (!itemMap.has(item.index)) {
+            itemMap.set(item.index, item);
+          }
+        });
+        allItems = Array.from(itemMap.values());
+      } catch (error) {
+        console.error('加载物品列表失败:', error);
+      }
+    }
+
+    async function loadMonsters() {
+      try {
+        const data = await api.get('/api/game/monsters?page=1&pageSize=500');
+        const monsters = data.monsters || [];
+        const monsterMap = new Map();
+        monsters.forEach(monster => {
+          if (!monsterMap.has(monster.index)) {
+            monsterMap.set(monster.index, monster);
+          }
+        });
+        allMonsters = Array.from(monsterMap.values());
+      } catch (error) {
+        console.error('加载怪物列表失败:', error);
+      }
+    }
+
+    function populateNPCSelects() {
+      const selects = ['editStartNPC', 'editFinishNPC', 'addStartNPC', 'addFinishNPC'];
+      selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (select) {
+          select.innerHTML = '<option value="">请选择</option>' +
+            allNPCs.map(npc => `<option value="${npc.index}">${npc.index} - ${escapeHtml(npc.name)}</option>`).join('');
+        }
+      });
+    }
+
+    function handleSearchKeyup(event) {
+      if (event.key === 'Enter') {
+        doSearch();
+        return;
+      }
+
+      // 防抖处理：延迟300ms后执行搜索
+      if (searchTimer) {
+        clearTimeout(searchTimer);
+      }
+      searchTimer = setTimeout(() => {
+        doSearch();
+      }, 300);
+    }
+
+    function doSearch() {
+      searchQuery = document.getElementById('searchInput').value.trim();
+      currentPage = 1;
+      loadQuests();
+    }
+
+    function resetSearch() {
+      document.getElementById('searchInput').value = '';
+      searchQuery = '';
+      currentPage = 1;
+      loadQuests();
+    }
+
+    async function loadQuests() {
+      try {
+        let url = `/api/game/quests?page=${currentPage}&pageSize=${pageSize}`;
+        if (searchQuery) {
+          url += `&search=${encodeURIComponent(searchQuery)}`;
+        }
+
+        const data = await api.get(url);
+        totalQuests = data.total || 0;
+        totalPages = data.totalPages || 0;
+        allQuests = data.quests || [];
+
+        document.getElementById('totalQuests').textContent = totalQuests.toLocaleString();
+        document.getElementById('pageInfo').textContent = `第 ${currentPage} / ${totalPages} 页，共 ${totalQuests} 条`;
+
+        renderQuests(allQuests);
+        renderPagination();
+      } catch (error) {
+        console.error('加载任务列表失败:', error);
+        document.getElementById('questsTable').innerHTML =
+          '<tr><td colspan="7" style="text-align: center; color: var(--error);">加载失败: ' + error.message + '</td></tr>';
+      }
+    }
+
+    function renderQuests(quests) {
+      const tbody = document.getElementById('questsTable');
+
+      if (quests.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-tertiary);">暂无任务数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = quests.map(quest => `
+        <tr>
+          <td><code>${quest.index}</code></td>
+          <td><strong>${escapeHtml(quest.questName)}</strong></td>
+          <td>${quest.startNPC ? quest.startNPC.name : '-'}</td>
+          <td>${quest.finishNPC ? quest.finishNPC.name : '-'}</td>
+          <td>${quest.tasks ? quest.tasks.length : 0}</td>
+          <td>${quest.rewards ? quest.rewards.length : 0}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-icon" onclick="openEditModal(${quest.index})" title="编辑">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button class="btn-icon danger" onclick="deleteQuest(${quest.index})" title="删除">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPagination() {
+      const pagination = document.getElementById('pagination');
+      if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">上一页</button>`;
+
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+      if (endPage - startPage < maxVisible - 1) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+      }
+
+      if (startPage > 1) {
+        html += `<button onclick="goToPage(1)">1</button>`;
+        if (startPage > 2) html += `<span>...</span>`;
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span>...</span>`;
+        html += `<button onclick="goToPage(${totalPages})">${totalPages}</button>`;
+      }
+
+      html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">下一页</button>`;
+      pagination.innerHTML = html;
+    }
+
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      loadQuests();
+    }
+
+    // Add Modal
+    function openAddModal() {
+      document.getElementById('addQuestName').value = '';
+      document.getElementById('addStartNPC').value = '';
+      document.getElementById('addFinishNPC').value = '';
+      document.getElementById('addModal').classList.add('active');
+    }
+
+    function closeAddModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('addModal').classList.remove('active');
+    }
+
+    async function addQuest() {
+      const questName = document.getElementById('addQuestName').value.trim();
+      const startNPC = parseInt(document.getElementById('addStartNPC').value) || 0;
+      const finishNPC = parseInt(document.getElementById('addFinishNPC').value) || 0;
+
+      if (!questName) {
+        alert('请输入任务名称');
+        return;
+      }
+
+      try {
+        const request = {
+          questName,
+          startNPC,
+          finishNPC
+        };
+        const result = await api.post('/api/game/quests', request);
+        alert(result.message || '创建成功');
+        closeAddModal();
+        loadQuests();
+      } catch (error) {
+        alert('创建失败: ' + error.message);
+      }
+    }
+
+    // Edit Modal
+    async function openEditModal(index) {
+      try {
+        const quest = await api.get(`/api/game/quests/${index}`);
+
+        document.getElementById('editIndex').value = quest.index;
+        document.getElementById('editQuestName').value = quest.questName || '';
+        document.getElementById('editStartNPC').value = quest.startNPC?.index || '';
+        document.getElementById('editFinishNPC').value = quest.finishNPC?.index || '';
+        document.getElementById('editAcceptText').value = quest.acceptText || '';
+        document.getElementById('editProgressText').value = quest.progressText || '';
+        document.getElementById('editCompletedText').value = quest.completedText || '';
+        document.getElementById('editArchiveText').value = quest.archiveText || '';
+
+        currentQuestIndex = index;
+        currentRequirements = quest.requirements || [];
+        currentTasks = quest.tasks || [];
+        currentRewards = quest.rewards || [];
+
+        renderRequirements();
+        renderTasks();
+        renderRewards();
+
+        document.getElementById('editModal').classList.add('active');
+      } catch (error) {
+        alert('加载任务详情失败: ' + error.message);
+      }
+    }
+
+    function closeEditModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('editModal').classList.remove('active');
+    }
+
+    async function saveQuest() {
+      const index = parseInt(document.getElementById('editIndex').value);
+      const questName = document.getElementById('editQuestName').value.trim();
+
+      if (!questName) {
+        alert('任务名称不能为空');
+        return;
+      }
+
+      try {
+        const request = {
+          questName,
+          acceptText: document.getElementById('editAcceptText').value,
+          progressText: document.getElementById('editProgressText').value,
+          completedText: document.getElementById('editCompletedText').value,
+          archiveText: document.getElementById('editArchiveText').value,
+          startNPC: parseInt(document.getElementById('editStartNPC').value) || 0,
+          finishNPC: parseInt(document.getElementById('editFinishNPC').value) || 0
+        };
+
+        const result = await api.put(`/api/game/quests/${index}`, request);
+        alert(result.message || '保存成功');
+        closeEditModal();
+        loadQuests();
+      } catch (error) {
+        alert('保存失败: ' + error.message);
+      }
+    }
+
+    async function deleteQuest(index) {
+      if (!confirm('确定要删除这个任务吗？此操作不可恢复！')) return;
+
+      try {
+        const result = await api.delete(`/api/game/quests/${index}`);
+        alert(result.message || '删除成功');
+        loadQuests();
+      } catch (error) {
+        alert('删除失败: ' + error.message);
+      }
+    }
+
+    // Requirements
+    function renderRequirements() {
+      const tbody = document.getElementById('requirementsTable');
+      if (currentRequirements.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-tertiary);">暂无要求</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = currentRequirements.map((req, idx) => `
+        <tr>
+          <td>${escapeHtml(req.requirement)}</td>
+          <td>${req.intParameter1}</td>
+          <td>${req.questParameter?.questName || '-'}</td>
+          <td>${req.class}</td>
+          <td>
+            <button class="btn-icon danger" onclick="deleteRequirement(${idx})" title="删除">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openAddRequirementModal() {
+      document.getElementById('reqRequirement').value = 'MinLevel';
+      document.getElementById('reqIntParameter1').value = '0';
+      document.getElementById('reqQuestParameter').value = '';
+      document.getElementById('reqClass').value = 'All';
+      
+      populateQuestSelect('reqQuestParameter');
+      document.getElementById('requirementModal').classList.add('active');
+    }
+
+    function closeRequirementModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('requirementModal').classList.remove('active');
+    }
+
+    function populateQuestSelect(selectId, excludeIndex = null) {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+      
+      select.innerHTML = '<option value="">请选择</option>' +
+        allQuests
+          .filter(q => q.index !== excludeIndex)
+          .map(q => `<option value="${q.index}">${q.index} - ${escapeHtml(q.questName)}</option>`)
+          .join('');
+    }
+
+    function saveRequirement() {
+      const requirement = {
+        requirement: document.getElementById('reqRequirement').value,
+        intParameter1: parseInt(document.getElementById('reqIntParameter1').value) || 0,
+        questParameter: parseInt(document.getElementById('reqQuestParameter').value) || 0,
+        class: document.getElementById('reqClass').value
+      };
+
+      currentRequirements.push(requirement);
+      renderRequirements();
+      closeRequirementModal();
+    }
+
+    function deleteRequirement(idx) {
+      if (!confirm('确定要删除这个要求吗？')) return;
+      currentRequirements.splice(idx, 1);
+      renderRequirements();
+    }
+
+    // Tasks
+    function renderTasks() {
+      const tbody = document.getElementById('tasksTable');
+      if (currentTasks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-tertiary);">暂无目标</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = currentTasks.map((task, idx) => `
+        <tr>
+          <td>${escapeHtml(task.task)}</td>
+          <td>
+            ${task.task === 'GainItem'
+              ? `${task.itemParameter?.index || 0} - ${escapeHtml(task.itemParameter?.name || '')}`
+              : `${task.mobParameter?.index || 0} - ${escapeHtml(task.mobParameter?.name || task.mobDescription || '-')}`}
+          </td>
+          <td>${task.amount}</td>
+          <td>${task.monsterDetails?.length || 0}</td>
+          <td>
+            <button class="btn-icon danger" onclick="deleteTask(${idx})" title="删除">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function openAddTaskModal() {
+      document.getElementById('taskTask').value = 'KillMonster';
+      document.getElementById('taskItemParameter').value = '';
+      document.getElementById('taskMobParameter').value = '';
+      document.getElementById('taskMobSearch').value = '';
+      document.getElementById('taskItemSearch').value = '';
+      document.getElementById('taskAmount').value = '1';
+
+      toggleTaskType();
+      await Promise.all([
+        loadItemsForSelect('taskItemParameter'),
+        loadMonstersForSelect('taskMobParameter')
+      ]);
+      document.getElementById('taskModal').classList.add('active');
+    }
+
+    function closeTaskModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      // 清理任务物品搜索定时器
+      const taskTimer = itemSearchTimers.get('taskItemParameter');
+      if (taskTimer) {
+        clearTimeout(taskTimer);
+        itemSearchTimers.delete('taskItemParameter');
+      }
+      // 清理任务怪物搜索定时器
+      const monsterTimer = monsterSearchTimers.get('taskMobParameter');
+      if (monsterTimer) {
+        clearTimeout(monsterTimer);
+        monsterSearchTimers.delete('taskMobParameter');
+      }
+      document.getElementById('taskModal').classList.remove('active');
+    }
+
+    function toggleTaskType() {
+      const taskType = document.getElementById('taskTask').value;
+      document.getElementById('taskItemGroup').style.display = taskType === 'GainItem' ? 'block' : 'none';
+      document.getElementById('taskMobGroup').style.display = taskType === 'KillMonster' ? 'block' : 'none';
+    }
+
+    async function loadItemsForSelect(selectId, search = '') {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+
+      // 如果没有搜索词，使用本地缓存的完整列表
+      if (!search) {
+        select.innerHTML = '<option value="">请选择物品</option>' +
+          allItems.map(item => `<option value="${item.index}">${item.index} - ${escapeHtml(item.name)}</option>`).join('');
+        return;
+      }
+
+      // 有搜索词时，调用API接口查询，而不是从本地过滤
+      try {
+        const data = await api.get(`/api/game/items?page=1&pageSize=200&search=${encodeURIComponent(search)}`);
+        const items = data.items || [];
+
+        // 去重（基于物品索引）
+        const itemMap = new Map();
+        items.forEach(item => {
+          if (!itemMap.has(item.index)) {
+            itemMap.set(item.index, item);
+          }
+        });
+        const uniqueItems = Array.from(itemMap.values());
+
+        select.innerHTML = '<option value="">请选择物品</option>' +
+          uniqueItems.map(item => `<option value="${item.index}">${item.index} - ${escapeHtml(item.name)}</option>`).join('');
+      } catch (error) {
+        console.error('搜索物品失败:', error);
+        // 出错时显示默认选项
+        select.innerHTML = '<option value="">请选择物品</option>';
+      }
+    }
+
+    // 加载怪物列表并填充到选择框
+    async function loadMonstersForSelect(selectId, search = '') {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+
+      // 如果没有搜索词，使用本地缓存的完整列表
+      if (!search) {
+        select.innerHTML = '<option value="">请选择怪物</option>' +
+          allMonsters.map(monster => `<option value="${monster.index}">${monster.index} - ${escapeHtml(monster.name)}</option>`).join('');
+        return;
+      }
+
+      // 有搜索词时，调用API接口查询，而不是从本地过滤
+      try {
+        const data = await api.get(`/api/game/monsters?page=1&pageSize=200&search=${encodeURIComponent(search)}`);
+        const monsters = data.monsters || [];
+
+        // 去重（基于怪物索引）
+        const monsterMap = new Map();
+        monsters.forEach(monster => {
+          if (!monsterMap.has(monster.index)) {
+            monsterMap.set(monster.index, monster);
+          }
+        });
+        const uniqueMonsters = Array.from(monsterMap.values());
+
+        select.innerHTML = '<option value="">请选择怪物</option>' +
+          uniqueMonsters.map(monster => `<option value="${monster.index}">${monster.index} - ${escapeHtml(monster.name)}</option>`).join('');
+
+        // 绑定选择事件，同步搜索框显示
+        select.onchange = () => {
+          const selectedOption = select.options[select.selectedIndex];
+          if (selectedOption.value) {
+            // 格式：索引 - 名称，去掉索引部分
+            const text = selectedOption.text;
+            const match = text.match(/^\d+\s*-\s*(.+)$/);
+            if (match) {
+              document.getElementById('taskMobSearch').value = match[1];
+            } else {
+              document.getElementById('taskMobSearch').value = text;
+            }
+          } else {
+            document.getElementById('taskMobSearch').value = '';
+          }
+        };
+      } catch (error) {
+        console.error('搜索怪物失败:', error);
+        // 出错时显示默认选项
+        select.innerHTML = '<option value="">请选择怪物</option>';
+      }
+    }
+
+    // 处理怪物搜索输入
+    function handleMonsterSearch(event, selectId) {
+      clearTimeout(monsterSearchTimers.get(selectId));
+      const searchTerm = event.target.value.trim();
+
+      const timer = setTimeout(() => {
+        loadMonstersForSelect(selectId, searchTerm);
+      }, 300);
+
+      monsterSearchTimers.set(selectId, timer);
+    }
+
+    // 处理物品搜索输入
+    function handleItemSearch(event, selectId) {
+      // 为每个搜索框维护独立的定时器，避免多个搜索框互相干扰
+      const existingTimer = itemSearchTimers.get(selectId);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
+
+      const searchTerm = event.target.value.trim();
+      const timer = setTimeout(async () => {
+        await loadItemsForSelect(selectId, searchTerm);
+        // 搜索完成后清除定时器引用
+        itemSearchTimers.delete(selectId);
+      }, 300);
+
+      itemSearchTimers.set(selectId, timer);
+    }
+
+    function saveTask() {
+      const taskType = document.getElementById('taskTask').value;
+      const task = {
+        task: taskType,
+        itemParameter: parseInt(document.getElementById('taskItemParameter').value) || 0,
+        mobParameter: parseInt(document.getElementById('taskMobParameter').value) || 0,
+        amount: parseInt(document.getElementById('taskAmount').value) || 1
+      };
+
+      currentTasks.push(task);
+      renderTasks();
+      closeTaskModal();
+    }
+
+    function deleteTask(idx) {
+      if (!confirm('确定要删除这个目标吗？')) return;
+      currentTasks.splice(idx, 1);
+      renderTasks();
+    }
+
+    // Rewards
+    function renderRewards() {
+      const tbody = document.getElementById('rewardsTable');
+      if (currentRewards.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-tertiary);">暂无奖励</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = currentRewards.map((reward, idx) => `
+        <tr>
+          <td>${reward.item?.name || '-'}</td>
+          <td>${reward.amount}</td>
+          <td>${reward.class}</td>
+          <td>${reward.choice ? '是' : '否'}</td>
+          <td>${reward.bound ? '是' : '否'}</td>
+          <td>
+            <button class="btn-icon danger" onclick="deleteReward(${idx})" title="删除">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function openAddRewardModal() {
+      document.getElementById('rewardItem').value = '';
+      document.getElementById('rewardAmount').value = '1';
+      document.getElementById('rewardDuration').value = '0';
+      document.getElementById('rewardClass').value = 'All';
+      document.getElementById('rewardChoice').checked = false;
+      document.getElementById('rewardBound').checked = false;
+      document.getElementById('rewardItemSearch').value = '';
+
+      await loadItemsForSelect('rewardItem');
+      document.getElementById('rewardModal').classList.add('active');
+    }
+
+    function closeRewardModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      // 清理奖励物品搜索定时器
+      const rewardTimer = itemSearchTimers.get('rewardItem');
+      if (rewardTimer) {
+        clearTimeout(rewardTimer);
+        itemSearchTimers.delete('rewardItem');
+      }
+      document.getElementById('rewardModal').classList.remove('active');
+    }
+
+    function saveReward() {
+      const reward = {
+        item: parseInt(document.getElementById('rewardItem').value) || 0,
+        amount: parseInt(document.getElementById('rewardAmount').value) || 1,
+        duration: parseInt(document.getElementById('rewardDuration').value) || 0,
+        class: document.getElementById('rewardClass').value,
+        choice: document.getElementById('rewardChoice').checked,
+        bound: document.getElementById('rewardBound').checked
+      };
+
+      currentRewards.push(reward);
+      renderRewards();
+      closeRewardModal();
+    }
+
+    function deleteReward(idx) {
+      if (!confirm('确定要删除这个奖励吗？')) return;
+      currentRewards.splice(idx, 1);
+      renderRewards();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function toggleUserMenu() {
+      if (confirm('确定要退出登录吗？')) {
+        logout();
+        window.location.href = 'index.html';
+      }
+    }
+  </script>
+</body>
+</html>
