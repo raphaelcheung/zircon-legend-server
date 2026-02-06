@@ -171,6 +171,44 @@
           <!-- 分隔线 -->
           <hr style="border: none; border-top: 1px solid var(--border-color); margin: 1.5rem 0;">
 
+          <!-- 地图链接点 -->
+            <div class="form-section">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div class="form-section-title" style="margin: 0;">地图链接点</div>
+                <button type="button" class="btn btn-primary btn-sm" onclick="openAddMovementModal()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  添加链接
+                </button>
+              </div>
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>源区域</th>
+                      <th>源坐标</th>
+                      <th>目标地图</th>
+                      <th>目标区域</th>
+                      <th>目标坐标</th>
+                      <th>图标</th>
+                      <th>需求</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="mapMovementsTable">
+                    <tr>
+                      <td colspan="8" style="text-align: center; color: var(--text-tertiary);">加载中...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          <!-- 分隔线 -->
+          <hr style="border: none; border-top: 1px solid var(--border-color); margin: 1.5rem 0;">
+
           <!-- 地图刷新怪物 -->
             <div class="form-section">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -274,7 +312,7 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>刷新延迟 (秒)</label>
+              <label>刷新延迟 (分钟)</label>
               <input type="number" id="respawnDelay" class="form-input" min="1" value="60">
             </div>
             <div class="form-group">
@@ -311,6 +349,139 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeRespawnModal()">取消</button>
         <button class="btn btn-primary" onclick="saveRespawn()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加/编辑链接点模态框 -->
+  <div class="modal" id="movementModal">
+    <div class="modal-backdrop" onclick="closeMovementModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+          <span id="movementModalTitle">添加链接点</span>
+        </h3>
+        <button type="button" class="modal-close" onclick="closeMovementModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="movementForm">
+          <input type="hidden" id="editMovementId">
+          <div class="form-group">
+            <label>源区域</label>
+            <select id="movementSourceRegion" class="form-select" required>
+              <option value="">请选择源区域</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>目标区域</label>
+            <select id="movementDestinationRegion" class="form-select" required>
+              <option value="">请选择目标区域</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>图标</label>
+              <select id="movementIcon" class="form-select">
+                <option value="">无</option>
+                <option value="None">None</option>
+                <option value="Up">↑</option>
+                <option value="Down">↓</option>
+                <option value="Left">←</option>
+                <option value="Right">→</option>
+                <option value="Quest">Quest</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>移动效果</label>
+              <select id="movementEffect" class="form-select">
+                <option value="">无</option>
+                <option value="None">None</option>
+                <option value="Dash">Dash</option>
+                <option value="Jump">Jump</option>
+                <option value="Teleport">Teleport</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>需要的职业</label>
+            <select id="movementRequiredClass" class="form-select">
+              <option value="">全部</option>
+              <option value="All">All</option>
+              <option value="Warrior">Warrior</option>
+              <option value="Wizard">Wizard</option>
+              <option value="Taoist">Taoist</option>
+              <option value="Assassin">Assassin</option>
+              <option value="Archer">Archer</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>需要的物品 (可选)</label>
+              <select id="movementNeedItem" class="form-select">
+                <option value="">无</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>需要的怪物刷新 (可选)</label>
+              <select id="movementNeedSpawn" class="form-select">
+                <option value="">无</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeMovementModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveMovement()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 坐标查看模态框 -->
+  <div class="modal" id="coordsModal">
+    <div class="modal-backdrop" onclick="closeCoordsModal()"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span id="coordsModalTitle">区域坐标</span>
+        </h3>
+        <button type="button" class="modal-close" onclick="closeCoordsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="currentRegionIndex">
+        <input type="hidden" id="currentRegionType">
+
+        <!-- 添加坐标点表单 -->
+        <div class="form-section" style="margin-bottom: 1rem;">
+          <h4 class="form-section-title">添加坐标点</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>X 坐标</label>
+              <input type="number" id="addCoordX" class="form-input" placeholder="输入 X 坐标" min="0">
+            </div>
+            <div class="form-group">
+              <label>Y 坐标</label>
+              <input type="number" id="addCoordY" class="form-input" placeholder="输入 Y 坐标" min="0">
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="addRegionPoint()">添加坐标点</button>
+        </div>
+
+        <div id="coordsContent">
+          <p style="color: var(--text-tertiary);">加载中...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCoordsModal()">关闭</button>
       </div>
     </div>
   </div>
@@ -408,7 +579,7 @@
           <td><code>${respawn.monsterIndex}</code></td>
           <td><strong>${escapeHtml(respawn.monsterName)}</strong></td>
           <td>${escapeHtml(respawn.regionDescription) || '全图'}</td>
-          <td>${respawn.delay}秒</td>
+          <td>${respawn.delay}分钟</td>
           <td>${respawn.count}</td>
           <td>${respawn.dropSet || '-'}</td>
           <td><span>1/</span>${respawn.easterEventChance}</td>
@@ -740,7 +911,7 @@
       }
 
       if (isNaN(delay) || delay < 1) {
-        alert('刷新延迟必须大于0秒');
+        alert('刷新延迟必须大于0分钟');
         document.getElementById('respawnDelay').focus();
         return;
       }
@@ -751,8 +922,8 @@
         return;
       }
 
-      if (isNaN(easterEventChance) || easterEventChance < 0 || easterEventChance > 1) {
-        alert('节日概率必须在 0-1 之间');
+      if (isNaN(easterEventChance) || easterEventChance < 1 || easterEventChance > 10000000) {
+        alert('节日概率必须在 1-10000000 之间');
         document.getElementById('respawnEasterEventChance').focus();
         return;
       }
@@ -818,7 +989,390 @@
         alert('删除失败: ' + error.message);
       }
     }
-    async function openEditModal(index) { try { const map = await api.get(`/api/game/maps/${index}`); currentMapIndex = index; document.getElementById('editMapIndex').value = map.index; document.getElementById('editMapId').value = map.index; document.getElementById('editMapName').value = map.mapName || ''; document.getElementById('editFileName').value = map.fileName || ''; document.getElementById('editSize').value = `${map.width || 0} x ${map.height || 0}`; document.getElementById('editMonsterCount').value = map.monsterCount || 0; document.getElementById('editPlayerCount').value = map.playerCount || 0; document.getElementById('editAllowRT').checked = map.allowRT || false; document.getElementById('editAllowTT').checked = map.allowTT || false; document.getElementById('editAllowRecall').checked = map.allowRecall || false; document.getElementById('editCanHorse').checked = map.canHorse || false; document.getElementById('editCanMine').checked = map.canMine || false; document.getElementById('editCanMarriageRecall').checked = map.canMarriageRecall || false; document.getElementById('editMinLevel').value = map.minimumLevel || 0; document.getElementById('editMaxLevel').value = map.maximumLevel || 0; document.getElementById('editMonsterHealth').value = map.monsterHealth || 0; document.getElementById('editMonsterDamage').value = map.monsterDamage || 0; document.getElementById('editDropRate').value = map.dropRate || 0; document.getElementById('editExpRate').value = map.experienceRate || 0; document.getElementById('editGoldRate').value = map.goldRate || 0; await loadMapRespawns(index); document.getElementById('editModal').classList.add('show'); } catch (error) { alert('加载失败: ' + error.message); } }
+
+    // Map Movements Functions
+    async function loadMapMovements(mapIndex) {
+      try {
+        const data = await api.get(`/api/game/maps/${mapIndex}/movements`);
+        const movements = data.movements || [];
+        renderMapMovements(movements);
+      } catch (error) {
+        console.error('加载链接点失败:', error);
+        document.getElementById('mapMovementsTable').innerHTML =
+          '<tr><td colspan="6" style="text-align: center; color: var(--error);">加载失败: ' + error.message + '</td></tr>';
+      }
+    }
+
+    function renderMapMovements(movements) {
+      const tbody = document.getElementById('mapMovementsTable');
+      if (movements.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-tertiary);">暂无链接点</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = movements.map(movement => {
+        const requirements = [];
+        if (movement.requiredClass && movement.requiredClass !== 'All') {
+          requirements.push(movement.requiredClass);
+        }
+        if (movement.needItemName) {
+          requirements.push(`物品: ${movement.needItemName}`);
+        }
+        if (movement.needSpawnName) {
+          requirements.push(`击杀: ${movement.needSpawnName}`);
+        }
+
+        // 源坐标显示
+        let sourceCoords = '-';
+        if (movement.sourcePointCount > 0) {
+          const coords = movement.sourcePoints || [];
+          sourceCoords = `<a href="javascript:void(0)" onclick="showCoordsModal('source', ${movement.index})" style="color: var(--primary); text-decoration: none;">
+            <small>${coords.slice(0, 3).join(' ')}</small>
+          </a>`;
+          if (movement.sourcePointCount > 3) {
+            sourceCoords += `<small style="color: var(--text-tertiary);">(+${movement.sourcePointCount - 3})</small>`;
+          }
+        }
+
+        // 目标坐标显示
+        let destCoords = '-';
+        if (movement.destinationPointCount > 0) {
+          const coords = movement.destinationPoints || [];
+          destCoords = `<a href="javascript:void(0)" onclick="showCoordsModal('dest', ${movement.index})" style="color: var(--primary); text-decoration: none;">
+            <small>${coords.slice(0, 3).join(' ')}</small>
+          </a>`;
+          if (movement.destinationPointCount > 3) {
+            destCoords += `<small style="color: var(--text-tertiary);">(+${movement.destinationPointCount - 3})</small>`;
+          }
+        }
+
+        return `
+        <tr>
+          <td>
+            <strong>${escapeHtml(movement.sourceRegionDescription)}</strong>
+            <small style="display: block; color: var(--text-tertiary);">${escapeHtml(movement.sourceMapName)}</small>
+          </td>
+          <td>${sourceCoords}</td>
+          <td><strong>${escapeHtml(movement.destinationMapName)}</strong></td>
+          <td>${escapeHtml(movement.destinationRegionDescription)}</td>
+          <td>${destCoords}</td>
+          <td>${movement.icon || '-'}</td>
+          <td><small style="color: var(--text-tertiary);">${requirements.length > 0 ? requirements.join(', ') : '-'}</small></td>
+          <td>
+            <div class="action-btns">
+              <button type="button" class="btn btn-primary btn-icon" onclick="openEditMovementModal(${movement.index})" title="编辑">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button type="button" class="btn btn-danger btn-icon" onclick="deleteMovement(${movement.index})" title="删除">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `}).join('');
+    }
+
+    async function openAddMovementModal() {
+      document.getElementById('movementModalTitle').textContent = '添加链接点';
+      document.getElementById('editMovementId').value = '';
+      document.getElementById('movementSourceRegion').value = '';
+      document.getElementById('movementDestinationRegion').value = '';
+      document.getElementById('movementIcon').value = '';
+      document.getElementById('movementEffect').value = '';
+      document.getElementById('movementRequiredClass').value = '';
+      document.getElementById('movementNeedItem').value = '';
+      document.getElementById('movementNeedSpawn').value = '';
+      document.getElementById('movementModal').classList.add('show');
+
+      // 加载区域列表
+      await loadMovementRegions();
+    }
+
+    async function openEditMovementModal(movementId) {
+      try {
+        const movements = await api.get(`/api/game/maps/${currentMapIndex}/movements`);
+        const movement = movements.movements?.find(m => m.index === movementId);
+        if (!movement) {
+          alert('链接信息不存在');
+          return;
+        }
+
+        document.getElementById('movementModalTitle').textContent = '编辑链接点';
+        document.getElementById('editMovementId').value = movement.index;
+        document.getElementById('movementIcon').value = movement.icon || '';
+        document.getElementById('movementEffect').value = movement.effect || '';
+        document.getElementById('movementRequiredClass').value = movement.requiredClass || '';
+        document.getElementById('movementModal').classList.add('show');
+
+        // 加载区域列表
+        await loadMovementRegions();
+
+        // 设置选中的区域
+        document.getElementById('movementSourceRegion').value = movement.sourceRegionIndex || '';
+        document.getElementById('movementDestinationRegion').value = movement.destinationRegionIndex || '';
+        document.getElementById('movementNeedItem').value = movement.needItemIndex || '';
+        document.getElementById('movementNeedSpawn').value = movement.needSpawnIndex || '';
+      } catch (error) {
+        console.error('加载链接信息失败:', error);
+        alert('加载失败: ' + error.message);
+      }
+    }
+
+    async function loadMovementRegions() {
+      try {
+        // 加载所有区域
+        const data = await api.get('/api/game/mapregions?page=1&pageSize=500');
+        const allRegions = data.regions || [];
+
+        // 加载物品列表
+        const itemsData = await api.get('/api/game/items?page=1&pageSize=500');
+        const allItems = itemsData.items || [];
+
+        // 加载怪物刷新列表
+        const respawnsData = await api.get('/api/game/monsters?page=1&pageSize=500');
+        const allRespawns = respawnsData.monsters || [];
+
+        // 填充源区域（只显示当前地图的区域）
+        const sourceRegionSelect = document.getElementById('movementSourceRegion');
+        const currentMapRegions = allRegions.filter(r => r.mapIndex === currentMapIndex);
+        sourceRegionSelect.innerHTML = '<option value="">请选择源区域</option>' +
+          currentMapRegions.map(r => `<option value="${r.index}">${r.index} - ${escapeHtml(r.description)} (${escapeHtml(r.mapName)})</option>`).join('');
+
+        // 填充目标区域（显示所有区域）
+        const destRegionSelect = document.getElementById('movementDestinationRegion');
+        destRegionSelect.innerHTML = '<option value="">请选择目标区域</option>' +
+          allRegions.map(r => `<option value="${r.index}">${r.index} - ${escapeHtml(r.description)} (${escapeHtml(r.mapName)})</option>`).join('');
+
+        // 填充物品选择
+        const itemSelect = document.getElementById('movementNeedItem');
+        itemSelect.innerHTML = '<option value="">无</option>' +
+          allItems.map(i => `<option value="${i.index}">${i.index} - ${escapeHtml(i.name)}</option>`).join('');
+
+        // 填充刷新选择
+        const spawnSelect = document.getElementById('movementNeedSpawn');
+        spawnSelect.innerHTML = '<option value="">无</option>' +
+          allRespawns.map(r => `<option value="${r.index}">${r.index} - ${escapeHtml(r.name)}</option>`).join('');
+      } catch (error) {
+        console.error('加载数据失败:', error);
+        alert('加载数据失败: ' + error.message);
+      }
+    }
+
+    function closeMovementModal() {
+      document.getElementById('movementModal').classList.remove('show');
+    }
+
+    async function saveMovement() {
+      const movementId = document.getElementById('editMovementId').value;
+      const sourceRegionIndex = parseInt(document.getElementById('movementSourceRegion').value);
+      const destinationRegionIndex = parseInt(document.getElementById('movementDestinationRegion').value);
+      const icon = document.getElementById('movementIcon').value;
+      const effect = document.getElementById('movementEffect').value;
+      const requiredClass = document.getElementById('movementRequiredClass').value;
+      const needItemIndex = parseInt(document.getElementById('movementNeedItem').value) || 0;
+      const needSpawnIndex = parseInt(document.getElementById('movementNeedSpawn').value) || 0;
+
+      if (!sourceRegionIndex) {
+        alert('请选择源区域');
+        return;
+      }
+
+      if (!destinationRegionIndex) {
+        alert('请选择目标区域');
+        return;
+      }
+
+      try {
+        if (movementId) {
+          // 更新
+          const request = {
+            destinationRegionIndex,
+            icon: icon || null,
+            effect: effect || null,
+            requiredClass: requiredClass || null,
+            needItemIndex: needItemIndex || null,
+            needSpawnIndex: needSpawnIndex || null
+          };
+          const result = await api.put(`/api/game/maps/${currentMapIndex}/movements/${parseInt(movementId)}`, request);
+          alert(result.message || '更新成功');
+        } else {
+          // 新增
+          const request = {
+            sourceRegionIndex,
+            destinationRegionIndex,
+            icon: icon || null,
+            effect: effect || null,
+            requiredClass: requiredClass || null,
+            needItemIndex,
+            needSpawnIndex
+          };
+          const result = await api.post(`/api/game/maps/${currentMapIndex}/movements`, request);
+          alert(result.message || '添加成功');
+        }
+
+        closeMovementModal();
+        loadMapMovements(currentMapIndex);
+      } catch (error) {
+        console.error('保存链接点失败:', error);
+        alert('操作失败: ' + error.message);
+      }
+    }
+
+    async function deleteMovement(movementId) {
+      if (!confirm('确定要删除这个链接点吗？')) {
+        return;
+      }
+
+      try {
+        const result = await api.delete(`/api/game/maps/${currentMapIndex}/movements/${movementId}`);
+        alert(result.message || '删除成功');
+        loadMapMovements(currentMapIndex);
+      } catch (error) {
+        console.error('删除链接点失败:', error);
+        alert('删除失败: ' + error.message);
+      }
+    }
+
+    let currentRegionPoints = [];
+
+    async function showCoordsModal(type, movementId) {
+      try {
+        const movements = await api.get(`/api/game/maps/${currentMapIndex}/movements`);
+        const movement = movements.movements?.find(m => m.index === movementId);
+        if (!movement) {
+          alert('链接信息不存在');
+          return;
+        }
+
+        let regionIndex, title;
+        if (type === 'source') {
+          regionIndex = movement.sourceRegionIndex;
+          title = `源区域坐标 - ${escapeHtml(movement.sourceRegionDescription)}`;
+        } else {
+          regionIndex = movement.destinationRegionIndex;
+          title = `目标区域坐标 - ${escapeHtml(movement.destinationRegionDescription)}`;
+        }
+
+        // 保存当前区域索引和类型
+        document.getElementById('currentRegionIndex').value = regionIndex;
+        document.getElementById('currentRegionType').value = type;
+        document.getElementById('coordsModalTitle').textContent = title;
+
+        // 清空添加坐标的输入框
+        document.getElementById('addCoordX').value = '';
+        document.getElementById('addCoordY').value = '';
+
+        // 获取完整的区域数据
+        const regionDetail = await api.get(`/api/game/mapregions/${regionIndex}`);
+        currentRegionPoints = regionDetail.points || [];
+
+        renderRegionPoints(regionDetail);
+        document.getElementById('coordsModal').classList.add('show');
+      } catch (error) {
+        console.error('加载坐标信息失败:', error);
+        alert('加载坐标信息失败: ' + error.message);
+      }
+    }
+
+    function renderRegionPoints(regionDetail) {
+      const points = regionDetail.points || [];
+      const pointCount = regionDetail.pointCount || 0;
+      let coordsHtml = `<p style="margin-bottom: 1rem; color: var(--text-secondary);">${escapeHtml(regionDetail.description)} - 共 ${pointCount} 个点</p>`;
+
+      if (points.length > 0) {
+        coordsHtml += '<div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 8px; max-height: 400px; overflow-y: auto;">';
+        coordsHtml += '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">';
+        points.forEach((point, index) => {
+          coordsHtml += `<div style="display: flex; align-items: center; gap: 0.25rem; background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.875rem;">
+            <span>${escapeHtml(point)}</span>
+            <button type="button" class="btn btn-danger btn-icon" onclick="removeRegionPoint('${point}')" style="padding: 0.1rem 0.3rem; font-size: 0.7rem;" title="删除此坐标">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>`;
+        });
+        coordsHtml += '</div></div>';
+      } else {
+        coordsHtml += '<p style="color: var(--text-tertiary); text-align: center;">暂无坐标数据</p>';
+      }
+
+      document.getElementById('coordsContent').innerHTML = coordsHtml;
+    }
+
+    async function addRegionPoint() {
+      const regionIndex = document.getElementById('currentRegionIndex').value;
+      const x = document.getElementById('addCoordX').value.trim();
+      const y = document.getElementById('addCoordY').value.trim();
+
+      if (!x || !y) {
+        alert('请输入 X 和 Y 坐标');
+        return;
+      }
+
+      try {
+        const result = await api.put(`/api/game/mapregions/${regionIndex}`, {
+          addPoints: [`${x},${y}`]
+        });
+
+        alert(result.message || '添加成功');
+
+        // 重新加载区域数据
+        const regionDetail = await api.get(`/api/game/mapregions/${regionIndex}`);
+        currentRegionPoints = regionDetail.points || [];
+        renderRegionPoints(regionDetail);
+
+        // 刷新地图链接点列表
+        loadMapMovements(currentMapIndex);
+
+        // 清空输入框
+        document.getElementById('addCoordX').value = '';
+        document.getElementById('addCoordY').value = '';
+      } catch (error) {
+        console.error('添加坐标点失败:', error);
+        alert('添加失败: ' + error.message);
+      }
+    }
+
+    async function removeRegionPoint(point) {
+      if (!confirm(`确定要删除坐标点 ${point} 吗？`)) {
+        return;
+      }
+
+      const regionIndex = document.getElementById('currentRegionIndex').value;
+
+      try {
+        const result = await api.put(`/api/game/mapregions/${regionIndex}`, {
+          removePoints: [point]
+        });
+
+        alert(result.message || '删除成功');
+
+        // 重新加载区域数据
+        const regionDetail = await api.get(`/api/game/mapregions/${regionIndex}`);
+        currentRegionPoints = regionDetail.points || [];
+        renderRegionPoints(regionDetail);
+
+        // 刷新地图链接点列表
+        loadMapMovements(currentMapIndex);
+      } catch (error) {
+        console.error('删除坐标点失败:', error);
+        alert('删除失败: ' + error.message);
+      }
+    }
+
+    function closeCoordsModal() {
+      document.getElementById('coordsModal').classList.remove('show');
+    }
+
+    async function openEditModal(index) { try { const map = await api.get(`/api/game/maps/${index}`); currentMapIndex = index; document.getElementById('editMapIndex').value = map.index; document.getElementById('editMapId').value = map.index; document.getElementById('editMapName').value = map.mapName || ''; document.getElementById('editFileName').value = map.fileName || ''; document.getElementById('editSize').value = `${map.width || 0} x ${map.height || 0}`; document.getElementById('editMonsterCount').value = map.monsterCount || 0; document.getElementById('editPlayerCount').value = map.playerCount || 0; document.getElementById('editAllowRT').checked = map.allowRT || false; document.getElementById('editAllowTT').checked = map.allowTT || false; document.getElementById('editAllowRecall').checked = map.allowRecall || false; document.getElementById('editCanHorse').checked = map.canHorse || false; document.getElementById('editCanMine').checked = map.canMine || false; document.getElementById('editCanMarriageRecall').checked = map.canMarriageRecall || false; document.getElementById('editMinLevel').value = map.minimumLevel || 0; document.getElementById('editMaxLevel').value = map.maximumLevel || 0; document.getElementById('editMonsterHealth').value = map.monsterHealth || 0; document.getElementById('editMonsterDamage').value = map.monsterDamage || 0; document.getElementById('editDropRate').value = map.dropRate || 0; document.getElementById('editExpRate').value = map.experienceRate || 0; document.getElementById('editGoldRate').value = map.goldRate || 0; await loadMapRespawns(index); await loadMapMovements(index); document.getElementById('editModal').classList.add('show'); } catch (error) { alert('加载失败: ' + error.message); } }
     function closeEditModal() { document.getElementById('editModal').classList.remove('show'); }
     async function saveMap() { const index = document.getElementById('editMapIndex').value; const data = { mapName: document.getElementById('editMapName').value, allowRT: document.getElementById('editAllowRT').checked, allowTT: document.getElementById('editAllowTT').checked, allowRecall: document.getElementById('editAllowRecall').checked, canHorse: document.getElementById('editCanHorse').checked, canMine: document.getElementById('editCanMine').checked, canMarriageRecall: document.getElementById('editCanMarriageRecall').checked, minimumLevel: parseInt(document.getElementById('editMinLevel').value) || 0, maximumLevel: parseInt(document.getElementById('editMaxLevel').value) || 0, monsterHealth: parseInt(document.getElementById('editMonsterHealth').value) || 0, monsterDamage: parseInt(document.getElementById('editMonsterDamage').value) || 0, dropRate: parseInt(document.getElementById('editDropRate').value) || 0, experienceRate: parseInt(document.getElementById('editExpRate').value) || 0, goldRate: parseInt(document.getElementById('editGoldRate').value) || 0 }; try { const result = await api.put(`/api/game/maps/${index}`, data); alert(result.message || '保存成功'); closeEditModal(); loadMaps(); } catch (error) { alert('保存失败: ' + error.message); } }
     function openTeleportModal(index, name) { document.getElementById('teleportMapIndex').value = index; document.getElementById('teleportMapName').value = name; document.getElementById('teleportCharacter').value = ''; document.getElementById('teleportX').value = ''; document.getElementById('teleportY').value = ''; document.getElementById('teleportModal').classList.add('show'); }

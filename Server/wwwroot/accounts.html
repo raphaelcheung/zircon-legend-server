@@ -254,6 +254,8 @@
                     <th>身份</th>
                     <th>状态</th>
                     <th>角色数</th>
+                    <th>元宝</th>
+                    <th>猎币</th>
                     <th>注册时间</th>
                     <th>最后登录</th>
                     <th>操作</th>
@@ -261,7 +263,7 @@
                 </thead>
                 <tbody id="accountsTable">
                   <tr>
-                    <td colspan="7" style="text-align: center; color: var(--text-tertiary);">加载中...</td>
+                    <td colspan="9" style="text-align: center; color: var(--text-tertiary);">加载中...</td>
                   </tr>
                 </tbody>
               </table>
@@ -364,6 +366,35 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="hidePasswordModal()">取消</button>
         <button class="btn btn-primary" onclick="resetPassword()">重置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 修改金币模态框 -->
+  <div id="goldModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="hideGoldModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>修改金币</h3>
+        <button class="btn btn-ghost btn-sm" onclick="hideGoldModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>账号邮箱</label>
+          <input type="text" id="goldEmail" class="form-input" readonly>
+        </div>
+        <div class="form-group">
+          <label>元宝 (GameGold)</label>
+          <input type="number" id="gameGoldValue" class="form-input" placeholder="输入元宝数量" min="0">
+        </div>
+        <div class="form-group">
+          <label>猎币 (HuntGold)</label>
+          <input type="number" id="huntGoldValue" class="form-input" placeholder="输入猎币数量" min="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="hideGoldModal()">取消</button>
+        <button class="btn btn-primary" onclick="updateGold()">保存</button>
       </div>
     </div>
   </div>
@@ -562,10 +593,19 @@
               : '<span class="badge badge-success">正常</span>'}
           </td>
           <td>${account.characterCount}</td>
+          <td style="color: #f59e0b; font-weight: 500;">${formatNumber(account.gameGold || 0)}</td>
+          <td style="color: #8b5cf6; font-weight: 500;">${formatNumber(account.huntGold || 0)}</td>
           <td>${formatDate(account.creationDate)}</td>
           <td>${formatDate(account.lastLogin)}</td>
           <td>
             <div class="btn-group">
+              <button class="btn btn-warning btn-sm" onclick="showGoldModal('${escapeHtml(account.email)}', ${account.gameGold || 0}, ${account.huntGold || 0})" title="修改金币">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+              </button>
               <button class="btn btn-info btn-sm" onclick="showIdentityModal('${escapeHtml(account.email)}', '${account.identity}')" title="调整权限">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -583,7 +623,7 @@
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                   </button>`
-                : `<button class="btn btn-warning btn-sm" onclick="banAccount('${escapeHtml(account.email)}')" title="封禁">
+                : `<button class="btn btn-secondary btn-sm" onclick="banAccount('${escapeHtml(account.email)}')" title="封禁">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <circle cx="12" cy="12" r="10"></circle>
                       <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
@@ -626,6 +666,11 @@
       if (!dateStr) return '-';
       const date = new Date(dateStr);
       return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatNumber(num) {
+      if (num === undefined || num === null) return '0';
+      return num.toLocaleString('zh-CN');
     }
 
     function showCreateModal() {
@@ -740,6 +785,38 @@
         await api.put(`/api/accounts/${encodeURIComponent(email)}/reset-password`, { newPassword });
         alert('密码重置成功');
         hidePasswordModal();
+      } catch (error) {
+        alert('操作失败: ' + error.message);
+      }
+    }
+
+    // 金币修改相关
+    function showGoldModal(email, gameGold, huntGold) {
+      document.getElementById('goldEmail').value = email;
+      document.getElementById('gameGoldValue').value = gameGold;
+      document.getElementById('huntGoldValue').value = huntGold;
+      document.getElementById('goldModal').style.display = 'flex';
+    }
+
+    function hideGoldModal() {
+      document.getElementById('goldModal').style.display = 'none';
+    }
+
+    async function updateGold() {
+      const email = document.getElementById('goldEmail').value;
+      const gameGold = parseInt(document.getElementById('gameGoldValue').value) || 0;
+      const huntGold = parseInt(document.getElementById('huntGoldValue').value) || 0;
+
+      if (gameGold < 0 || huntGold < 0) {
+        alert('金币数量不能为负数');
+        return;
+      }
+
+      try {
+        await api.put(`/api/accounts/${encodeURIComponent(email)}/gold`, { gameGold, huntGold });
+        alert('金币修改成功');
+        hideGoldModal();
+        await loadAccounts();
       } catch (error) {
         alert('操作失败: ' + error.message);
       }

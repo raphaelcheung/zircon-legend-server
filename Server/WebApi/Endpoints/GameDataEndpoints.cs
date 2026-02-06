@@ -38,6 +38,10 @@ namespace Server.WebApi.Endpoints
             group.MapPut("/maps/{index:int}", UpdateMap);
             group.MapPost("/maps/teleport", TeleportPlayer);
             group.MapPost("/maps/{index:int}/clear-monsters", ClearMonstersOnMap);
+            group.MapGet("/maps/{index:int}/movements", GetMapMovements);
+            group.MapPost("/maps/{index:int}/movements", AddMapMovement);
+            group.MapPut("/maps/{index:int}/movements/{movementId:int}", UpdateMapMovement);
+            group.MapDelete("/maps/{index:int}/movements/{movementId:int}", DeleteMapMovement);
 
             // Monsters
             group.MapGet("/monsters", GetMonsters);
@@ -55,6 +59,8 @@ namespace Server.WebApi.Endpoints
             group.MapGet("/npcs/{index:int}", GetNpcDetail);
             group.MapPut("/npcs/{index:int}", UpdateNpc);
             group.MapGet("/mapregions", GetMapRegions);
+            group.MapGet("/mapregions/{index:int}", GetMapRegionDetail);
+            group.MapPut("/mapregions/{index:int}", UpdateMapRegionPoints);
 
             group.MapGet("/magics", GetMagics);
             group.MapGet("/magics/{index:int}", GetMagicDetail);
@@ -367,6 +373,51 @@ namespace Server.WebApi.Endpoints
                 total = regions.Count,
                 regions
             });
+        }
+
+        /// <summary>
+        /// Get map region detail with all points
+        /// </summary>
+        private static IResult GetMapRegionDetail(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var region = dataService.GetMapRegionDetail(index);
+            if (region == null)
+            {
+                return Results.NotFound(new { message = "区域不存在" });
+            }
+
+            return Results.Ok(region);
+        }
+
+        /// <summary>
+        /// Update map region points
+        /// </summary>
+        private static IResult UpdateMapRegionPoints(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            UpdateRegionPointsRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.UpdateMapRegionPoints(index, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
         }
 
         /// <summary>
@@ -1367,6 +1418,101 @@ namespace Server.WebApi.Endpoints
             }
 
             var (success, message) = dataService.DeleteMapRespawn(index, respawnId);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        #endregion
+
+        #region Movement Management
+
+        /// <summary>
+        /// Get movements for a map
+        /// </summary>
+        private static IResult GetMapMovements(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var movements = dataService.GetMapMovements(index);
+            return Results.Ok(new
+            {
+                total = movements.Count,
+                movements
+            });
+        }
+
+        /// <summary>
+        /// Add movement to map
+        /// </summary>
+        private static IResult AddMapMovement(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            AddMovementRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message, movement) = dataService.AddMapMovement(index, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message, movement });
+        }
+
+        /// <summary>
+        /// Update map movement
+        /// </summary>
+        private static IResult UpdateMapMovement(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            int movementId,
+            UpdateMovementRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.UpdateMapMovement(index, movementId, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        /// <summary>
+        /// Delete map movement
+        /// </summary>
+        private static IResult DeleteMapMovement(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            int movementId)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.DeleteMapMovement(index, movementId);
             if (!success)
             {
                 return Results.BadRequest(new { message });
