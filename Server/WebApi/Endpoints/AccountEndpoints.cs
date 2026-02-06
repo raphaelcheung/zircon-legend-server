@@ -22,6 +22,7 @@ namespace Server.WebApi.Endpoints
             group.MapPut("/{email}/unban", UnbanAccount);
             group.MapPut("/{email}/identity", ChangeIdentity);
             group.MapPut("/{email}/reset-password", ResetPassword);
+            group.MapPut("/{email}/gold", UpdateGold);
         }
 
         /// <summary>
@@ -255,6 +256,45 @@ namespace Server.WebApi.Endpoints
 
             return Results.Problem("Failed to reset password");
         }
+
+        /// <summary>
+        /// Update account gold and game gold
+        /// </summary>
+        private static IResult UpdateGold(string email, UpdateGoldRequest request, ClaimsPrincipal user, ServerDataService dataService)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Operator))
+            {
+                return Results.Forbid();
+            }
+
+            if (request.GameGold < 0 || request.HuntGold < 0)
+            {
+                return Results.BadRequest(new { message = "Gold values cannot be negative" });
+            }
+
+            var currentIdentity = JwtHelper.GetIdentity(user);
+
+            // Check target account
+            var targetAccount = dataService.GetAccountByEmail(email);
+            if (targetAccount == null)
+            {
+                return Results.NotFound(new { message = "Account not found" });
+            }
+
+            // Cannot modify gold for accounts with higher or equal identity (unless SuperAdmin)
+            if (targetAccount.Identify >= currentIdentity && currentIdentity < AccountIdentity.SuperAdmin)
+            {
+                return Results.Forbid();
+            }
+
+            var success = dataService.UpdateAccountGold(email, request.GameGold, request.HuntGold);
+            if (success)
+            {
+                return Results.Ok(new { message = "Gold updated successfully" });
+            }
+
+            return Results.Problem("Failed to update gold");
+        }
     }
 
     #region Request Models
@@ -280,6 +320,12 @@ namespace Server.WebApi.Endpoints
     public class ResetPasswordRequest
     {
         public string NewPassword { get; set; } = "";
+    }
+
+    public class UpdateGoldRequest
+    {
+        public int GameGold { get; set; }
+        public int HuntGold { get; set; }
     }
 
     #endregion
