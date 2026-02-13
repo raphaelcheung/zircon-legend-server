@@ -50,7 +50,7 @@ namespace Server.Envir
             MailPassword = @"REDACTED";
             MailFrom = "admin@zirconserver.com";
             MailDisplayName = "Admin";
-            WebPrefix = @"http://*:80/Command/";
+            WebPrefix = @"http://*:7080/Command/";
             WebCommandLink = @"https://www.zirconserver.com/Command";
             ActivationSuccessLink = @"https://www.zirconserver.com/activation-successful/";
             ActivationFailLink = @"https://www.zirconserver.com/activation-unsuccessful/";
@@ -58,9 +58,9 @@ namespace Server.Envir
             ResetFailLink = @"https://www.zirconserver.com/password-reset-unsuccessful/";
             DeleteSuccessLink = @"https://www.zirconserver.com/account-deletetion-successful/";
             DeleteFailLink = @"https://www.zirconserver.com/account-deletetion-unsuccessful/";
-            BuyPrefix = @"http://*:80/BuyGameGold/";
-            BuyAddress = @"http://145.239.204.13/BuyGameGold";
-            IPNPrefix = @"http://*:80/IPN/";
+            BuyPrefix = @"http://*:7080/BuyGameGold/";
+            BuyAddress = @"http://x.x.x.x/BuyGameGold";
+            IPNPrefix = @"http://*:7080/IPN/";
             ReceiverEMail = @"REDACTED";
             MaxViewRange = 18;
             ProcessGameGold = true;
@@ -136,6 +136,7 @@ namespace Server.Envir
         public static byte 判断敏感词最大跳几个字符 { get; set; } = 2;
 
         [ConfigSection("Control")]
+        public static bool OnlyAdminLogin { get; set; } = true;
         public static bool AllowLogin { get; set; } 
         public static bool AllowNewAccount { get; set; } 
         public static bool AllowChangePassword { get; set; } 
@@ -252,6 +253,12 @@ namespace Server.Envir
         public static int CompanionRate { get; set; }
         public static int Boss掉落倍率 { get; set; } = 0;
         public static int 技能高等级经验倍率 { get; set; } = 100;
+
+        [ConfigSection("WebApi")]
+        public static bool WebApiEnabled { get; set; } = true;
+        public static int WebApiPort { get; set; } = 7080;
+        public static string WebApiJwtSecret { get; set; } = "ZirconLegendServer2024SecretKey32";
+        public static int WebApiJwtExpiration { get; set; } = 60;
 
     }
 }

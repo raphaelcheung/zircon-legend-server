@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>账号管理 - 皓石传奇三管理后台</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <span class="sidebar-brand">皓石传奇三</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">主菜单</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="9"></rect>
+              <rect x="14" y="3" width="7" height="5"></rect>
+              <rect x="14" y="12" width="7" height="9"></rect>
+              <rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+            <span>仪表盘</span>
+          </a>
+          <a href="players.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>玩家管理</span>
+          </a>
+          <a href="accounts.html" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>账号管理</span>
+          </a>
+          <a href="characters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
+            </svg>
+            <span>角色管理</span>
+          </a>
+        </div>
+
+        <!-- 游戏管理 -->
+        <div class="nav-section">
+          <div class="nav-section-title">游戏管理</div>
+          <a href="items.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            <span>物品管理</span>
+          </a>
+          <a href="maps.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
+            </svg>
+            <span>地图管理</span>
+          </a>
+          <a href="monsters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 9v4a7 7 0 0 1-14 0V9"></path>
+              <path d="M12 19v3"></path>
+              <path d="M8 22h8"></path>
+            </svg>
+            <span>怪物管理</span>
+          </a>
+          <a href="npcs.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="5"></circle>
+              <path d="M20 21a8 8 0 1 0-16 0"></path>
+            </svg>
+            <span>NPC管理</span>
+          </a>
+          <a href="magics.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>
+            </svg>
+            <span>技能管理</span>
+          </a>
+          <a href="classes.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <line x1="10" y1="9" x2="8" y2="9"></line>
+            </svg>
+            <span>职业管理</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-section">
+          <div class="nav-section-title">系统</div>
+          <a href="logs.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>系统日志</span>
+          </a>
+          <a href="settings.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>设置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <h1 class="page-title">账号管理</h1>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="切换主题">
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <div class="user-menu" onclick="toggleUserMenu()">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <div class="user-info">
+              <div class="user-name" id="userName">管理员</div>
+              <div class="user-role" id="userRole">SuperAdmin</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <!-- 搜索和操作栏 -->
+        <div class="card animate-in" style="margin-bottom: 1.25rem;">
+          <div class="card-body" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <input type="text" id="searchInput" class="form-input" placeholder="搜索账号邮箱..." onkeyup="handleSearchKeyup(event)">
+            </div>
+            <button class="btn btn-primary" onclick="doSearch()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              搜索
+            </button>
+            <button class="btn btn-secondary" onclick="resetSearch()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+              </svg>
+              重置
+            </button>
+            <button class="btn btn-success" onclick="showCreateModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              创建账号
+            </button>
+          </div>
+        </div>
+
+        <!-- 账号列表 -->
+        <div class="card animate-in animate-delay-1">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              账号列表
+              <span id="totalCount" style="font-weight: normal; color: var(--text-tertiary);"></span>
+            </h3>
+            <button class="btn btn-ghost btn-sm" onclick="loadAccounts()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+              刷新
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>邮箱</th>
+                    <th>身份</th>
+                    <th>状态</th>
+                    <th>角色数</th>
+                    <th>注册时间</th>
+                    <th>最后登录</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="accountsTable">
+                  <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-tertiary);">加载中...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- 分页 -->
+            <div id="pagination" class="pagination" style="margin-top: 1rem;"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 创建账号模态框 -->
+  <div id="createModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="hideCreateModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>创建新账号</h3>
+        <button class="btn btn-ghost btn-sm" onclick="hideCreateModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>邮箱地址</label>
+          <input type="email" id="newEmail" class="form-input" placeholder="example@email.com">
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <input type="password" id="newPassword" class="form-input" placeholder="输入密码">
+        </div>
+        <div class="form-group">
+          <label>账号身份</label>
+          <select id="newIdentity" class="form-input">
+            <option value="Normal">普通玩家</option>
+            <option value="Supervisor">监督员</option>
+            <option value="Operator">操作员</option>
+            <option value="Admin">管理员</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="hideCreateModal()">取消</button>
+        <button class="btn btn-primary" onclick="createAccount()">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 调整权限模态框 -->
+  <div id="identityModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="hideIdentityModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>调整账号权限</h3>
+        <button class="btn btn-ghost btn-sm" onclick="hideIdentityModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>账号邮箱</label>
+          <input type="text" id="identityEmail" class="form-input" readonly>
+        </div>
+        <div class="form-group">
+          <label>权限等级</label>
+          <select id="identitySelect" class="form-input">
+            <option value="Normal">普通玩家</option>
+            <option value="Supervisor">监督员</option>
+            <option value="Operator">操作员</option>
+            <option value="Admin">管理员</option>
+            <option value="SuperAdmin">超级管理员</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="hideIdentityModal()">取消</button>
+        <button class="btn btn-primary" onclick="changeIdentity()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 重置密码模态框 -->
+  <div id="passwordModal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="hidePasswordModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>重置密码</h3>
+        <button class="btn btn-ghost btn-sm" onclick="hidePasswordModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>账号邮箱</label>
+          <input type="text" id="passwordEmail" class="form-input" readonly>
+        </div>
+        <div class="form-group">
+          <label>新密码</label>
+          <input type="password" id="newPasswordInput" class="form-input" placeholder="输入新密码（至少6位）">
+        </div>
+        <div class="form-group">
+          <label>确认密码</label>
+          <input type="password" id="confirmPasswordInput" class="form-input" placeholder="再次输入新密码">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="hidePasswordModal()">取消</button>
+        <button class="btn btn-primary" onclick="resetPassword()">重置</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .form-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+    }
+    .modal-content {
+      position: relative;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      margin: 1rem;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-body {
+      padding: 1.25rem;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .pagination button {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .pagination button:hover {
+      background: var(--bg-secondary);
+    }
+    .pagination button.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .badge-success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .badge-error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    .btn-group { display: flex; gap: 0.25rem; }
+    .btn-info { background: #3b82f6; color: white; border-color: #3b82f6; }
+    .btn-info:hover { background: #2563eb; border-color: #2563eb; }
+  </style>
+
+  <script src="js/theme.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let currentPage = 1;
+    let searchQuery = '';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!checkAuth()) {
+        window.location.href = 'index.html';
+        return;
+      }
+      // Read search parameter from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchParam = urlParams.get('search');
+      if (searchParam) {
+        searchQuery = searchParam;
+        document.getElementById('searchInput').value = searchParam;
+      }
+      loadUserInfo();
+      await loadAccounts();
+    });
+
+    function loadUserInfo() {
+      const user = getUser();
+      if (user) {
+        document.getElementById('userName').textContent = user.email.split('@')[0];
+        document.getElementById('userRole').textContent = user.identity;
+        document.getElementById('userAvatar').textContent = user.email.charAt(0).toUpperCase();
+      }
+    }
+
+    function handleSearchKeyup(event) {
+      if (event.key === 'Enter') {
+        doSearch();
+      }
+    }
+
+    function doSearch() {
+      searchQuery = document.getElementById('searchInput').value;
+      currentPage = 1;
+      loadAccounts();
+    }
+
+    function resetSearch() {
+      document.getElementById('searchInput').value = '';
+      searchQuery = '';
+      currentPage = 1;
+      // Clear URL search parameter
+      window.history.replaceState({}, '', 'accounts.html');
+      loadAccounts();
+    }
+
+    async function loadAccounts() {
+      try {
+        let url = `/api/accounts?page=${currentPage}&pageSize=20`;
+        if (searchQuery) {
+          url += `&search=${encodeURIComponent(searchQuery)}`;
+        }
+        const data = await api.get(url);
+        document.getElementById('totalCount').textContent = `(共 ${data.total} 个)`;
+        renderAccounts(data.accounts || []);
+        renderPagination(data.page, data.totalPages);
+      } catch (error) {
+        console.error('加载账号列表失败:', error);
+        document.getElementById('accountsTable').innerHTML =
+          '<tr><td colspan="7" style="text-align: center; color: var(--error);">加载失败</td></tr>';
+      }
+    }
+
+    function renderAccounts(accounts) {
+      const tbody = document.getElementById('accountsTable');
+      if (accounts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-tertiary);">暂无账号</td></tr>';
+        return;
+      }
+
+      const identityMap = {
+        'Normal': '普通玩家',
+        'Supervisor': '监督员',
+        'Operator': '操作员',
+        'Admin': '管理员',
+        'SuperAdmin': '超级管理员'
+      };
+
+      tbody.innerHTML = accounts.map(account => `
+        <tr>
+          <td><strong>${escapeHtml(account.email)}</strong></td>
+          <td><span class="badge badge-primary">${identityMap[account.identity] || account.identity}</span></td>
+          <td>
+            ${account.banned
+              ? '<span class="badge badge-error">已封禁</span>'
+              : '<span class="badge badge-success">正常</span>'}
+          </td>
+          <td>${account.characterCount}</td>
+          <td>${formatDate(account.creationDate)}</td>
+          <td>${formatDate(account.lastLogin)}</td>
+          <td>
+            <div class="btn-group">
+              <button class="btn btn-info btn-sm" onclick="showIdentityModal('${escapeHtml(account.email)}', '${account.identity}')" title="调整权限">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="showPasswordModal('${escapeHtml(account.email)}')" title="重置密码">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </button>
+              ${account.banned
+                ? `<button class="btn btn-success btn-sm" onclick="unbanAccount('${escapeHtml(account.email)}')" title="解封">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>`
+                : `<button class="btn btn-warning btn-sm" onclick="banAccount('${escapeHtml(account.email)}')" title="封禁">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                    </svg>
+                  </button>`}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPagination(page, totalPages) {
+      const container = document.getElementById('pagination');
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      html += `<button onclick="goToPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}>上一页</button>`;
+
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+          html += `<button class="${i === page ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        } else if (i === page - 3 || i === page + 3) {
+          html += `<span style="padding: 0.5rem;">...</span>`;
+        }
+      }
+
+      html += `<button onclick="goToPage(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>下一页</button>`;
+      container.innerHTML = html;
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      loadAccounts();
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function showCreateModal() {
+      document.getElementById('createModal').style.display = 'flex';
+    }
+
+    function hideCreateModal() {
+      document.getElementById('createModal').style.display = 'none';
+      document.getElementById('newEmail').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('newIdentity').value = 'Normal';
+    }
+
+    async function createAccount() {
+      const email = document.getElementById('newEmail').value;
+      const password = document.getElementById('newPassword').value;
+      const identity = document.getElementById('newIdentity').value;
+
+      if (!email || !password) {
+        alert('请填写邮箱和密码');
+        return;
+      }
+
+      try {
+        await api.post('/api/accounts', { email, password, identity });
+        alert('账号创建成功');
+        hideCreateModal();
+        await loadAccounts();
+      } catch (error) {
+        alert('创建失败: ' + error.message);
+      }
+    }
+
+    async function banAccount(email) {
+      const reason = prompt('请输入封禁原因:');
+      if (reason === null) return;
+
+      try {
+        await api.put(`/api/accounts/${encodeURIComponent(email)}/ban`, { reason });
+        alert('账号已封禁');
+        await loadAccounts();
+      } catch (error) {
+        alert('操作失败: ' + error.message);
+      }
+    }
+
+    async function unbanAccount(email) {
+      if (!confirm(`确定要解封账号 "${email}" 吗？`)) return;
+
+      try {
+        await api.put(`/api/accounts/${encodeURIComponent(email)}/unban`);
+        alert('账号已解封');
+        await loadAccounts();
+      } catch (error) {
+        alert('操作失败: ' + error.message);
+      }
+    }
+
+    // 权限调整相关
+    function showIdentityModal(email, currentIdentity) {
+      document.getElementById('identityEmail').value = email;
+      document.getElementById('identitySelect').value = currentIdentity;
+      document.getElementById('identityModal').style.display = 'flex';
+    }
+
+    function hideIdentityModal() {
+      document.getElementById('identityModal').style.display = 'none';
+    }
+
+    async function changeIdentity() {
+      const email = document.getElementById('identityEmail').value;
+      const identity = document.getElementById('identitySelect').value;
+
+      try {
+        await api.put(`/api/accounts/${encodeURIComponent(email)}/identity`, { identity });
+        alert('权限调整成功');
+        hideIdentityModal();
+        await loadAccounts();
+      } catch (error) {
+        alert('操作失败: ' + error.message);
+      }
+    }
+
+    // 密码重置相关
+    function showPasswordModal(email) {
+      document.getElementById('passwordEmail').value = email;
+      document.getElementById('newPasswordInput').value = '';
+      document.getElementById('confirmPasswordInput').value = '';
+      document.getElementById('passwordModal').style.display = 'flex';
+    }
+
+    function hidePasswordModal() {
+      document.getElementById('passwordModal').style.display = 'none';
+    }
+
+    async function resetPassword() {
+      const email = document.getElementById('passwordEmail').value;
+      const newPassword = document.getElementById('newPasswordInput').value;
+      const confirmPassword = document.getElementById('confirmPasswordInput').value;
+
+      if (!newPassword || newPassword.length < 6) {
+        alert('密码长度至少6位');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        alert('两次输入的密码不一致');
+        return;
+      }
+
+      try {
+        await api.put(`/api/accounts/${encodeURIComponent(email)}/reset-password`, { newPassword });
+        alert('密码重置成功');
+        hidePasswordModal();
+      } catch (error) {
+        alert('操作失败: ' + error.message);
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function toggleUserMenu() {
+      if (confirm('确定要退出登录吗？')) {
+        logout();
+        window.location.href = 'index.html';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,6 +1,9 @@
 services:
     zircon:
         container_name: zircon
+        build:
+            context: .
+            dockerfile: Dockerfile
         image: raphzhang/zirconlegend:latest
         labels:
             createdBy: Apps
@@ -9,6 +12,7 @@ services:
                 ipv4_address: 172.18.0.82
         ports:
             - 192.168.0.3:17000:7000
+            - 192.168.0.3:17080:7080
         restart: unless-stopped
         user: "0:0"
         volumes:

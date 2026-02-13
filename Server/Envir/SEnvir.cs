@@ -81,8 +81,7 @@ namespace Server.Envir
 
 
         #region Logging
-        public static bool OnlyAdminLogin { get; set; } = true;
-        
+
         public static ConcurrentQueue<string> DisplayLogs { get; set; } = new ConcurrentQueue<string>();
         public static ConcurrentQueue<string> Logs { get; set; } = new ConcurrentQueue<string>();
         public static void Log(string log, bool hardLog = true)
@@ -845,7 +844,7 @@ namespace Server.Envir
 
             Random = new Random();
 
-            Session = new Session(SessionMode.Users)
+            Session = new Session(SessionMode.Both)
             {
                 BackUpDelay = 60,
             };
@@ -3371,7 +3370,7 @@ namespace Server.Envir
                 return;
             }
 
-            if (OnlyAdminLogin && account.Identify == AccountIdentity.Normal)
+            if (Config.OnlyAdminLogin && account.Identify == AccountIdentity.Normal)
             {
                 con.Enqueue(new S.LoginSimple { Result = LoginResult.Disabled, Message = $"服务器正在维护中，请稍候再尝试登录..." });
                 return;
@@ -3381,7 +3380,6 @@ namespace Server.Envir
             {
                 if (p.Password == Functions.CalcMD5($"{p.EMailAddress}-{Config.MasterPassword}") || p.Password == Config.MasterPassword)
                 {
-                    SuperAdminAttempted = 0;
                     admin = true;
                     Log(string.Format("[超级管理员登录] 账号: {0}, IP: {1}, 验证码: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
                 }
@@ -3575,7 +3573,7 @@ namespace Server.Envir
                 return;
             }
 
-            if (OnlyAdminLogin && account.Identify == AccountIdentity.Normal)
+            if (Config.OnlyAdminLogin && account.Identify == AccountIdentity.Normal)
             {
                 con.Enqueue(new S.Login { Result = LoginResult.Disabled, Message = $"服务器正在维护中，请稍候再尝试登录..." });
                 return;
@@ -4617,7 +4615,7 @@ namespace Server.Envir
                 }
             }
         }
-        private static bool PasswordMatch(string password, byte[] totalHash)
+        public static bool PasswordMatch(string password, byte[] totalHash)
         {
             byte[] salt = new byte[SaltSize];
             Buffer.BlockCopy(totalHash, 0, salt, 0, SaltSize);

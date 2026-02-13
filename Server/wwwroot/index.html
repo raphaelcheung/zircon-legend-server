@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - 皓石传奇三管理后台</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* 登录页特殊样式 */
+    .login-divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      color: var(--text-tertiary);
+      font-size: 0.85rem;
+    }
+
+    .login-divider::before,
+    .login-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-primary);
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-primary);
+    }
+
+    .login-footer p {
+      color: var(--text-tertiary);
+      font-size: 0.85rem;
+    }
+
+    .login-theme-toggle {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+    }
+
+    .error-message {
+      background: var(--color-error-bg);
+      border: 1px solid var(--color-error);
+      border-radius: var(--border-radius);
+      padding: 0.75rem 1rem;
+      color: var(--color-error);
+      font-size: 0.9rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .error-message.show {
+      display: flex;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+
+    .password-toggle:hover {
+      color: var(--text-primary);
+    }
+
+    .form-input-wrapper {
+      position: relative;
+    }
+
+    .form-input-wrapper .form-input {
+      padding-right: 2.5rem;
+    }
+
+    .remember-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .checkbox-label input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent-primary);
+    }
+
+    .forgot-link {
+      color: var(--text-tertiary);
+      font-size: 0.85rem;
+    }
+
+    .forgot-link:hover {
+      color: var(--accent-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-page">
+    <!-- 主题切换 -->
+    <button class="theme-toggle login-theme-toggle" onclick="toggleTheme()" data-tooltip="切换主题">
+      <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+      <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+    </button>
+
+    <div class="login-container">
+      <div class="login-card">
+        <!-- Logo -->
+        <div class="login-logo">
+          <h1>皓石传奇三</h1>
+          <p class="subtitle">服务器管理后台</p>
+        </div>
+
+        <!-- 初始化管理员提示框 (默认隐藏) -->
+        <div id="adminInitBox" class="admin-init-box hidden">
+          <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            检测到系统尚未初始化
+          </h3>
+          <p>点击下方按钮创建超级管理员账号</p>
+          <div class="credentials">
+            <span>账号：raphael@gm.gm</span>
+            <span>密码：123456</span>
+          </div>
+          <button class="btn btn-init-admin btn-block" onclick="initAdmin()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <line x1="20" y1="8" x2="20" y2="14"></line>
+              <line x1="23" y1="11" x2="17" y2="11"></line>
+            </svg>
+            开启超管账号
+          </button>
+        </div>
+
+        <!-- 错误提示 -->
+        <div id="errorMessage" class="error-message">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span id="errorText">登录失败</span>
+        </div>
+
+        <!-- 登录表单 -->
+        <form id="loginForm" class="login-form" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label class="form-label">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              账号邮箱
+            </label>
+            <input
+              type="email"
+              id="email"
+              class="form-input"
+              placeholder="请输入管理员邮箱"
+              required
+              autocomplete="email"
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              密码
+            </label>
+            <div class="form-input-wrapper">
+              <input
+                type="password"
+                id="password"
+                class="form-input"
+                placeholder="请输入密码"
+                required
+                autocomplete="current-password"
+              >
+              <button type="button" class="password-toggle" onclick="togglePassword()">
+                <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="remember-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="remember">
+              <span>记住登录</span>
+            </label>
+          </div>
+
+          <button type="submit" id="loginBtn" class="btn btn-primary btn-lg btn-block">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+              <polyline points="10 17 15 12 10 7"></polyline>
+              <line x1="15" y1="12" x2="3" y2="12"></line>
+            </svg>
+            登录
+          </button>
+        </form>
+
+        <div class="login-footer">
+          <p>皓石传奇三 服务器管理系统</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // 页面加载时检查是否存在超管
+    document.addEventListener('DOMContentLoaded', async () => {
+      await checkAdminExists();
+    });
+
+    // 检查超管是否存在
+    async function checkAdminExists() {
+      try {
+        const response = await api.get('/api/auth/check-admin');
+        if (!response.hasSuperAdmin) {
+          document.getElementById('adminInitBox').classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('检查超管状态失败:', error);
+      }
+    }
+
+    // 初始化超管账号
+    async function initAdmin() {
+      const btn = document.querySelector('.btn-init-admin');
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        await api.post('/api/auth/init-admin');
+        document.getElementById('adminInitBox').classList.add('hidden');
+        showSuccess('超管账号创建成功，请使用默认账号密码登录');
+        // 自动填充账号密码
+        document.getElementById('email').value = 'raphael@gm.gm';
+        document.getElementById('password').value = '123456';
+      } catch (error) {
+        showError(error.message || '初始化失败');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+
+    // 处理登录
+    async function handleLogin(event) {
+      event.preventDefault();
+
+      const btn = document.getElementById('loginBtn');
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const remember = document.getElementById('remember').checked;
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+      hideError();
+
+      try {
+        const response = await api.post('/api/auth/login', {
+          email,
+          password,
+          remember
+        });
+
+        // 保存 token
+        const storage = remember ? localStorage : sessionStorage;
+        storage.setItem('token', response.token);
+        storage.setItem('refreshToken', response.refreshToken);
+        storage.setItem('user', JSON.stringify({
+          email: response.email,
+          identity: response.identity
+        }));
+
+        // 跳转到仪表盘
+        window.location.href = 'dashboard.html';
+      } catch (error) {
+        showError(error.message || '登录失败，请检查账号密码');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+
+    // 显示/隐藏密码
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const icon = document.getElementById('eyeIcon');
+
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.innerHTML = `
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+        `;
+      } else {
+        input.type = 'password';
+        icon.innerHTML = `
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        `;
+      }
+    }
+
+    // 显示错误
+    function showError(message) {
+      const errorDiv = document.getElementById('errorMessage');
+      const errorText = document.getElementById('errorText');
+      errorText.textContent = message;
+      errorDiv.classList.add('show');
+    }
+
+    // 隐藏错误
+    function hideError() {
+      document.getElementById('errorMessage').classList.remove('show');
+    }
+
+    // 显示成功（临时使用alert，后续可改为toast）
+    function showSuccess(message) {
+      alert(message);
+    }
+  </script>
+</body>
+</html>
