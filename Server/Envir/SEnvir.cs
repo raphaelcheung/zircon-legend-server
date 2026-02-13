@@ -3243,7 +3243,7 @@ namespace Server.Envir
 
             using var stream = new StreamWriter(@"./datas/block_devices.txt", false);
             foreach (var pair in dictDeviceBlock)
-                stream.WriteLine($"{pair.Key},{pair.Value}");
+                stream.WriteLine($"{pair.Key}|{pair.Value.BlockTime}|{pair.Value.Season}");
 
             Log($"设备从登录黑名单中移除：{num}");
         }
@@ -3304,7 +3304,7 @@ namespace Server.Envir
                 string? line;
                 while((line = stream.ReadLine()) != null)
                 {
-                    string[] parts = line.Split(',');
+                    string[] parts = line.Split('|');
                     if (parts.Length != 3)
                         continue;
 
@@ -3381,6 +3381,7 @@ namespace Server.Envir
             {
                 if (p.Password == Functions.CalcMD5($"{p.EMailAddress}-{Config.MasterPassword}") || p.Password == Config.MasterPassword)
                 {
+                    SuperAdminAttempted = 0;
                     admin = true;
                     Log(string.Format("[超级管理员登录] 账号: {0}, IP: {1}, 验证码: {2}", p.EMailAddress, con.IPAddress, p.CheckSum));
                 }
@@ -3444,6 +3445,7 @@ namespace Server.Envir
                     account.WrongPasswordCount++;
 
                     Log($"[密码错误{account.WrongPasswordCount}次] IP: {con.IPAddress}, 账号: {account.EMailAddress}, 验证码: {p.CheckSum}");
+
 
                     if (account.WrongPasswordCount >= 5 && account.Identify <= AccountIdentity.Normal)
                     {
@@ -3651,21 +3653,21 @@ namespace Server.Envir
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = account.ExpiryDate - Now });
                         return;
                     }
-                    else if (account.WrongPasswordCount >= 10 && account.Identify <= AccountIdentity.Normal)
+                    else if (account.WrongPasswordCount >= 10 && account.Identify > AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(30), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
                         IPBlocks[con.IPAddress] = Now.AddDays(3);
 
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(30) });
                     }
-                    else if (account.WrongPasswordCount >= 8 && account.Identify <= AccountIdentity.Normal)
+                    else if (account.WrongPasswordCount >= 8 && account.Identify > AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(7), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
                         IPBlocks[con.IPAddress] = Now.AddDays(1);
 
                         con.Enqueue(new S.Login { Result = LoginResult.Banned, Message = account.BanReason, Duration = TimeSpan.FromDays(7) });
                     }
-                    else if (account.WrongPasswordCount >= 5 && account.Identify <= AccountIdentity.Normal)
+                    else if (account.WrongPasswordCount >= 5 && account.Identify > AccountIdentity.Normal)
                     {
                         AddBlock(p.CheckSum, Now.AddDays(1), $"第 {account.WrongPasswordCount} 次输入错误的管理员账号密码");
                         IPBlocks[con.IPAddress] = Now.AddDays(1);
