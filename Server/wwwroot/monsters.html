@@ -355,6 +355,11 @@
                 <input type="number" id="editHealth" class="form-input" min="1">
               </div>
               <div class="form-group">
+                <label class="form-label">生命百分比HP%</label>
+                <input type="number" id="editHealthPercent" class="form-input" min="0" step="1">
+                <small class="form-hint">额外HP百分比（如50表示+50%）</small>
+              </div>
+              <div class="form-group">
                 <label class="form-label">AI</label>
                 <input type="number" id="editAi" class="form-input" min="1">
               </div>
@@ -1472,6 +1477,7 @@
         // Load and populate stats if available
         if (monster.stats) {
           document.getElementById('editHealth').value = monster.stats.health || 0;
+          document.getElementById('editHealthPercent').value = monster.stats.healthPercent || 0;
           document.getElementById('editMinDC').value = monster.stats.minDC || 0;
           document.getElementById('editMaxDC').value = monster.stats.maxDC || 0;
           document.getElementById('editMinSC').value = monster.stats.minSC || 0;
@@ -1487,6 +1493,7 @@
         } else {
           // Clear stats fields if no stats data
           document.getElementById('editHealth').value = 0;
+          document.getElementById('editHealthPercent').value = 0;
           document.getElementById('editMinDC').value = 0;
           document.getElementById('editMaxDC').value = 0;
           document.getElementById('editMinSC').value = 0;
@@ -1537,6 +1544,7 @@
       // 收集怪物属性（Stats）
       const stats = {
         health: safeParseInt(document.getElementById('editHealth').value, 0),
+        healthPercent: safeParseInt(document.getElementById('editHealthPercent').value, 0),
         minDC: safeParseInt(document.getElementById('editMinDC').value, 0),
         maxDC: safeParseInt(document.getElementById('editMaxDC').value, 0),
         minSC: safeParseInt(document.getElementById('editMinSC').value, 0),

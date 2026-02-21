@@ -158,6 +158,42 @@ namespace Server.WebApi.Services
             return false;
         }
 
+        /// <summary>
+        /// Kick all online players
+        /// </summary>
+        public int KickAllPlayers()
+        {
+            var players = SEnvir.Players;
+            if (players == null) return 0;
+
+            int count = 0;
+            foreach (var player in players)
+            {
+                if (player?.Connection != null)
+                {
+                    player.Connection.TryDisconnect();
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Save user data to database
+        /// </summary>
+        public void SaveUserDatas()
+        {
+            SEnvir.SaveUserDatas();
+        }
+
+        /// <summary>
+        /// Save system data to database
+        /// </summary>
+        public void SaveSystem()
+        {
+            SEnvir.SaveSystem();
+        }
+
         #endregion
 
         #region Accounts
