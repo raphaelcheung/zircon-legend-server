@@ -253,6 +253,8 @@ namespace Server.Envir
         public static int CompanionRate { get; set; }
         public static int Boss掉落倍率 { get; set; } = 0;
         public static int 技能高等级经验倍率 { get; set; } = 100;
+        public static int 全局极品几率 { get; set; } = 15;
+        public static int 高级稀世极品几率 { get; set; } = 15;
 
         [ConfigSection("WebApi")]
         public static bool WebApiEnabled { get; set; } = true;

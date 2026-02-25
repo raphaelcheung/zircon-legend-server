@@ -739,6 +739,7 @@
       display: flex;
       flex-direction: column;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      margin: auto;
     }
     .modal.modal-sm {
       max-width: 500px;
@@ -1186,7 +1187,10 @@
           completedText: document.getElementById('editCompletedText').value,
           archiveText: document.getElementById('editArchiveText').value,
           startNPC: parseInt(document.getElementById('editStartNPC').value) || 0,
-          finishNPC: parseInt(document.getElementById('editFinishNPC').value) || 0
+          finishNPC: parseInt(document.getElementById('editFinishNPC').value) || 0,
+          requirements: currentRequirements,
+          tasks: currentTasks,
+          rewards: currentRewards
         };
 
         const result = await api.put(`/api/game/quests/${index}`, request);
@@ -1263,10 +1267,16 @@
     }
 
     function saveRequirement() {
+      const questParamIndex = parseInt(document.getElementById('reqQuestParameter').value) || 0;
+      const questInfo = questParamIndex > 0 ? allQuests.find(q => q.index === questParamIndex) : null;
+
       const requirement = {
         requirement: document.getElementById('reqRequirement').value,
         intParameter1: parseInt(document.getElementById('reqIntParameter1').value) || 0,
-        questParameter: parseInt(document.getElementById('reqQuestParameter').value) || 0,
+        questParameter: questInfo ? {
+          index: questInfo.index,
+          questName: questInfo.questName
+        } : null,
         class: document.getElementById('reqClass').value
       };
 
@@ -1289,14 +1299,18 @@
         return;
       }
 
-      tbody.innerHTML = currentTasks.map((task, idx) => `
+      tbody.innerHTML = currentTasks.map((task, idx) => {
+        let itemText = '-';
+        if (task.task === 'GainItem' && task.itemParameter) {
+          itemText = `${task.itemParameter.index || 0} - ${escapeHtml(task.itemParameter.name || '')}`;
+        } else if (task.task === 'KillMonster' && task.mobDescription) {
+          itemText = escapeHtml(task.mobDescription);
+        }
+
+        return `
         <tr>
           <td>${escapeHtml(task.task)}</td>
-          <td>
-            ${task.task === 'GainItem'
-              ? `${task.itemParameter?.index || 0} - ${escapeHtml(task.itemParameter?.name || '')}`
-              : `${task.mobParameter?.index || 0} - ${escapeHtml(task.mobParameter?.name || task.mobDescription || '-')}`}
-          </td>
+          <td>${itemText}</td>
           <td>${task.amount}</td>
           <td>${task.monsterDetails?.length || 0}</td>
           <td>
@@ -1308,7 +1322,7 @@
             </button>
           </td>
         </tr>
-      `).join('');
+      `}).join('');
     }
 
     async function openAddTaskModal() {
@@ -1468,11 +1482,21 @@
 
     function saveTask() {
       const taskType = document.getElementById('taskTask').value;
+      const itemParamIndex = parseInt(document.getElementById('taskItemParameter').value) || 0;
+      const mobParamIndex = parseInt(document.getElementById('taskMobParameter').value) || 0;
+
+      const mobInfo = mobParamIndex > 0 ? allMonsters.find(m => m.index === mobParamIndex) : null;
+      const mobText = mobInfo ? `${mobInfo.index} - ${mobInfo.name}` : '';
+
       const task = {
         task: taskType,
-        itemParameter: parseInt(document.getElementById('taskItemParameter').value) || 0,
-        mobParameter: parseInt(document.getElementById('taskMobParameter').value) || 0,
-        amount: parseInt(document.getElementById('taskAmount').value) || 1
+        itemParameter: itemParamIndex > 0 ? {
+          index: itemParamIndex,
+          name: allItems.find(i => i.index === itemParamIndex)?.name || ''
+        } : null,
+        mobDescription: mobText,
+        amount: parseInt(document.getElementById('taskAmount').value) || 1,
+        monsterDetails: []
       };
 
       currentTasks.push(task);
@@ -1494,9 +1518,14 @@
         return;
       }
 
-      tbody.innerHTML = currentRewards.map((reward, idx) => `
+      tbody.innerHTML = currentRewards.map((reward, idx) => {
+        const itemInfo = reward.item;
+        const itemText = itemInfo
+          ? `${itemInfo.index || 0} - ${escapeHtml(itemInfo.name || '')}`
+          : '-';
+        return `
         <tr>
-          <td>${reward.item?.name || '-'}</td>
+          <td>${itemText}</td>
           <td>${reward.amount}</td>
           <td>${reward.class}</td>
           <td>${reward.choice ? '是' : '否'}</td>
@@ -1506,11 +1535,11 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
+            </svg>
             </button>
           </td>
         </tr>
-      `).join('');
+      `}).join('');
     }
 
     async function openAddRewardModal() {
@@ -1538,8 +1567,13 @@
     }
 
     function saveReward() {
+      const itemIndex = parseInt(document.getElementById('rewardItem').value) || 0;
       const reward = {
-        item: parseInt(document.getElementById('rewardItem').value) || 0,
+        index: 0,
+        item: itemIndex > 0 ? {
+          index: itemIndex,
+          name: allItems.find(i => i.index === itemIndex)?.name || ''
+        } : null,
         amount: parseInt(document.getElementById('rewardAmount').value) || 1,
         duration: parseInt(document.getElementById('rewardDuration').value) || 0,
         class: document.getElementById('rewardClass').value,
