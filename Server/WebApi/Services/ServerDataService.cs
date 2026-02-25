@@ -2615,7 +2615,9 @@ namespace Server.WebApi.Services
                 MinimumLevel = mapInfo.MinimumLevel,
                 MaximumLevel = mapInfo.MaximumLevel,
                 MonsterHealth = mapInfo.MonsterHealth,
+                MaxMonsterHealth = mapInfo.MaxMonsterHealth,
                 MonsterDamage = mapInfo.MonsterDamage,
+                MaxMonsterDamage = mapInfo.MaxMonsterDamage,
                 DropRate = mapInfo.DropRate,
                 ExperienceRate = mapInfo.ExperienceRate,
                 GoldRate = mapInfo.GoldRate,
@@ -2659,7 +2661,9 @@ namespace Server.WebApi.Services
             if (request.MinimumLevel.HasValue) mapInfo.MinimumLevel = request.MinimumLevel.Value;
             if (request.MaximumLevel.HasValue) mapInfo.MaximumLevel = request.MaximumLevel.Value;
             if (request.MonsterHealth.HasValue) mapInfo.MonsterHealth = request.MonsterHealth.Value;
+            if (request.MaxMonsterHealth.HasValue) mapInfo.MaxMonsterHealth = request.MaxMonsterHealth.Value;
             if (request.MonsterDamage.HasValue) mapInfo.MonsterDamage = request.MonsterDamage.Value;
+            if (request.MaxMonsterDamage.HasValue) mapInfo.MaxMonsterDamage = request.MaxMonsterDamage.Value;
             if (request.DropRate.HasValue) mapInfo.DropRate = request.DropRate.Value;
             if (request.ExperienceRate.HasValue) mapInfo.ExperienceRate = request.ExperienceRate.Value;
             if (request.GoldRate.HasValue) mapInfo.GoldRate = request.GoldRate.Value;
@@ -2818,6 +2822,9 @@ namespace Server.WebApi.Services
                 {
                     case Stat.Health:
                         stats.Health = stat.Amount;
+                        break;
+                    case Stat.HealthPercent:
+                        stats.HealthPercent = stat.Amount;
                         break;
                     case Stat.MinDC:
                         stats.MinDC = stat.Amount;
@@ -4198,7 +4205,9 @@ namespace Server.WebApi.Services
         public int MinimumLevel { get; set; }
         public int MaximumLevel { get; set; }
         public int MonsterHealth { get; set; }
+        public int MaxMonsterHealth { get; set; }
         public int MonsterDamage { get; set; }
+        public int MaxMonsterDamage { get; set; }
         public int DropRate { get; set; }
         public int ExperienceRate { get; set; }
         public int GoldRate { get; set; }
@@ -4222,7 +4231,9 @@ namespace Server.WebApi.Services
         public int? MinimumLevel { get; set; }
         public int? MaximumLevel { get; set; }
         public int? MonsterHealth { get; set; }
+        public int? MaxMonsterHealth { get; set; }
         public int? MonsterDamage { get; set; }
+        public int? MaxMonsterDamage { get; set; }
         public int? DropRate { get; set; }
         public int? ExperienceRate { get; set; }
         public int? GoldRate { get; set; }
@@ -4261,6 +4272,7 @@ namespace Server.WebApi.Services
     public class MonsterStatDto
     {
         public int Health { get; set; }
+        public int HealthPercent { get; set; }
         public int MinDC { get; set; }
         public int MaxDC { get; set; }
         public int MinSC { get; set; }
