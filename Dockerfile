@@ -13,8 +13,8 @@ RUN dotnet restore "Zircon Server.sln"
 # Copy all source code
 COPY . .
 
-# Build and publish
-RUN dotnet publish "Server/Server.csproj" -c Release -o /app/publish --no-restore
+# Build and publish without a platform-specific apphost.
+RUN dotnet publish "Server/Server.csproj" -c Release -o /app/publish --no-restore /p:UseAppHost=false
 
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
@@ -30,4 +30,4 @@ RUN mkdir -p datas Map
 EXPOSE 7000 3000 7080
 
 # Set entry point
-ENTRYPOINT ["./Server"]
+ENTRYPOINT ["dotnet", "Server.dll"]

@@ -3,7 +3,7 @@ using Library;
 
 namespace Server.Envir.Translations
 {
-    [ConfigPath(@".\datas\Translations\ChineseMessages.ini")]
+    [ConfigPath("./datas/Translations/ChineseMessages.ini")]
     public class ChineseMessages : StringMessages
     {
         public ChineseMessages()
