@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -62,7 +62,7 @@ namespace Zircon.Server.Models
 
         public void Load()
         {
-            string fileName = string.Format("{0}{1}.map", Config.MapPath, Info.FileName);
+            string fileName = Path.Combine(Config.MapPath, $"{Info.FileName}.map");
 
             if (!File.Exists(fileName))
             {

@@ -635,7 +635,8 @@ namespace Server.Envir
         public static DBCollection<UserItemStat> UserItemStatsList;
         public static DBCollection<UserMagic> UserMagicList;
         public static DBCollection<BuffInfo> BuffInfoList;
-        public static DBCollection<MonsterInfo> MonsterInfoList;    
+        public static DBCollection<MonsterInfo> MonsterInfoList;
+        public static DBCollection<DropInfo> DropInfoList;
         public static DBCollection<SetInfo> SetInfoList;
         public static DBCollection<AuctionInfo> AuctionInfoList;
         public static DBCollection<MailInfo> MailInfoList;
@@ -650,6 +651,7 @@ namespace Server.Envir
         public static DBCollection<GuildMemberInfo> GuildMemberInfoList;
         public static DBCollection<UserQuest> UserQuestList;
         public static DBCollection<UserQuestTask> UserQuestTaskList;
+        public static DBCollection<QuestInfo> QuestInfoList;
         public static DBCollection<CompanionInfo> CompanionInfoList;
         public static DBCollection<CompanionLevelInfo> CompanionLevelInfoList;
         public static DBCollection<UserCompanion> UserCompanionList;
@@ -853,6 +855,7 @@ namespace Server.Envir
             SafeZoneInfoList = Session.GetCollection<SafeZoneInfo>();
             ItemInfoList = Session.GetCollection<ItemInfo>();
             MonsterInfoList = Session.GetCollection<MonsterInfo>();
+            DropInfoList = Session.GetCollection<DropInfo>();
             RespawnInfoList = Session.GetCollection<RespawnInfo>();
             MagicInfoList = Session.GetCollection<MagicInfo>();
 
@@ -879,6 +882,7 @@ namespace Server.Envir
             GuildMemberInfoList = Session.GetCollection<GuildMemberInfo>();
             UserQuestList = Session.GetCollection<UserQuest>();
             UserQuestTaskList = Session.GetCollection<UserQuestTask>();
+            QuestInfoList = Session.GetCollection<QuestInfo>();
             CompanionSkillInfoList = Session.GetCollection<CompanionSkillInfo>();
 
             CompanionInfoList = Session.GetCollection<CompanionInfo>();
@@ -1372,6 +1376,7 @@ namespace Server.Envir
             SafeZoneInfoList = null;
             ItemInfoList = null;
             MonsterInfoList = null;
+            DropInfoList = null;
             RespawnInfoList = null;
             MagicInfoList = null;
 

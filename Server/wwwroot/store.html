@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商城管理 - 皓石传奇三管理后台</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <span class="sidebar-brand">皓石传奇三</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 主菜单 -->
+        <div class="nav-section">
+          <div class="nav-section-title">主菜单</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="9"></rect>
+              <rect x="14" y="3" width="7" height="5"></rect>
+              <rect x="14" y="12" width="7" height="9"></rect>
+              <rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+            <span>仪表盘</span>
+          </a>
+          <a href="players.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>玩家管理</span>
+          </a>
+          <a href="accounts.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>账号管理</span>
+          </a>
+          <a href="characters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
+            </svg>
+            <span>角色管理</span>
+          </a>
+        </div>
+
+        <!-- 游戏管理 -->
+        <div class="nav-section">
+          <div class="nav-section-title">游戏管理</div>
+          <a href="items.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            <span>物品管理</span>
+          </a>
+          <a href="maps.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
+            </svg>
+            <span>地图管理</span>
+          </a>
+          <a href="monsters.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v1a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 9v4a7 7 0 0 1-14 0V9"></path>
+              <path d="M12 19v3"></path>
+              <path d="M8 22h8"></path>
+            </svg>
+            <span>怪物管理</span>
+          </a>
+          <a href="npcs.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="5"></circle>
+              <path d="M20 21a8 8 0 1 0-16 0"></path>
+            </svg>
+            <span>NPC管理</span>
+          </a>
+          <a href="magics.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>
+            </svg>
+            <span>技能管理</span>
+          </a>
+          <a href="classes.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <line x1="10" y1="9" x2="8" y2="9"></line>
+            </svg>
+            <span>职业管理</span>
+          </a>
+          <a href="quests.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <path d="M16 13H8"></path>
+              <path d="M16 17H8"></path>
+              <path d="M10 9H8"></path>
+            </svg>
+            <span>任务管理</span>
+          </a>
+          <a href="store.html" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span>商城管理</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-section">
+          <div class="nav-section-title">系统</div>
+          <a href="logs.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>系统日志</span>
+          </a>
+          <a href="settings.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>设置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <h1 class="page-title">商城管理</h1>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="切换主题">
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <div class="user-menu" onclick="toggleUserMenu()">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <div class="user-info">
+              <div class="user-name" id="userName">管理员</div>
+              <div class="user-role" id="userRole">SuperAdmin</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <!-- 统计卡片 -->
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.25rem;">
+          <div class="stat-card animate-in">
+            <div class="stat-card-header">
+              <div class="stat-icon info">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="totalItems">--</div>
+            <div class="stat-label">商城商品总数</div>
+          </div>
+        </div>
+
+        <!-- 搜索栏 -->
+        <div class="card animate-in" style="margin-bottom: 1.25rem;">
+          <div class="card-body" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <input type="text" id="searchInput" class="form-input" placeholder="搜索商品名称..." onkeyup="handleSearchKeyup(event)">
+            </div>
+            <button class="btn btn-primary" onclick="doSearch()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              搜索
+            </button>
+            <button class="btn btn-secondary" onclick="resetSearch()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+              </svg>
+              重置
+            </button>
+          </div>
+        </div>
+
+        <!-- 商城商品列表 -->
+        <div class="card animate-in animate-delay-1">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              商城商品列表
+            </h3>
+            <div class="card-actions">
+              <button class="btn btn-primary btn-sm" onclick="openAddModal()" title="新增商品">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                新增
+              </button>
+              <span id="pageInfo" style="color: var(--text-tertiary); font-size: 0.875rem; margin-right: 1rem;"></span>
+              <button class="btn btn-ghost btn-sm" onclick="loadStoreItems()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                刷新
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>物品名称</th>
+                    <th>金币价格</th>
+                    <th>猎金价格</th>
+                    <th>分类</th>
+                    <th>持续时间</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="storeTable">
+                  <tr>
+                    <td colspan="8" style="text-align: center; color: var(--text-tertiary);">加载中...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination" id="pagination"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 新增商品弹窗 -->
+  <div class="modal" id="addModal">
+    <div class="modal-backdrop" onclick="closeAddModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">新增商城商品</h3>
+        <button class="modal-close" onclick="closeAddModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="addForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>选择物品</label>
+              <div class="item-search-wrapper">
+                <input type="text" id="addItemNameSearch" class="form-input" placeholder="输入物品名称搜索..." autocomplete="off" oninput="handleItemSearch(event)">  
+              </div>
+            </div>
+            <div class="form-group">
+              <label>物品列表</label>
+              <select id="addItemName" class="form-select" required>
+                  <option value="">请选择物品</option>
+                </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>金币价格</label>
+              <input type="number" id="addPrice" class="form-input" required min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label>猎金价格</label>
+              <input type="number" id="addHuntGoldPrice" class="form-input" required min="0" value="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>分类/过滤</label>
+              <div class="tag-input-container" id="addFilterContainer">
+                <div class="tag-list" id="addFilterTags"></div>
+                <input type="text" id="addFilterInput" class="tag-input" placeholder="输入分类并回车，或从下拉选择" autocomplete="off" oninput="handleFilterInput(this, 'add')" onkeydown="handleFilterKeydown(event, 'add')">
+                <datalist id="addFilterDatalist"></datalist>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>持续时间（天）</label>
+              <input type="number" id="addDuration" class="form-input" min="0" value="0" placeholder="0表示永久">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>状态</label>
+              <select id="addAvailable" class="form-select">
+                <option value="true">上架</option>
+                <option value="false">下架</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAddModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveStoreItem()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑商品弹窗 -->
+  <div class="modal" id="editModal">
+    <div class="modal-backdrop" onclick="closeEditModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">编辑商城商品</h3>
+        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>物品ID</label>
+              <input type="number" id="editItemIndex" class="form-input" disabled>
+            </div>
+            <div class="form-group">
+              <label>物品名称</label>
+              <input type="text" id="editItemName" class="form-input" disabled>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>金币价格</label>
+              <input type="number" id="editPrice" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label>猎金价格</label>
+              <input type="number" id="editHuntGoldPrice" class="form-input" min="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>分类/过滤</label>
+              <div class="tag-input-container" id="editFilterContainer">
+                <div class="tag-list" id="editFilterTags"></div>
+                <input type="text" id="editFilterInput" class="tag-input" placeholder="输入分类并回车，或从下拉选择" autocomplete="off" oninput="handleFilterInput(this, 'edit')" onkeydown="handleFilterKeydown(event, 'edit')">
+                <datalist id="editFilterDatalist"></datalist>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>持续时间（天）</label>
+              <input type="number" id="editDuration" class="form-input" min="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex: 0 0 auto; min-width: 50%;">
+              <label>状态</label>
+              <select id="editAvailable" class="form-select" style="width: auto;">
+                <option value="true">上架</option>
+                <option value="false">下架</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+        <button class="btn btn-primary" onclick="updateStoreItem()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 公共脚本 -->
+  <script src="js/api.js"></script>
+  <script>
+    // 页面变量
+    let currentPage = 1;
+    let pageSize = 20;
+    let totalPages = 0;
+    let totalItems = 0;
+    let currentEditIndex = 0;
+    let searchTimer = null;
+
+    // 分类相关变量
+    let allFilters = new Set();
+    let addFilterTags = new Set();
+    let editFilterTags = new Set();
+
+    // 页面加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+      initPage();
+    });
+
+    // 初始化页面
+    async function initPage() {
+      await loadStoreItems();
+      await loadUser();
+    }
+
+    // 验证物品是否存在
+    async function validateItemIndex(itemIndex) {
+      if (!itemIndex || itemIndex <= 0) return null;
+
+      try {
+        const item = await api.get(`/api/game/items/${itemIndex}`);
+        return item;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    // 物品搜索防抖定时器
+    let itemSearchTimer = null;
+
+    // 加载所有分类
+    async function loadAllFilters() {
+      try {
+        const response = await api.get('/api/game/store');
+        const items = response.items || [];
+        allFilters.clear();
+
+        // 从现有商品中提取分类
+        items.forEach(item => {
+          if (item.filter) {
+            const filters = item.filter.split(',').map(f => f.trim()).filter(f => f);
+            filters.forEach(filter => allFilters.add(filter));
+          }
+        });
+
+        // 更新datalist
+        updateFilterDatalist();
+      } catch (error) {
+        console.error('加载分类列表失败:', error);
+      }
+    }
+
+    // 更新分类datalist
+    function updateFilterDatalist() {
+      const addDatalist = document.getElementById('addFilterDatalist');
+      const editDatalist = document.getElementById('editFilterDatalist');
+
+      const options = Array.from(allFilters)
+        .map(filter => `<option value="${escapeHtml(filter)}">`)
+        .join('');
+
+      addDatalist.innerHTML = options;
+      editDatalist.innerHTML = options;
+    }
+
+    // 处理分类输入
+    function handleFilterInput(input, type) {
+      // input事件处理，可以在这里添加实时过滤等功能
+    }
+
+    // 处理分类按键（回车添加标签）
+    function handleFilterKeydown(event, type) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const input = event.target;
+        const value = input.value.trim();
+
+        if (value) {
+          addFilterTag(value, type);
+          input.value = '';
+
+          // 添加到所有分类集合
+          allFilters.add(value);
+          updateFilterDatalist();
+        }
+      } else if (event.key === 'Backspace' && event.target.value === '') {
+        // 如果输入框为空且按下退格键，删除最后一个标签
+        const tags = type === 'add' ? addFilterTags : editFilterTags;
+        if (tags.size > 0) {
+          const lastTag = Array.from(tags).pop();
+          removeFilterTag(lastTag, type);
+        }
+      }
+    }
+
+    // 添加标签
+    function addFilterTag(tag, type) {
+      const tags = type === 'add' ? addFilterTags : editFilterTags;
+      const trimmedTag = tag.trim();
+
+      if (trimmedTag && !tags.has(trimmedTag)) {
+        tags.add(trimmedTag);
+        renderFilterTags(type);
+      }
+    }
+
+    // 移除标签
+    function removeFilterTag(tag, type) {
+      const tags = type === 'add' ? addFilterTags : editFilterTags;
+      tags.delete(tag);
+      renderFilterTags(type);
+    }
+
+    // 渲染标签
+    function renderFilterTags(type) {
+      const tags = type === 'add' ? addFilterTags : editFilterTags;
+      const container = document.getElementById(`${type}FilterTags`);
+
+      container.innerHTML = Array.from(tags).map(tag => `
+        <span class="tag">
+          ${escapeHtml(tag)}
+          <button type="button" class="tag-remove" onclick="removeFilterTag('${escapeHtml(tag)}', '${type}')">&times;</button>
+        </span>
+      `).join('');
+    }
+
+    // 获取标签值（逗号分隔）
+    function getFilterValue(type) {
+      const tags = type === 'add' ? addFilterTags : editFilterTags;
+      return Array.from(tags).join(',');
+    }
+
+    // 设置标签值（从逗号分隔的字符串）
+    function setFilterValue(value, type) {
+      const tags = type === 'add' ? addFilterTags : editFilterTags;
+      tags.clear();
+
+      if (value) {
+        const filterArray = value.split(',').map(f => f.trim()).filter(f => f);
+        filterArray.forEach(filter => {
+          tags.add(filter);
+          allFilters.add(filter);
+        });
+      }
+
+      renderFilterTags(type);
+      updateFilterDatalist();
+    }
+
+    // 处理物品搜索输入
+    function handleItemSearch(event) {
+      clearTimeout(itemSearchTimer);
+      itemSearchTimer = setTimeout(() => {
+        const searchTerm = event.target.value.trim();
+        loadItemsForSelect(searchTerm);
+      }, 300);
+    }
+
+    // 加载物品列表并填充到选择框
+    async function loadItemsForSelect(search = '') {
+      try {
+        const data = await api.get(`/api/game/items?page=1&pageSize=200${search ? '&search=' + encodeURIComponent(search) : ''}`);
+        const allItems = data.items || [];
+        // 去重（基于物品索引）
+        const itemMap = new Map();
+        allItems.forEach(item => {
+          if (!itemMap.has(item.index)) {
+            itemMap.set(item.index, item);
+          }
+        });
+        const items = Array.from(itemMap.values());
+
+        const itemSelect = document.getElementById('addItemName');
+        itemSelect.innerHTML = '<option value="">请选择物品</option>' +
+          items.map(item => `<option value="${item.index}">${item.index} - ${escapeHtml(item.name)}</option>`).join('');
+
+        // 绑定选择事件，同步搜索框显示
+        itemSelect.onchange = () => {
+          const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+          if (selectedOption.value) {
+            // 格式：索引 - 名称，去掉索引部分
+            const text = selectedOption.text;
+            const match = text.match(/^\d+\s*-\s*(.+)$/);
+            if (match) {
+              document.getElementById('addItemNameSearch').value = match[1];
+            } else {
+              document.getElementById('addItemNameSearch').value = text;
+            }
+          } else {
+            document.getElementById('addItemNameSearch').value = '';
+          }
+        };
+      } catch (error) {
+        console.error('加载物品列表失败:', error);
+      }
+    }
+
+    // 加载商城商品列表
+    async function loadStoreItems() {
+      try {
+        const search = document.getElementById('searchInput').value;
+        const response = await api.get(`/api/game/store?page=${currentPage}&pageSize=${pageSize}&search=${search}`);
+        
+        totalItems = response.total;
+        totalPages = Math.ceil(totalItems / pageSize);
+        
+        document.getElementById('totalItems').textContent = totalItems;
+        
+        renderStoreTable(response.items);
+        renderPagination();
+        updatePageInfo();
+      } catch (error) {
+        console.error('加载商城商品失败:', error);
+        showError('加载商城商品失败: ' + error.message);
+      }
+    }
+
+    // 渲染商城商品表格
+    function renderStoreTable(items) {
+      const tbody = document.getElementById('storeTable');
+      
+      if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-tertiary);">暂无商城商品</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map(item => `
+        <tr>
+          <td>${item.index}</td>
+          <td>${escapeHtml(item.itemName)}</td>
+          <td>${formatNumber(item.price)}</td>
+          <td>${formatNumber(item.huntGoldPrice)}</td>
+          <td>${escapeHtml(item.filter || '-')}</td>
+          <td>${item.duration > 0 ? item.duration + '天' : '永久'}</td>
+          <td>
+            <span class="badge ${item.available ? 'badge-success' : 'badge-danger'}">
+              ${item.available ? '上架' : '下架'}
+            </span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-icon" onclick="openEditModal(${item.index})" title="编辑">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button class="btn-icon danger" onclick="deleteStoreItem(${item.index})" title="删除">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2H4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // 渲染分页
+    function renderPagination() {
+      const pagination = document.getElementById('pagination');
+      let html = '';
+
+      // 上一页
+      html += `<button class="btn btn-sm ${currentPage === 1 ? 'btn-disabled' : ''}" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>`;
+
+      // 页码按钮
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, currentPage + 2);
+
+      if (startPage > 1) {
+        html += `<button class="btn btn-sm" onclick="goToPage(1)">1</button>`;
+        if (startPage > 2) html += `<span style="padding: 0 0.5rem;">...</span>`;
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="btn btn-sm ${i === currentPage ? 'btn-primary' : ''}" onclick="goToPage(${i})">${i}</button>`;
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span style="padding: 0 0.5rem;">...</span>`;
+        html += `<button class="btn btn-sm" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+      }
+
+      // 下一页
+      html += `<button class="btn btn-sm ${currentPage === totalPages ? 'btn-disabled' : ''}" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>`;
+
+      pagination.innerHTML = html;
+    }
+
+    // 跳转页面
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      loadStoreItems();
+    }
+
+    // 更新页面信息
+    function updatePageInfo() {
+      document.getElementById('pageInfo').textContent = `第 ${currentPage} / ${totalPages || 1} 页`;
+    }
+
+    // 搜索处理（带防抖）
+    function handleSearchKeyup(event) {
+      if (event.key === 'Enter') {
+        doSearch();
+        return;
+      }
+
+      // 防抖处理：延迟300ms后执行搜索
+      if (searchTimer) {
+        clearTimeout(searchTimer);
+      }
+      searchTimer = setTimeout(() => {
+        doSearch();
+      }, 300);
+    }
+
+    // 执行搜索
+    function doSearch() {
+      currentPage = 1;
+      loadStoreItems();
+    }
+
+    // 重置搜索
+    function resetSearch() {
+      document.getElementById('searchInput').value = '';
+      currentPage = 1;
+      loadStoreItems();
+    }
+
+    // 打开新增模态框
+    async function openAddModal() {
+      // 重置表单
+      document.getElementById('addItemNameSearch').value = '';
+      document.getElementById('addPrice').value = '0';
+      document.getElementById('addHuntGoldPrice').value = '0';
+      document.getElementById('addDuration').value = '0';
+      document.getElementById('addAvailable').value = 'true';
+      document.getElementById('addModal').classList.add('active');
+
+      // 清空分类标签
+      addFilterTags.clear();
+      renderFilterTags('add');
+
+      // 加载物品列表和分类列表
+      await Promise.all([
+        loadItemsForSelect(),
+        loadAllFilters()
+      ]);
+    }
+
+    // 关闭新增模态框
+    function closeAddModal() {
+      document.getElementById('addModal').classList.remove('active');
+    }
+
+    // 保存商城商品
+    async function saveStoreItem() {
+      const itemIndex = parseInt(document.getElementById('addItemName').value);
+      const price = parseInt(document.getElementById('addPrice').value);
+      const huntGoldPrice = parseInt(document.getElementById('addHuntGoldPrice').value);
+      const filter = getFilterValue('add');
+      const duration = parseInt(document.getElementById('addDuration').value);
+      const available = document.getElementById('addAvailable').value === 'true';
+
+      if (!itemIndex || itemIndex <= 0) {
+        showError('请选择物品');
+        return;
+      }
+
+      if (price < 0) {
+        showError('金币价格不能为负数');
+        return;
+      }
+
+      if (huntGoldPrice < 0) {
+        showError('猎金价格不能为负数');
+        return;
+      }
+
+      try {
+        const data = {
+          itemIndex: itemIndex,
+          price: price,
+          huntGoldPrice: huntGoldPrice,
+          filter: filter,
+          duration: duration,
+          available: available
+        };
+
+        const result = await api.post('/api/game/store', data);
+        showSuccess(result.message || '添加成功');
+        closeAddModal();
+        loadStoreItems();
+      } catch (error) {
+        showError('添加失败: ' + error.message);
+      }
+    }
+
+    // 打开编辑模态框
+    async function openEditModal(index) {
+      currentEditIndex = index;
+
+      // 先加载分类列表
+      await loadAllFilters();
+
+      try {
+        const item = await api.get(`/api/game/store/${index}`);
+
+        document.getElementById('editItemIndex').value = item.itemIndex;
+        document.getElementById('editItemName').value = item.itemName;
+        document.getElementById('editPrice').value = item.price;
+        document.getElementById('editHuntGoldPrice').value = item.huntGoldPrice;
+        document.getElementById('editDuration').value = item.duration;
+        document.getElementById('editAvailable').value = item.available.toString();
+
+        // 设置分类标签
+        setFilterValue(item.filter || '', 'edit');
+
+        document.getElementById('editModal').classList.add('active');
+      } catch (error) {
+        showError('获取商品详情失败: ' + error.message);
+      }
+    }
+
+    // 关闭编辑模态框
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('active');
+    }
+
+    // 更新商城商品
+    async function updateStoreItem() {
+      const price = parseInt(document.getElementById('editPrice').value);
+      const huntGoldPrice = parseInt(document.getElementById('editHuntGoldPrice').value);
+      const filter = getFilterValue('edit');
+      const duration = parseInt(document.getElementById('editDuration').value);
+      const available = document.getElementById('editAvailable').value === 'true';
+
+      if (price < 0) {
+        showError('金币价格不能为负数');
+        return;
+      }
+
+      if (huntGoldPrice < 0) {
+        showError('猎金价格不能为负数');
+        return;
+      }
+
+      try {
+        const data = {
+          price: price,
+          huntGoldPrice: huntGoldPrice,
+          filter: filter,
+          duration: duration,
+          available: available
+        };
+
+        const result = await api.put(`/api/game/store/${currentEditIndex}`, data);
+        showSuccess(result.message || '更新成功');
+        closeEditModal();
+        loadStoreItems();
+      } catch (error) {
+        showError('更新失败: ' + error.message);
+      }
+    }
+
+    // 删除商城商品
+    async function deleteStoreItem(index) {
+      if (!confirm('确定要删除这个商品吗？此操作不可恢复！')) return;
+
+      try {
+        const result = await api.delete(`/api/game/store/${index}`);
+        showSuccess(result.message || '删除成功');
+        loadStoreItems();
+      } catch (error) {
+        showError('删除失败: ' + error.message);
+      }
+    }
+
+    // 加载用户信息
+    async function loadUser() {
+      try {
+        const user = await api.get('/api/auth/user');
+        document.getElementById('userName').textContent = user.email || '管理员';
+        document.getElementById('userRole').textContent = user.identity || 'SuperAdmin';
+        document.getElementById('userAvatar').textContent = (user.email || 'A').charAt(0).toUpperCase();
+      } catch (error) {
+        console.error('加载用户信息失败:', error);
+      }
+    }
+
+    // 工具函数：转义HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 工具函数：格式化数字
+    function formatNumber(num) {
+      return new Intl.NumberFormat('zh-CN').format(num);
+    }
+
+    // 显示成功消息
+    function showSuccess(message) {
+      alert(message);
+    }
+
+    // 显示错误消息
+    function showError(message) {
+      alert(message);
+    }
+
+    // 切换侧边栏
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    // 切换主题
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    }
+
+    // 切换用户菜单
+    function toggleUserMenu() {
+      const userMenu = document.querySelector('.user-menu');
+      userMenu.classList.toggle('active');
+    }
+
+    // 加载保存的主题
+    function loadTheme() {
+      const theme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    // 页面加载时加载主题
+    loadTheme();
+  </script>
+</body>
+</html>

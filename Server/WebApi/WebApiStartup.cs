@@ -5,6 +5,8 @@ using Server.Envir;
 using Server.WebApi.Auth;
 using Server.WebApi.Services;
 using Server.WebApi.Endpoints;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Server.WebApi
 {
@@ -122,6 +124,13 @@ namespace Server.WebApi
                 });
 
             services.AddAuthorization();
+
+            // Configure JSON serialization with camelCase naming
+            services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+            {
+                options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                options.SerializerOptions.WriteIndented = true;
+            });
 
             // Add singleton services
             services.AddSingleton<JwtHelper>();

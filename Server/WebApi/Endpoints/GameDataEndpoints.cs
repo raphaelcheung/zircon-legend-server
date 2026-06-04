@@ -2,6 +2,7 @@ using Library;
 using Server.WebApi.Auth;
 using Server.WebApi.Services;
 using System.Security.Claims;
+using Server.Envir;
 
 namespace Server.WebApi.Endpoints
 {
@@ -22,12 +23,18 @@ namespace Server.WebApi.Endpoints
             group.MapGet("/items/required-classes", GetRequiredClasses);
             group.MapGet("/items/rarities", GetRarities);
             group.MapGet("/items/{index:int}", GetItemDetail);
+            group.MapGet("/items/{index:int}/drops", GetItemDrops);
+            group.MapPost("/items", CreateItem);
             group.MapPut("/items/{index:int}", UpdateItem);
             group.MapPost("/items/give", GiveItem);
 
             // Maps
             group.MapGet("/maps", GetMaps);
             group.MapGet("/maps/{index:int}", GetMapDetail);
+            group.MapGet("/maps/{index:int}/respawns", GetMapRespawns);
+            group.MapPost("/maps/{index:int}/respawns", AddMapRespawn);
+            group.MapPut("/maps/{index:int}/respawns/{respawnId:int}", UpdateMapRespawn);
+            group.MapDelete("/maps/{index:int}/respawns/{respawnId:int}", DeleteMapRespawn);
             group.MapPut("/maps/{index:int}", UpdateMap);
             group.MapPost("/maps/teleport", TeleportPlayer);
             group.MapPost("/maps/{index:int}/clear-monsters", ClearMonstersOnMap);
@@ -35,6 +42,10 @@ namespace Server.WebApi.Endpoints
             // Monsters
             group.MapGet("/monsters", GetMonsters);
             group.MapGet("/monsters/{index:int}", GetMonsterDetail);
+            group.MapGet("/monsters/{index:int}/drops", GetMonsterDrops);
+            group.MapPost("/monsters/{index:int}/drops", AddMonsterDrop);
+            group.MapPut("/monsters/{index:int}/drops/{dropId:int}", UpdateMonsterDrop);
+            group.MapDelete("/monsters/{index:int}/drops/{dropId:int}", DeleteMonsterDrop);
             group.MapPut("/monsters/{index:int}", UpdateMonster);
             group.MapPost("/monsters/{index:int}/clear", ClearMonstersByType);
             group.MapPost("/monsters/spawn", SpawnMonsterNearPlayer);
@@ -58,6 +69,20 @@ namespace Server.WebApi.Endpoints
             group.MapPost("/basestats", CreateBaseStat);
             group.MapPut("/basestats/{index:int}", UpdateBaseStat);
             group.MapDelete("/basestats/{index:int}", DeleteBaseStat);
+
+            // Quests
+            group.MapGet("/quests", GetQuests);
+            group.MapGet("/quests/{index:int}", GetQuestDetail);
+            group.MapPost("/quests", CreateQuest);
+            group.MapPut("/quests/{index:int}", UpdateQuest);
+            group.MapDelete("/quests/{index:int}", DeleteQuest);
+
+            // Store
+            group.MapGet("/store", GetStoreItems);
+            group.MapGet("/store/{index:int}", GetStoreItemDetail);
+            group.MapPost("/store", AddStoreItem);
+            group.MapPut("/store/{index:int}", UpdateStoreItem);
+            group.MapDelete("/store/{index:int}", DeleteStoreItem);
         }
 
         /// <summary>
@@ -110,6 +135,38 @@ namespace Server.WebApi.Endpoints
             }
 
             return Results.Ok(item);
+        }
+
+        /// <summary>
+        /// Create new item
+        /// </summary>
+        private static IResult CreateItem(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            AddItemRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            if (request.Index <= 0)
+            {
+                return Results.BadRequest(new { message = "物品ID必须大于0" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return Results.BadRequest(new { message = "物品名称不能为空" });
+            }
+
+            var (success, message, item) = dataService.CreateItem(request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message, item });
         }
 
         /// <summary>
@@ -604,6 +661,154 @@ namespace Server.WebApi.Endpoints
 
         #endregion
 
+        #region Store Management
+
+        /// <summary>
+        /// Get store items list with pagination
+        /// </summary>
+        private static IResult GetStoreItems(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int page = 1,
+            int pageSize = 50,
+            string? search = null)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 200) pageSize = 50;
+
+            var (items, total) = dataService.GetStoreItems(page, pageSize, search);
+
+            return Results.Ok(new
+            {
+                total,
+                page,
+                pageSize,
+                totalPages = (int)Math.Ceiling((double)total / pageSize),
+                items
+            });
+        }
+
+        /// <summary>
+        /// Get store item detail by index
+        /// </summary>
+        private static IResult GetStoreItemDetail(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var item = dataService.GetStoreItemDetail(index);
+            if (item == null)
+            {
+                return Results.NotFound(new { message = "商城商品不存在" });
+            }
+
+            return Results.Ok(item);
+        }
+
+        /// <summary>
+        /// Add new store item
+        /// </summary>
+        private static IResult AddStoreItem(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            AddStoreItemRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            if (request.ItemIndex <= 0)
+            {
+                return Results.BadRequest(new { message = "物品ID必须大于0" });
+            }
+
+            if (request.Price < 0)
+            {
+                return Results.BadRequest(new { message = "价格不能为负数" });
+            }
+
+            if (request.HuntGoldPrice < 0)
+            {
+                return Results.BadRequest(new { message = "猎金价格不能为负数" });
+            }
+
+            var (success, message, item) = dataService.AddStoreItem(request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message, item });
+        }
+
+        /// <summary>
+        /// Update store item
+        /// </summary>
+        private static IResult UpdateStoreItem(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            UpdateStoreItemRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            if (request.Price.HasValue && request.Price.Value < 0)
+            {
+                return Results.BadRequest(new { message = "价格不能为负数" });
+            }
+
+            if (request.HuntGoldPrice.HasValue && request.HuntGoldPrice.Value < 0)
+            {
+                return Results.BadRequest(new { message = "猎金价格不能为负数" });
+            }
+
+            var (success, message) = dataService.UpdateStoreItem(index, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        /// <summary>
+        /// Delete store item
+        /// </summary>
+        private static IResult DeleteStoreItem(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.DeleteStoreItem(index);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        #endregion
+
         #region Magic Management
 
         /// <summary>
@@ -814,6 +1019,354 @@ namespace Server.WebApi.Endpoints
             }
 
             var (success, message) = dataService.DeleteBaseStat(index);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        #endregion
+
+        #region Item Drops
+
+        /// <summary>
+        /// Get monsters that drop this item
+        /// </summary>
+        private static IResult GetItemDrops(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var drops = dataService.GetItemDrops(index);
+            return Results.Ok(new
+            {
+                total = drops.Count,
+                drops
+            });
+        }
+
+        #endregion
+
+        #region Quest Management
+
+        /// <summary>
+        /// Get quests list with pagination
+        /// </summary>
+        private static IResult GetQuests(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int page = 1,
+            int pageSize = 50,
+            string? search = null)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 200) pageSize = 50;
+
+            var (quests, total) = dataService.GetQuests(page, pageSize, search);
+
+            return Results.Ok(new
+            {
+                total,
+                page,
+                pageSize,
+                totalPages = (int)Math.Ceiling((double)total / pageSize),
+                quests
+            });
+        }
+
+        /// <summary>
+        /// Get quest detail by index
+        /// </summary>
+        private static IResult GetQuestDetail(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var quest = dataService.GetQuestDetail(index);
+            if (quest == null)
+            {
+                return Results.NotFound(new { message = "任务不存在" });
+            }
+
+            return Results.Ok(quest);
+        }
+
+        /// <summary>
+        /// Create new quest
+        /// </summary>
+        private static IResult CreateQuest(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            AddQuestRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            if (string.IsNullOrWhiteSpace(request.QuestName))
+            {
+                return Results.BadRequest(new { message = "任务名称不能为空" });
+            }
+
+            var (success, message, quest) = dataService.CreateQuest(request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message, quest });
+        }
+
+        /// <summary>
+        /// Update quest by index
+        /// </summary>
+        private static IResult UpdateQuest(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            UpdateQuestRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            if (string.IsNullOrWhiteSpace(request.QuestName))
+            {
+                return Results.BadRequest(new { message = "任务名称不能为空" });
+            }
+
+            var (success, message) = dataService.UpdateQuest(index, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        /// <summary>
+        /// Delete quest by index
+        /// </summary>
+        private static IResult DeleteQuest(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.DeleteQuest(index);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        #endregion
+
+        #region Monster Drops Management
+
+        /// <summary>
+        /// Get drops for a monster
+        /// </summary>
+        private static IResult GetMonsterDrops(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var drops = dataService.GetMonsterDrops(index);
+            return Results.Ok(new
+            {
+                total = drops.Count,
+                drops
+            });
+        }
+
+        /// <summary>
+        /// Add drop to monster
+        /// </summary>
+        private static IResult AddMonsterDrop(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            AddDropRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message, drop) = dataService.AddMonsterDrop(index, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message, drop });
+        }
+
+        /// <summary>
+        /// Update monster drop
+        /// </summary>
+        private static IResult UpdateMonsterDrop(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            int dropId,
+            UpdateDropRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.UpdateMonsterDrop(index, dropId, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        /// <summary>
+        /// Delete monster drop
+        /// </summary>
+        private static IResult DeleteMonsterDrop(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            int dropId)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.DeleteMonsterDrop(index, dropId);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        #endregion
+
+        #region Map Respawns Management
+
+        /// <summary>
+        /// Get respawns for a map
+        /// </summary>
+        private static IResult GetMapRespawns(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
+            {
+                return Results.Forbid();
+            }
+
+            var respawns = dataService.GetMapRespawns(index);
+            return Results.Ok(new
+            {
+                total = respawns.Count,
+                respawns
+            });
+        }
+
+        /// <summary>
+        /// Add respawn to map
+        /// </summary>
+        private static IResult AddMapRespawn(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            AddRespawnRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message, respawn) = dataService.AddMapRespawn(index, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message, respawn });
+        }
+
+        /// <summary>
+        /// Update map respawn
+        /// </summary>
+        private static IResult UpdateMapRespawn(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            int respawnId,
+            UpdateRespawnRequest request)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.UpdateMapRespawn(index, respawnId, request);
+            if (!success)
+            {
+                return Results.BadRequest(new { message });
+            }
+
+            return Results.Ok(new { message });
+        }
+
+        /// <summary>
+        /// Delete map respawn
+        /// </summary>
+        private static IResult DeleteMapRespawn(
+            ClaimsPrincipal user,
+            ServerDataService dataService,
+            int index,
+            int respawnId)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
+            {
+                return Results.Forbid();
+            }
+
+            var (success, message) = dataService.DeleteMapRespawn(index, respawnId);
             if (!success)
             {
                 return Results.BadRequest(new { message });

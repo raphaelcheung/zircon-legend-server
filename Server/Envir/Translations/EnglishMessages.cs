@@ -2,7 +2,7 @@
 
 namespace Server.Envir.Translations
 {
-    [ConfigPath(@".\datas\Translations\EnglishMessages.ini")]
+    [ConfigPath("./datas/Translations/EnglishMessages.ini")]
     public class EnglishMessages : StringMessages
     {
         public EnglishMessages()
