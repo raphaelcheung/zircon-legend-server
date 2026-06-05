@@ -929,9 +929,7 @@ namespace Server.Envir
             TopRankings = new HashSet<CharacterInfo>();
             foreach (CharacterInfo info in CharacterInfoList.Binding)
             {
-                if (info.Deleted || !info.Account.Activated 
-                    || info.Account.Banned 
-                    || info.Account.Identify != AccountIdentity.Normal) continue;
+                if (!CanShowInRanking(info)) continue;
 
                 info.RankingNode = Rankings.AddLast(info);
                 RankingSort(info, false);
@@ -970,12 +968,21 @@ namespace Server.Envir
 
             Session.BackUpSpace = Config.玩家数据备份间隔;
         }
+        public static bool CanShowInRanking(CharacterInfo info)
+        {
+            if (info == null || info.Account == null) return false;
+
+            return !info.Deleted
+                && info.Account.Activated
+                && !info.Account.Banned
+                && info.Account.Identify == AccountIdentity.Normal
+                && info.Account.EMailAddress != SuperAdmin;
+        }
+
         //Only works on Increasing EXP, still need to do Rebirth or loss of exp ranking update.
         public static void RankingSort(CharacterInfo character, bool updateLead = true)
         {
-            if (character.Deleted
-                || !character.Account.Activated 
-                || character.Account.Identify != AccountIdentity.Normal)
+            if (!CanShowInRanking(character))
                 return;
 
             bool changed = false;
@@ -1037,10 +1044,7 @@ namespace Server.Envir
 
             foreach (CharacterInfo cInfo in Rankings)
             {
-                if (cInfo.Deleted 
-                    || !cInfo.Account.Activated 
-                    || cInfo.Account.Banned
-                    || cInfo.Account.Identify != AccountIdentity.Normal) 
+                if (!CanShowInRanking(cInfo))
                     continue;
 
                 switch (cInfo.Class)
@@ -4716,10 +4720,7 @@ namespace Server.Envir
             int rank = 0;
             foreach (CharacterInfo info in Rankings)
             {
-                if (info.Deleted 
-                    || !info.Account.Activated 
-                    || info.Account.Banned 
-                    || info.Account.EMailAddress == SuperAdmin) 
+                if (!CanShowInRanking(info))
                     continue;
 
                 switch (info.Class)
