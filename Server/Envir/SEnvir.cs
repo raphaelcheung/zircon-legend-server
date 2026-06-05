@@ -2192,7 +2192,9 @@ namespace Server.Envir
             item.Colour = Color.FromArgb(Random.Next(256), Random.Next(256), Random.Next(256));
 
             if (item.Info.Rarity != Rarity.Common)
-                chance *= 2;
+                chance = Config.高级稀世极品几率;
+            else
+                chance = Config.全局极品几率;
 
             if (Random.Next(chance) == 0)
             {

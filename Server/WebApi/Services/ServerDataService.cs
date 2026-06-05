@@ -158,6 +158,42 @@ namespace Server.WebApi.Services
             return false;
         }
 
+        /// <summary>
+        /// Kick all online players
+        /// </summary>
+        public int KickAllPlayers()
+        {
+            var players = SEnvir.Players;
+            if (players == null) return 0;
+
+            int count = 0;
+            foreach (var player in players)
+            {
+                if (player?.Connection != null)
+                {
+                    player.Connection.TryDisconnect();
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Save user data to database
+        /// </summary>
+        public void SaveUserDatas()
+        {
+            SEnvir.SaveUserDatas();
+        }
+
+        /// <summary>
+        /// Save system data to database
+        /// </summary>
+        public void SaveSystem()
+        {
+            SEnvir.SaveSystem();
+        }
+
         #endregion
 
         #region Accounts
@@ -307,8 +343,8 @@ namespace Server.WebApi.Services
                     LastLogin = a.LastLogin,
                     LastIP = a.LastIP,
                     CharacterCount = a.Characters?.Count(c => !c.Deleted) ?? 0,
-                    Gold = a.Gold,
-                    GameGold = a.GameGold
+                    GameGold = a.GameGold,
+                    HuntGold = a.HuntGold
                 })
                 .ToList();
 
@@ -334,8 +370,8 @@ namespace Server.WebApi.Services
                 CreationIP = account.CreationIP,
                 LastLogin = account.LastLogin,
                 LastIP = account.LastIP,
-                Gold = account.Gold,
                 GameGold = account.GameGold,
+                HuntGold = account.HuntGold,
                 Characters = account.Characters?
                     .Where(c => !c.Deleted)
                     .Select(c => new CharacterDto
@@ -400,6 +436,20 @@ namespace Server.WebApi.Services
 
             account.Password = SEnvir.CreateHash(newPassword);
             account.RealPassword = SEnvir.CreateHash(Functions.CalcMD5($"{email}-{newPassword}"));
+            SEnvir.SaveUserDatas();
+            return true;
+        }
+
+        /// <summary>
+        /// Update account gold and game gold
+        /// </summary>
+        public bool UpdateAccountGold(string email, int gameGold, int huntGold)
+        {
+            var account = GetAccountByEmail(email);
+            if (account == null) return false;
+
+            account.GameGold = gameGold;
+            account.HuntGold = huntGold;
             SEnvir.SaveUserDatas();
             return true;
         }
@@ -965,16 +1015,154 @@ namespace Server.WebApi.Services
             for (int i = 0; i < regions.Count; i++)
             {
                 var region = regions[i];
-                result.Add(new MapRegionDto
+                var dto = new MapRegionDto
                 {
                     Index = region.Index,
                     Description = region.Description ?? "",
                     MapIndex = region.Map?.Index ?? 0,
                     MapName = region.Map?.Description ?? "",
                     ServerDescription = region.ServerDescription ?? ""
-                });
+                };
+
+                // 创建并获取点列表
+                var mapWidth = 0;
+                if (region.Map != null)
+                {
+                    var map = SEnvir.GetMap(region.Map);
+                    mapWidth = map?.Width ?? 0;
+                }
+                region.CreatePoints(mapWidth);
+
+                if (region.PointList != null && region.PointList.Count > 0)
+                {
+                    dto.PointCount = region.PointList.Count;
+                    // 取前 20 个点作为示例，避免数据过大
+                    var displayPoints = region.PointList.Take(20).Select(p => $"({p.X},{p.Y})").ToList();
+                    dto.Points = displayPoints;
+                    if (region.PointList.Count > 20)
+                    {
+                        dto.Points.Add($"...还有{region.PointList.Count - 20}个点");
+                    }
+                }
+
+                result.Add(dto);
             }
             return result.OrderBy(r => r.MapName).ThenBy(r => r.Description).ToList();
+        }
+
+        /// <summary>
+        /// Get map region detail with all points
+        /// </summary>
+        public MapRegionDetailDto? GetMapRegionDetail(int index)
+        {
+            var regions = SEnvir.MapRegionList;
+            if (regions == null) return null;
+
+            for (int i = 0; i < regions.Count; i++)
+            {
+                var region = regions[i];
+                if (region.Index == index)
+                {
+                    var mapWidth = 0;
+                    if (region.Map != null)
+                    {
+                        var map = SEnvir.GetMap(region.Map);
+                        mapWidth = map?.Width ?? 0;
+                    }
+                    region.CreatePoints(mapWidth);
+
+                    var dto = new MapRegionDetailDto
+                    {
+                        Index = region.Index,
+                        Description = region.Description ?? "",
+                        MapIndex = region.Map?.Index ?? 0,
+                        MapName = region.Map?.Description ?? "",
+                        ServerDescription = region.ServerDescription ?? "",
+                        PointCount = region.PointList?.Count ?? 0
+                    };
+
+                    if (region.PointList != null && region.PointList.Count > 0)
+                    {
+                        dto.Points = region.PointList.Select(p => $"{p.X},{p.Y}").ToList();
+                    }
+
+                    return dto;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Update map region points
+        /// </summary>
+        public (bool success, string message) UpdateMapRegionPoints(int index, UpdateRegionPointsRequest request)
+        {
+            var regions = SEnvir.MapRegionList;
+            if (regions == null) return (false, "区域列表不可用");
+
+            MapRegion? region = null;
+            for (int i = 0; i < regions.Count; i++)
+            {
+                if (regions[i].Index == index)
+                {
+                    region = regions[i];
+                    break;
+                }
+            }
+
+            if (region == null) return (false, "区域不存在");
+
+            // 处理添加点
+            if (request.AddPoints != null && request.AddPoints.Count > 0)
+            {
+                var pointsToAdd = new List<System.Drawing.Point>();
+                foreach (var pointStr in request.AddPoints)
+                {
+                    var parts = pointStr.Split(',');
+                    if (parts.Length == 2)
+                    {
+                        if (int.TryParse(parts[0], out int x) && int.TryParse(parts[1], out int y))
+                        {
+                            pointsToAdd.Add(new System.Drawing.Point(x, y));
+                        }
+                    }
+                }
+
+                if (pointsToAdd.Count > 0)
+                {
+                    if (region.PointRegion == null)
+                    {
+                        region.PointRegion = pointsToAdd.ToArray();
+                    }
+                    else
+                    {
+                        var existing = region.PointRegion.ToList();
+                        existing.AddRange(pointsToAdd);
+                        region.PointRegion = existing.ToArray();
+                    }
+                }
+            }
+
+            // 处理删除点
+            if (request.RemovePoints != null && request.RemovePoints.Count > 0)
+            {
+                var pointsToRemove = new HashSet<string>(request.RemovePoints);
+                var existingPoints = region.PointRegion?.ToList() ?? new List<System.Drawing.Point>();
+                var remainingPoints = existingPoints
+                    .Where(p => !pointsToRemove.Contains($"{p.X},{p.Y}"))
+                    .ToList();
+
+                if (remainingPoints.Count == 0)
+                {
+                    region.PointRegion = null;
+                }
+                else
+                {
+                    region.PointRegion = remainingPoints.ToArray();
+                }
+            }
+
+            return (true, "更新成功");
         }
 
         /// <summary>
@@ -1871,9 +2059,98 @@ namespace Server.WebApi.Services
                     }
                 }
 
-                // Note: Requirements, Tasks, and Rewards update logic would be more complex
-                // and would require handling create/update/delete operations for child collections
-                // For now, we only update basic quest properties
+                // Update Requirements
+                if (request.Requirements != null)
+                {
+                    // Clear existing requirements
+                    questInfo.Requirements.Clear();
+
+                    // Add new requirements
+                    var questList = SEnvir.QuestInfoList;
+                    foreach (var reqDto in request.Requirements)
+                    {
+                        var requirement = questInfo.Requirements.AddNew();
+                        requirement.Requirement = Enum.Parse<QuestRequirementType>(reqDto.Requirement);
+                        requirement.IntParameter1 = reqDto.IntParameter1;
+                        requirement.Class = Enum.Parse<RequiredClass>(reqDto.Class);
+
+                        if (reqDto.QuestParameter != null && questList != null)
+                        {
+                            for (int i = 0; i < questList.Count; i++)
+                            {
+                                if (questList[i].Index == reqDto.QuestParameter.Index)
+                                {
+                                    requirement.QuestParameter = questList[i];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Update Tasks
+                if (request.Tasks != null)
+                {
+                    // Clear existing tasks
+                    questInfo.Tasks.Clear();
+
+                    // Add new tasks
+                    var items = SEnvir.ItemInfoList;
+                    foreach (var taskDto in request.Tasks)
+                    {
+                        var task = questInfo.Tasks.AddNew();
+                        task.Task = Enum.Parse<QuestTaskType>(taskDto.Task);
+                        task.Amount = taskDto.Amount;
+                        task.MobDescription = taskDto.MobDescription;
+
+                        // Set ItemParameter
+                        if (taskDto.ItemParameter != null && items != null)
+                        {
+                            for (int i = 0; i < items.Count; i++)
+                            {
+                                if (items[i].Index == taskDto.ItemParameter.Index)
+                                {
+                                    task.ItemParameter = items[i];
+                                    break;
+                                }
+                            }
+                        }
+
+                        // MonsterDetails are handled separately (not in this simple implementation)
+                    }
+                }
+
+                // Update Rewards
+                if (request.Rewards != null)
+                {
+                    // Clear existing rewards
+                    questInfo.Rewards.Clear();
+
+                    // Add new rewards
+                    var items = SEnvir.ItemInfoList;
+                    foreach (var rewardDto in request.Rewards)
+                    {
+                        var reward = questInfo.Rewards.AddNew();
+                        reward.Amount = rewardDto.Amount;
+                        reward.Class = Enum.Parse<RequiredClass>(rewardDto.Class);
+                        reward.Choice = rewardDto.Choice;
+                        reward.Bound = rewardDto.Bound;
+                        reward.Duration = rewardDto.Duration;
+
+                        // Set Item
+                        if (rewardDto.Item != null && items != null)
+                        {
+                            for (int i = 0; i < items.Count; i++)
+                            {
+                                if (items[i].Index == rewardDto.Item.Index)
+                                {
+                                    reward.Item = items[i];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
 
                 // Save to database
                 SEnvir.SaveUserDatas();
@@ -2338,7 +2615,9 @@ namespace Server.WebApi.Services
                 MinimumLevel = mapInfo.MinimumLevel,
                 MaximumLevel = mapInfo.MaximumLevel,
                 MonsterHealth = mapInfo.MonsterHealth,
+                MaxMonsterHealth = mapInfo.MaxMonsterHealth,
                 MonsterDamage = mapInfo.MonsterDamage,
+                MaxMonsterDamage = mapInfo.MaxMonsterDamage,
                 DropRate = mapInfo.DropRate,
                 ExperienceRate = mapInfo.ExperienceRate,
                 GoldRate = mapInfo.GoldRate,
@@ -2382,7 +2661,9 @@ namespace Server.WebApi.Services
             if (request.MinimumLevel.HasValue) mapInfo.MinimumLevel = request.MinimumLevel.Value;
             if (request.MaximumLevel.HasValue) mapInfo.MaximumLevel = request.MaximumLevel.Value;
             if (request.MonsterHealth.HasValue) mapInfo.MonsterHealth = request.MonsterHealth.Value;
+            if (request.MaxMonsterHealth.HasValue) mapInfo.MaxMonsterHealth = request.MaxMonsterHealth.Value;
             if (request.MonsterDamage.HasValue) mapInfo.MonsterDamage = request.MonsterDamage.Value;
+            if (request.MaxMonsterDamage.HasValue) mapInfo.MaxMonsterDamage = request.MaxMonsterDamage.Value;
             if (request.DropRate.HasValue) mapInfo.DropRate = request.DropRate.Value;
             if (request.ExperienceRate.HasValue) mapInfo.ExperienceRate = request.ExperienceRate.Value;
             if (request.GoldRate.HasValue) mapInfo.GoldRate = request.GoldRate.Value;
@@ -2541,6 +2822,9 @@ namespace Server.WebApi.Services
                 {
                     case Stat.Health:
                         stats.Health = stat.Amount;
+                        break;
+                    case Stat.HealthPercent:
+                        stats.HealthPercent = stat.Amount;
                         break;
                     case Stat.MinDC:
                         stats.MinDC = stat.Amount;
@@ -3386,6 +3670,338 @@ namespace Server.WebApi.Services
 
         #endregion
 
+        #region Movement Management
+
+        /// <summary>
+        /// Get movements for a map
+        /// </summary>
+        public List<MovementInfoDto> GetMapMovements(int mapIndex)
+        {
+            var movements = SEnvir.MovementInfoList;
+            if (movements == null) return new List<MovementInfoDto>();
+
+            var result = new List<MovementInfoDto>();
+            for (int i = 0; i < movements.Count; i++)
+            {
+                var movement = movements[i];
+                if (movement.SourceRegion?.Map?.Index == mapIndex)
+                {
+                    var dto = new MovementInfoDto
+                    {
+                        Index = movement.Index,
+                        SourceRegionIndex = movement.SourceRegion?.Index ?? 0,
+                        SourceRegionDescription = movement.SourceRegion?.Description ?? "",
+                        SourceMapName = movement.SourceRegion?.Map?.Description ?? "",
+                        DestinationRegionIndex = movement.DestinationRegion?.Index ?? 0,
+                        DestinationRegionDescription = movement.DestinationRegion?.Description ?? "",
+                        DestinationMapName = movement.DestinationRegion?.Map?.Description ?? "",
+                        Icon = movement.Icon.ToString(),
+                        NeedItemIndex = movement.NeedItem?.Index ?? 0,
+                        NeedItemName = movement.NeedItem?.ItemName ?? "",
+                        NeedSpawnIndex = movement.NeedSpawn?.Index ?? 0,
+                        NeedSpawnName = movement.NeedSpawn?.MonsterName ?? "",
+                        Effect = movement.Effect.ToString(),
+                        RequiredClass = movement.RequiredClass.ToString()
+                    };
+
+                    // 填充源区域坐标信息
+                    if (movement.SourceRegion != null)
+                    {
+                        var srcWidth = 0;
+                        if (movement.SourceRegion.Map != null)
+                        {
+                            var srcMap = SEnvir.GetMap(movement.SourceRegion.Map);
+                            srcWidth = srcMap?.Width ?? 0;
+                        }
+                        movement.SourceRegion.CreatePoints(srcWidth);
+                        if (movement.SourceRegion.PointList != null)
+                        {
+                            dto.SourcePointCount = movement.SourceRegion.PointList.Count;
+                            var displayPoints = movement.SourceRegion.PointList.Take(20).Select(p => $"({p.X},{p.Y})").ToList();
+                            dto.SourcePoints = displayPoints;
+                            if (movement.SourceRegion.PointList.Count > 20)
+                            {
+                                dto.SourcePoints.Add($"...还有{movement.SourceRegion.PointList.Count - 20}个点");
+                            }
+                        }
+                    }
+
+                    // 填充目标区域坐标信息
+                    if (movement.DestinationRegion != null)
+                    {
+                        var destWidth = 0;
+                        if (movement.DestinationRegion.Map != null)
+                        {
+                            var destMap = SEnvir.GetMap(movement.DestinationRegion.Map);
+                            destWidth = destMap?.Width ?? 0;
+                        }
+                        movement.DestinationRegion.CreatePoints(destWidth);
+                        if (movement.DestinationRegion.PointList != null)
+                        {
+                            dto.DestinationPointCount = movement.DestinationRegion.PointList.Count;
+                            var displayPoints = movement.DestinationRegion.PointList.Take(20).Select(p => $"({p.X},{p.Y})").ToList();
+                            dto.DestinationPoints = displayPoints;
+                            if (movement.DestinationRegion.PointList.Count > 20)
+                            {
+                                dto.DestinationPoints.Add($"...还有{movement.DestinationRegion.PointList.Count - 20}个点");
+                            }
+                        }
+                    }
+
+                    result.Add(dto);
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Add movement to map
+        /// </summary>
+        public (bool success, string message, MovementInfoDto? movement) AddMapMovement(int mapIndex, AddMovementRequest request)
+        {
+            var movementList = SEnvir.MovementInfoList;
+            if (movementList == null) return (false, "链接列表不可用", null);
+
+            // Find source region
+            var sourceRegion = FindMapRegion(request.SourceRegionIndex, mapIndex);
+            if (sourceRegion == null) return (false, "源区域不存在或不属于该地图", null);
+
+            // Find destination region (can be on different map)
+            var destinationRegion = FindMapRegion(request.DestinationRegionIndex, null);
+            if (destinationRegion == null) return (false, "目标区域不存在", null);
+
+            var movement = movementList.CreateNewObject();
+            movement.SourceRegion = sourceRegion;
+            movement.DestinationRegion = destinationRegion;
+
+            // Set optional fields
+            if (!string.IsNullOrWhiteSpace(request.Icon) && Enum.TryParse<MapIcon>(request.Icon, out var icon))
+            {
+                movement.Icon = icon;
+            }
+            if (!string.IsNullOrWhiteSpace(request.Effect) && Enum.TryParse<MovementEffect>(request.Effect, out var effect))
+            {
+                movement.Effect = effect;
+            }
+            if (!string.IsNullOrWhiteSpace(request.RequiredClass) && Enum.TryParse<RequiredClass>(request.RequiredClass, out var requiredClass))
+            {
+                movement.RequiredClass = requiredClass;
+            }
+
+            // Set optional item requirement
+            if (request.NeedItemIndex > 0)
+            {
+                var items = SEnvir.ItemInfoList;
+                if (items != null)
+                {
+                    for (int i = 0; i < items.Count; i++)
+                    {
+                        if (items[i].Index == request.NeedItemIndex)
+                        {
+                            movement.NeedItem = items[i];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Set optional spawn requirement
+            if (request.NeedSpawnIndex > 0)
+            {
+                var spawns = SEnvir.RespawnInfoList;
+                if (spawns != null)
+                {
+                    for (int i = 0; i < spawns.Count; i++)
+                    {
+                        if (spawns[i].Index == request.NeedSpawnIndex)
+                        {
+                            movement.NeedSpawn = spawns[i];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return (true, "添加成功", new MovementInfoDto
+            {
+                Index = movement.Index,
+                SourceRegionIndex = movement.SourceRegion?.Index ?? 0,
+                SourceRegionDescription = movement.SourceRegion?.Description ?? "",
+                SourceMapName = movement.SourceRegion?.Map?.Description ?? "",
+                DestinationRegionIndex = movement.DestinationRegion?.Index ?? 0,
+                DestinationRegionDescription = movement.DestinationRegion?.Description ?? "",
+                DestinationMapName = movement.DestinationRegion?.Map?.Description ?? "",
+                Icon = movement.Icon.ToString(),
+                NeedItemIndex = movement.NeedItem?.Index ?? 0,
+                NeedItemName = movement.NeedItem?.ItemName ?? "",
+                NeedSpawnIndex = movement.NeedSpawn?.Index ?? 0,
+                NeedSpawnName = movement.NeedSpawn?.MonsterName ?? "",
+                Effect = movement.Effect.ToString(),
+                RequiredClass = movement.RequiredClass.ToString()
+            });
+        }
+
+        /// <summary>
+        /// Update map movement
+        /// </summary>
+        public (bool success, string message) UpdateMapMovement(int mapIndex, int movementId, UpdateMovementRequest request)
+        {
+            var movementList = SEnvir.MovementInfoList;
+            if (movementList == null) return (false, "链接列表不可用");
+
+            MovementInfo? movement = null;
+            for (int i = 0; i < movementList.Count; i++)
+            {
+                if (movementList[i].Index == movementId)
+                {
+                    movement = movementList[i];
+                    break;
+                }
+            }
+
+            if (movement == null) return (false, "链接信息不存在");
+
+            // Verify movement belongs to map
+            if (movement.SourceRegion?.Map?.Index != mapIndex)
+            {
+                return (false, "链接信息不属于该地图");
+            }
+
+            // Update destination region
+            if (request.DestinationRegionIndex.HasValue)
+            {
+                var destinationRegion = FindMapRegion(request.DestinationRegionIndex.Value, null);
+                if (destinationRegion == null) return (false, "目标区域不存在");
+                movement.DestinationRegion = destinationRegion;
+            }
+
+            // Update optional fields
+            if (!string.IsNullOrWhiteSpace(request.Icon) && Enum.TryParse<MapIcon>(request.Icon, out var icon))
+            {
+                movement.Icon = icon;
+            }
+            if (!string.IsNullOrWhiteSpace(request.Effect) && Enum.TryParse<MovementEffect>(request.Effect, out var effect))
+            {
+                movement.Effect = effect;
+            }
+            if (!string.IsNullOrWhiteSpace(request.RequiredClass) && Enum.TryParse<RequiredClass>(request.RequiredClass, out var requiredClass))
+            {
+                movement.RequiredClass = requiredClass;
+            }
+
+            // Update item requirement
+            if (request.NeedItemIndex.HasValue)
+            {
+                if (request.NeedItemIndex.Value <= 0)
+                {
+                    movement.NeedItem = null;
+                }
+                else
+                {
+                    var items = SEnvir.ItemInfoList;
+                    if (items != null)
+                    {
+                        for (int i = 0; i < items.Count; i++)
+                        {
+                            if (items[i].Index == request.NeedItemIndex.Value)
+                            {
+                                movement.NeedItem = items[i];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Update spawn requirement
+            if (request.NeedSpawnIndex.HasValue)
+            {
+                if (request.NeedSpawnIndex.Value <= 0)
+                {
+                    movement.NeedSpawn = null;
+                }
+                else
+                {
+                    var spawns = SEnvir.RespawnInfoList;
+                    if (spawns != null)
+                    {
+                        for (int i = 0; i < spawns.Count; i++)
+                        {
+                            if (spawns[i].Index == request.NeedSpawnIndex.Value)
+                            {
+                                movement.NeedSpawn = spawns[i];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return (true, "更新成功");
+        }
+
+        /// <summary>
+        /// Delete map movement
+        /// </summary>
+        public (bool success, string message) DeleteMapMovement(int mapIndex, int movementId)
+        {
+            var movementList = SEnvir.MovementInfoList;
+            if (movementList == null) return (false, "链接列表不可用");
+
+            MovementInfo? movement = null;
+            for (int i = 0; i < movementList.Count; i++)
+            {
+                if (movementList[i].Index == movementId)
+                {
+                    movement = movementList[i];
+                    break;
+                }
+            }
+
+            if (movement == null) return (false, "链接信息不存在");
+
+            // Verify movement belongs to map
+            if (movement.SourceRegion?.Map?.Index != mapIndex)
+            {
+                return (false, "链接信息不属于该地图");
+            }
+
+            movement.Delete();
+            return (true, "删除成功");
+        }
+
+        /// <summary>
+        /// Helper method to find map region
+        /// </summary>
+        private MapRegion? FindMapRegion(int regionIndex, int? mapIndexFilter)
+        {
+            var regions = SEnvir.MapRegionList;
+            if (regions == null) return null;
+
+            for (int i = 0; i < regions.Count; i++)
+            {
+                if (regions[i].Index == regionIndex)
+                {
+                    // If map filter is provided, check that region belongs to that map
+                    if (mapIndexFilter.HasValue)
+                    {
+                        if (regions[i].Map?.Index == mapIndexFilter.Value)
+                        {
+                            return regions[i];
+                        }
+                    }
+                    else
+                    {
+                        // No map filter, return any region with matching index
+                        return regions[i];
+                    }
+                }
+            }
+            return null;
+        }
+
+        #endregion
+
         #region Helpers
 
         /// <summary>
@@ -3421,8 +4037,8 @@ namespace Server.WebApi.Services
         public DateTime LastLogin { get; set; }
         public string? LastIP { get; set; }
         public int CharacterCount { get; set; }
-        public long Gold { get; set; }
         public int GameGold { get; set; }
+        public int HuntGold { get; set; }
     }
 
     public class AccountDetailDto : AccountDto
@@ -3589,7 +4205,9 @@ namespace Server.WebApi.Services
         public int MinimumLevel { get; set; }
         public int MaximumLevel { get; set; }
         public int MonsterHealth { get; set; }
+        public int MaxMonsterHealth { get; set; }
         public int MonsterDamage { get; set; }
+        public int MaxMonsterDamage { get; set; }
         public int DropRate { get; set; }
         public int ExperienceRate { get; set; }
         public int GoldRate { get; set; }
@@ -3613,7 +4231,9 @@ namespace Server.WebApi.Services
         public int? MinimumLevel { get; set; }
         public int? MaximumLevel { get; set; }
         public int? MonsterHealth { get; set; }
+        public int? MaxMonsterHealth { get; set; }
         public int? MonsterDamage { get; set; }
+        public int? MaxMonsterDamage { get; set; }
         public int? DropRate { get; set; }
         public int? ExperienceRate { get; set; }
         public int? GoldRate { get; set; }
@@ -3652,6 +4272,7 @@ namespace Server.WebApi.Services
     public class MonsterStatDto
     {
         public int Health { get; set; }
+        public int HealthPercent { get; set; }
         public int MinDC { get; set; }
         public int MaxDC { get; set; }
         public int MinSC { get; set; }
@@ -3788,6 +4409,25 @@ namespace Server.WebApi.Services
         public int MapIndex { get; set; }
         public string MapName { get; set; } = "";
         public string ServerDescription { get; set; } = "";
+        public List<string> Points { get; set; } = new List<string>();
+        public int PointCount { get; set; }
+    }
+
+    public class MapRegionDetailDto
+    {
+        public int Index { get; set; }
+        public string Description { get; set; } = "";
+        public int MapIndex { get; set; }
+        public string MapName { get; set; } = "";
+        public string ServerDescription { get; set; } = "";
+        public List<string> Points { get; set; } = new List<string>();
+        public int PointCount { get; set; }
+    }
+
+    public class UpdateRegionPointsRequest
+    {
+        public List<string>? AddPoints { get; set; }
+        public List<string>? RemovePoints { get; set; }
     }
 
     // Magic/Skill DTOs
@@ -4082,5 +4722,53 @@ namespace Server.WebApi.Services
     }
 
     #endregion
+
+    #region Movement
+
+    public class MovementInfoDto
+    {
+        public int Index { get; set; }
+        public int SourceRegionIndex { get; set; }
+        public string SourceRegionDescription { get; set; } = "";
+        public string SourceMapName { get; set; } = "";
+        public int SourcePointCount { get; set; }
+        public List<string> SourcePoints { get; set; } = new List<string>();
+        public int DestinationRegionIndex { get; set; }
+        public string DestinationRegionDescription { get; set; } = "";
+        public string DestinationMapName { get; set; } = "";
+        public int DestinationPointCount { get; set; }
+        public List<string> DestinationPoints { get; set; } = new List<string>();
+        public string Icon { get; set; } = "";
+        public int NeedItemIndex { get; set; }
+        public string NeedItemName { get; set; } = "";
+        public int NeedSpawnIndex { get; set; }
+        public string NeedSpawnName { get; set; } = "";
+        public string Effect { get; set; } = "";
+        public string RequiredClass { get; set; } = "";
+    }
+
+    public class AddMovementRequest
+    {
+        public int SourceRegionIndex { get; set; }
+        public int DestinationRegionIndex { get; set; }
+        public string? Icon { get; set; }
+        public int NeedItemIndex { get; set; } = 0;
+        public int NeedSpawnIndex { get; set; } = 0;
+        public string? Effect { get; set; }
+        public string? RequiredClass { get; set; }
+    }
+
+    public class UpdateMovementRequest
+    {
+        public int? DestinationRegionIndex { get; set; }
+        public string? Icon { get; set; }
+        public int? NeedItemIndex { get; set; }
+        public int? NeedSpawnIndex { get; set; }
+        public string? Effect { get; set; }
+        public string? RequiredClass { get; set; }
+    }
+
+    #endregion
 }
+
 
