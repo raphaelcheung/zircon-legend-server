@@ -16,6 +16,9 @@ namespace Server.WebApi.Endpoints
                 .RequireAuthorization();
 
             group.MapGet("/stats", GetStats);
+            group.MapPost("/save-users", SaveUserDatas);
+            group.MapPost("/save-system", SaveSystem);
+            group.MapPost("/kick-all", KickAllPlayers);
         }
 
         /// <summary>
@@ -60,6 +63,69 @@ namespace Server.WebApi.Endpoints
                 return $"{(int)uptime.TotalHours}小时 {uptime.Minutes}分钟";
             }
             return $"{uptime.Minutes}分钟 {uptime.Seconds}秒";
+        }
+
+        /// <summary>
+        /// Save user data to database
+        /// </summary>
+        private static IResult SaveUserDatas(ClaimsPrincipal user, ServerDataService dataService)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Operator))
+            {
+                return Results.Forbid();
+            }
+
+            try
+            {
+                dataService.SaveUserDatas();
+                return Results.Ok(new { message = "用户数据保存成功" });
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(new { message = $"保存失败: {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// Save system data to database
+        /// </summary>
+        private static IResult SaveSystem(ClaimsPrincipal user, ServerDataService dataService)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Operator))
+            {
+                return Results.Forbid();
+            }
+
+            try
+            {
+                dataService.SaveSystem();
+                return Results.Ok(new { message = "系统数据保存成功" });
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(new { message = $"保存失败: {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// Kick all online players
+        /// </summary>
+        private static IResult KickAllPlayers(ClaimsPrincipal user, ServerDataService dataService)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Operator))
+            {
+                return Results.Forbid();
+            }
+
+            try
+            {
+                int count = dataService.KickAllPlayers();
+                return Results.Ok(new { message = $"已踢出 {count} 个在线玩家" });
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(new { message = $"操作失败: {ex.Message}" });
+            }
         }
     }
 
