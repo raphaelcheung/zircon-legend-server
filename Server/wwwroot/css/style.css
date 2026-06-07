@@ -411,12 +411,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .sidebar-header {
-  padding: 1.25rem;
+  height: var(--topbar-height);
+  padding: 0 1.5rem;
   border-bottom: 1px solid var(--border-primary);
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-height: var(--topbar-height);
 }
 
 .sidebar-logo {
@@ -1157,10 +1157,15 @@ h1, h2, h3, h4, h5, h6 {
 @media (max-width: 1024px) {
   .sidebar {
     transform: translateX(-100%);
+    z-index: 1001; /* 提升层级，保证盖在主内容层上面 */
+    transition: transform var(--transition-speed);
   }
 
-  .sidebar.open {
+  /* 小屏下，.open 或 .collapsed 折叠状态类都翻转映射为滑出显示 */
+  .sidebar.open,
+  .sidebar.collapsed {
     transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
   }
 
   .main-content {
@@ -1253,7 +1258,7 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
 }
 
-.modal.active {
+.modal.active, .modal.show {
   display: flex;
 }
 
@@ -1269,15 +1274,27 @@ h1, h2, h3, h4, h5, h6 {
 
 .modal-content {
   position: relative;
-  width: 100%;
-  max-width: 500px;
+  width: 90%;
+  max-width: 600px;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-xl), var(--shadow-glow);
   animation: modalSlideIn 0.3s ease-out;
+  margin: auto;
+  z-index: 1001;
+}
+
+.modal-content.modal-small {
+  max-width: 480px;
+}
+
+.modal-content.modal-large {
+  max-width: 850px;
 }
 
 @keyframes modalSlideIn {
@@ -1293,10 +1310,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .modal-header {
   padding: 1.25rem 1.5rem;
+  background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .modal-title {
@@ -1330,15 +1349,20 @@ h1, h2, h3, h4, h5, h6 {
 
 .modal-body {
   padding: 1.5rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--bg-secondary);
 }
 
 .modal-footer {
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 1.5rem;
   border-top: 1px solid var(--border-primary);
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
   background: var(--bg-tertiary);
+  flex-shrink: 0;
 }
 
 .form-row {

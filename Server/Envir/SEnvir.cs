@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
@@ -65,14 +65,22 @@ namespace Server.Envir
         private static readonly Dictionary<string, TagBlockInfo> dictDeviceBlock = new Dictionary<string, TagBlockInfo>();
         #region Synchronization
 
-        private static readonly SynchronizationContext Context = SynchronizationContext.Current;
+        // 移除对 SynchronizationContext 的依赖，改用无锁队列作为游戏主线程的消息泵
+        public static readonly System.Collections.Concurrent.ConcurrentQueue<Action> MainLoopActions = new System.Collections.Concurrent.ConcurrentQueue<Action>();
+
         public static void Send(SendOrPostCallback method)
         {
-            Context.Send(method, null);
+            throw new NotSupportedException("SEnvir.Send 采用阻塞同步，在当前跨平台架构中已废弃以防死锁，请使用 SEnvir.Post 代替。");
         }
+
+        public static void Post(Action action)
+        {
+            MainLoopActions.Enqueue(action);
+        }
+
         public static void Post(SendOrPostCallback method)
         {
-            Context.Post(method, null);
+            MainLoopActions.Enqueue(() => method(null));
         }
 
         public static bool SupportClientUpgrade { get => ClientFileHash.Count > 0; }
@@ -82,6 +90,10 @@ namespace Server.Envir
 
         #region Logging
 
+        public static Queue<string> SystemLogHistory { get; } = new Queue<string>();
+        public static Queue<string> ChatLogHistory { get; } = new Queue<string>();
+        public static readonly object LogHistoryLock = new object();
+
         public static ConcurrentQueue<string> DisplayLogs { get; set; } = new ConcurrentQueue<string>();
         public static ConcurrentQueue<string> Logs { get; set; } = new ConcurrentQueue<string>();
         public static void Log(string log, bool hardLog = true)
@@ -89,6 +101,16 @@ namespace Server.Envir
             DateTime now = Time.Now.ToLocalTime();
 
             log = $"[{now.ToString("yyyy-MM-dd HH:mm:ss")}]: {log}";
+
+            // 将日志安全地存入系统日志历史缓冲区，容量上限 3000 条
+            lock (LogHistoryLock)
+            {
+                SystemLogHistory.Enqueue(log);
+                if (SystemLogHistory.Count > 3000)
+                {
+                    SystemLogHistory.Dequeue();
+                }
+            }
 
             if (DisplayLogs.Count < 300)
                 DisplayLogs.Enqueue(log);
@@ -119,6 +141,16 @@ namespace Server.Envir
         public static void LogChat(string log)
         {
             log = string.Format("[{0:F}]: {1}", Time.Now.ToLocalTime(), log);
+
+            // 将聊天日志安全地存入聊天日志历史缓冲区，容量上限 3000 条
+            lock (LogHistoryLock)
+            {
+                ChatLogHistory.Enqueue(log);
+                if (ChatLogHistory.Count > 3000)
+                {
+                    ChatLogHistory.Dequeue();
+                }
+            }
 
             if (DisplayChatLogs.Count < 500)
                 DisplayChatLogs.Enqueue(log);
@@ -619,6 +651,7 @@ namespace Server.Envir
         #region Database
 
         private static Session Session;
+        public static bool HasSession => Session != null;
 
         public static DBCollection<MapInfo> MapInfoList;
         public static DBCollection<SafeZoneInfo> SafeZoneInfoList;
@@ -755,6 +788,10 @@ namespace Server.Envir
         }
 
         public static bool MonsterSieging { get; set; } = false;
+
+        // 【新增】管理员触发系统自重启控制标志。若为 true，程序在彻底退出主循环并保存好数据后，将重新拉起自身的新实例。
+        public static bool RequestRestart { get; set; } = false;
+
 
         public static LinkedList<CharacterInfo> Rankings { get; set; }
         public static HashSet<CharacterInfo> TopRankings { get; set; }
@@ -1463,6 +1500,13 @@ namespace Server.Envir
 
                 try
                 {
+                    // 【新增】每帧安全执行外部线程投递过来的并发任务
+                    while (MainLoopActions.TryDequeue(out Action action))
+                    {
+                        try { action(); }
+                        catch (Exception ex) { Log(ex); }
+                    }
+
                     SConnection connection;
                     while (!NewConnections.IsEmpty)
                     {
@@ -2191,12 +2235,16 @@ namespace Server.Envir
 
             item.Colour = Color.FromArgb(Random.Next(256), Random.Next(256), Random.Next(256));
 
-            if (item.Info.Rarity != Rarity.Common)
-                chance = Config.高级稀世极品几率;
-            else
-                chance = Config.全局极品几率;
+            if (chance == 15)
+            {
+                if (item.Info.Rarity != Rarity.Common)
+                    chance = Config.高级稀世极品几率;
+                else
+                    chance = Config.全局极品几率;
+            }
 
-            if (Random.Next(chance) == 0)
+            // [防溢出修复] 检查 chance 必须大于0，避免 Random.Next(0) 或负数抛出 ArgumentOutOfRangeException 导致主线程崩溃
+            if (chance > 0 && Random.Next(chance) == 0)
             {
                 switch (info.ItemType)
                 {
@@ -4593,7 +4641,7 @@ namespace Server.Envir
 
             return result;
         }
-        public static void SaveSystem() { Session.ForceSaveSystem(); }
+        public static void SaveSystem() { Session.SaveSystem(); }
         public static void SaveUserDatas() { Session.Save(true); }
 
         #region Password Encryption

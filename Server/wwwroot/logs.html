@@ -50,6 +50,13 @@
             </svg>
             <span>账号管理</span>
           </a>
+          <a href="currencies.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>货币管理</span>
+          </a>
           <a href="characters.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -194,7 +201,6 @@
       </header>
 
       <div class="page-content">
-        <!-- 日志类型选择 -->
         <div class="card animate-in">
           <div class="card-header">
             <h3 class="card-title">
@@ -202,7 +208,7 @@
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
               </svg>
-              日志查看
+              控制台日志中心
             </h3>
             <div style="display: flex; gap: 0.5rem;">
               <button class="btn btn-primary btn-sm" id="btnSystemLog" onclick="switchLogType('system')">系统日志</button>
@@ -218,6 +224,33 @@
             </div>
           </div>
           <div class="card-body">
+            <!-- 高级控制筛选工具栏 -->
+            <div class="log-toolbar">
+              <div class="toolbar-item" id="levelSelectorContainer">
+                <label for="levelSelect">级别筛选：</label>
+                <select id="levelSelect" onchange="filterLogs()">
+                  <option value="all">显示全部 (ALL)</option>
+                  <option value="Info">一般信息 (INFO)</option>
+                  <option value="Warning">系统警告 (WARN)</option>
+                  <option value="Error">致命错误 (ERROR)</option>
+                </select>
+              </div>
+              <div class="toolbar-item search-bar">
+                <input type="text" id="searchInput" placeholder="搜索关键字（例如：管理员、账号、角色、修改、精炼、发生异常等）" oninput="filterLogs()">
+              </div>
+              <div class="toolbar-actions">
+                <button class="btn btn-ghost btn-sm btn-export" onclick="exportLogs()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: middle;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  导出日志
+                </button>
+              </div>
+            </div>
+
+            <!-- 日志显示区域 -->
             <div class="log-container" id="logContainer">
               <div style="text-align: center; color: var(--text-tertiary); padding: 2rem;">加载中...</div>
             </div>
@@ -228,26 +261,168 @@
   </div>
 
   <style>
-    .log-container {
-      background: var(--bg-tertiary);
+    /* 高级筛选工具栏样式 */
+    .log-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg-secondary);
       border-radius: 8px;
-      padding: 1rem;
-      max-height: 600px;
-      overflow-y: auto;
-      font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 0.875rem;
-      line-height: 1.6;
+      border: 1px solid var(--border-color);
     }
+    .toolbar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .toolbar-item label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      font-weight: 500;
+    }
+    .toolbar-item select {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.375rem 2rem 0.375rem 0.75rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+    }
+    .toolbar-item select:focus {
+      border-color: var(--color-primary);
+    }
+    .search-bar {
+      flex: 1;
+      min-width: 260px;
+    }
+    .search-bar input {
+      width: 100%;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-bar input:focus {
+      border-color: var(--color-primary);
+    }
+    .btn-export {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      border: 1px solid var(--border-color);
+      font-weight: 500;
+    }
+    .btn-export:hover {
+      background: var(--bg-secondary) !important;
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    /* 极客风日志展示区域 */
+    .log-container {
+      background: #0f141c; /* 极客深色终端背景 */
+      border-radius: 8px;
+      padding: 1.25rem;
+      height: 600px;
+      max-height: 700px;
+      overflow-y: auto;
+      font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+      font-size: 0.825rem;
+      line-height: 1.7;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
     .log-line {
-      padding: 0.25rem 0;
-      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
       word-break: break-all;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .log-line:hover {
+      background: rgba(255, 255, 255, 0.03);
     }
     .log-line:last-child {
       border-bottom: none;
     }
-    .log-line:hover {
-      background: var(--bg-secondary);
+
+    .log-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.125rem 0.375rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 4px;
+      margin-right: 0.75rem;
+      min-width: 66px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      letter-spacing: 0.5px;
+    }
+    
+    .badge-info {
+      background: rgba(14, 165, 233, 0.12);
+      color: #0ea5e9;
+      border: 1px solid rgba(14, 165, 233, 0.25);
+    }
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.12);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .badge-error {
+      background: rgba(239, 68, 68, 0.12);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.15);
+    }
+
+    .log-time {
+      color: #64748b;
+      font-weight: 500;
+      margin-right: 0.75rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    
+    .log-message {
+      flex: 1;
+      color: #cbd5e1; /* 浅白高可读 */
+    }
+
+    /* 不同级别行的特有高亮 */
+    .log-line-warning .log-message {
+      color: #fde047; /* 淡黄 */
+    }
+    .log-line-error {
+      background: rgba(239, 68, 68, 0.02);
+    }
+    .log-line-error:hover {
+      background: rgba(239, 68, 68, 0.05);
+    }
+    .log-line-error .log-message {
+      color: #fca5a5; /* 淡红 */
+      font-weight: 500;
     }
   </style>
 
@@ -256,6 +431,8 @@
   <script src="js/auth.js"></script>
   <script>
     let currentLogType = 'system';
+    let allLoadedLogs = []; // 保存从后端获取的最新日志（最多500条）
+    let autoRefreshTimer = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
       if (!checkAuth()) {
@@ -264,7 +441,14 @@
       }
       loadUserInfo();
       await loadLogs();
-      setInterval(loadLogs, 10000);
+      
+      // 开启每 10 秒自动静默刷新
+      autoRefreshTimer = setInterval(loadLogs, 10000);
+
+      // 清理定时器以防止内存泄漏
+      window.addEventListener('beforeunload', () => {
+        if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      });
     });
 
     function loadUserInfo() {
@@ -280,35 +464,144 @@
       currentLogType = type;
       document.getElementById('btnSystemLog').className = type === 'system' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
       document.getElementById('btnChatLog').className = type === 'chat' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+      
+      // 聊天日志不支持 LogLevel，动态显示或隐匿级别筛选
+      const levelSelector = document.getElementById('levelSelectorContainer');
+      if (type === 'chat') {
+        levelSelector.style.display = 'none';
+      } else {
+        levelSelector.style.display = 'flex';
+      }
+
       loadLogs();
     }
 
+    let isLoading = false;
+
     async function loadLogs() {
+      if (isLoading) return;
+      isLoading = true;
       try {
         const endpoint = currentLogType === 'system' ? '/api/logs/system' : '/api/logs/chat';
-        const data = await api.get(endpoint + '?count=200');
-        renderLogs(data.logs || []);
+        // 一次性获取最新的 500 条日志
+        const data = await api.get(endpoint + '?count=500');
+        allLoadedLogs = data.logs || [];
+        filterLogs(); // 获取后自动执行当前条件下的过滤渲染
       } catch (error) {
         console.error('加载日志失败:', error);
-        document.getElementById('logContainer').innerHTML = '<div style="text-align: center; color: var(--error);">加载失败</div>';
+        document.getElementById('logContainer').innerHTML = '<div style="text-align: center; color: var(--error); padding: 2rem;">加载失败，请检查网络或刷新重试</div>';
+      } finally {
+        isLoading = false;
       }
     }
 
-    function renderLogs(logs) {
+    function filterLogs() {
+      const level = document.getElementById('levelSelect').value;
+      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+
+      let filtered = allLoadedLogs;
+
+      // 仅当查看系统日志时应用日志级别过滤
+      if (currentLogType === 'system' && level !== 'all') {
+        filtered = filtered.filter(log => log.level === level);
+      }
+
+      // 全文检索过滤
+      if (search) {
+        filtered = filtered.filter(log => {
+          return (log.raw && log.raw.toLowerCase().includes(search)) ||
+                 (log.message && log.message.toLowerCase().includes(search)) ||
+                 (log.time && log.time.toLowerCase().includes(search));
+        });
+      }
+
+      renderFilteredLogs(filtered);
+    }
+
+    function renderFilteredLogs(logs) {
       const container = document.getElementById('logContainer');
       if (logs.length === 0) {
-        container.innerHTML = '<div style="text-align: center; color: var(--text-tertiary);">暂无日志</div>';
+        container.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: 3rem;">没有找到匹配的日志</div>';
         return;
       }
-      container.innerHTML = logs.map(log => `<div class="log-line">${escapeHtml(log)}</div>`).join('');
-      container.scrollTop = container.scrollHeight;
+
+      container.innerHTML = logs.map(log => {
+        const level = log.level || 'Info';
+        const badgeClass = `badge-${level.toLowerCase()}`;
+        const lineClass = `log-line-${level.toLowerCase()}`;
+        
+        let levelIconText = 'ℹ️ INFO';
+        if (level === 'Error') {
+          levelIconText = '❌ ERROR';
+        } else if (level === 'Warning') {
+          levelIconText = '⚠️ WARN';
+        }
+
+        return `
+          <div class="log-line ${lineClass}">
+            <span class="log-badge ${badgeClass}">${levelIconText}</span>
+            <span class="log-time">${escapeHtml(log.time || '')}</span>
+            <span class="log-message">${escapeHtml(log.message || log.raw || '')}</span>
+          </div>
+        `;
+      }).join('');
+
+      // 数据为倒序排列（最新排在最前），自动回滚到日志顶端
+      container.scrollTop = 0;
     }
 
     function refreshLogs() {
       loadLogs();
     }
 
+    function exportLogs() {
+      const level = document.getElementById('levelSelect').value;
+      const search = document.getElementById('searchInput').value.trim();
+
+      let filtered = allLoadedLogs;
+
+      if (currentLogType === 'system' && level !== 'all') {
+        filtered = filtered.filter(log => log.level === level);
+      }
+
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filtered = filtered.filter(log => {
+          return (log.raw && log.raw.toLowerCase().includes(searchLower)) ||
+                 (log.message && log.message.toLowerCase().includes(searchLower)) ||
+                 (log.time && log.time.toLowerCase().includes(searchLower));
+        });
+      }
+
+      if (filtered.length === 0) {
+        alert('当前视图中没有可供导出的日志数据！');
+        return;
+      }
+
+      // 将过滤渲染后的日志格式化为纯文本
+      const textContent = filtered.map(log => log.raw || `[${log.time}]: ${log.message}`).join('\r\n');
+
+      const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+
+      // 创建虚拟 a 链接触发文件下载
+      const link = document.createElement('a');
+      const now = new Date();
+      const dateString = now.toISOString().slice(0, 10);
+      const timeString = now.toTimeString().slice(0, 8).replace(/:/g, '');
+      
+      link.href = url;
+      link.download = `zircon_legend_${currentLogType}_logs_${dateString}_${timeString}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // 清理资源
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
     function escapeHtml(text) {
+      if (!text) return '';
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;

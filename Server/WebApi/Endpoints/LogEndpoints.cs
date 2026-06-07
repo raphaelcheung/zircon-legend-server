@@ -22,16 +22,18 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Get system logs
         /// </summary>
-        private static IResult GetSystemLogs(ClaimsPrincipal user, ServerDataService dataService, int count = 100)
+        private static IResult GetSystemLogs(ClaimsPrincipal user, ServerDataService dataService, int count = 100, string level = "all", string search = "")
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
             {
                 return Results.Forbid();
             }
 
-            if (count < 1 || count > 500) count = 100;
+            if (count < 1 || count > 1000) count = 100;
+            if (string.IsNullOrEmpty(level)) level = "all";
+            if (search == null) search = "";
 
-            var logs = dataService.GetSystemLogs(count);
+            var logs = dataService.GetSystemLogs(count, level, search);
             return Results.Ok(new
             {
                 total = logs.Count,
@@ -42,16 +44,17 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Get chat logs
         /// </summary>
-        private static IResult GetChatLogs(ClaimsPrincipal user, ServerDataService dataService, int count = 100)
+        private static IResult GetChatLogs(ClaimsPrincipal user, ServerDataService dataService, int count = 100, string search = "")
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
             {
                 return Results.Forbid();
             }
 
-            if (count < 1 || count > 500) count = 100;
+            if (count < 1 || count > 1000) count = 100;
+            if (search == null) search = "";
 
-            var logs = dataService.GetChatLogs(count);
+            var logs = dataService.GetChatLogs(count, search);
             return Results.Ok(new
             {
                 total = logs.Count,

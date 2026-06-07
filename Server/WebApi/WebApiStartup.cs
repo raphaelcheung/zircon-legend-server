@@ -7,6 +7,7 @@ using Server.WebApi.Services;
 using Server.WebApi.Endpoints;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace Server.WebApi
 {
@@ -39,6 +40,9 @@ namespace Server.WebApi
                     ContentRootPath = Path.GetDirectoryName(wwwrootPath) ?? Environment.CurrentDirectory,
                     WebRootPath = wwwrootPath
                 });
+
+                // 【日志修复】移除完全静默，改为仅过滤 Microsoft 框架的 Info/Debug
+                builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
 
                 // Configure Kestrel to listen on specified port
                 builder.WebHost.ConfigureKestrel(options =>

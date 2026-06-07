@@ -51,6 +51,13 @@
             </svg>
             <span>账号管理</span>
           </a>
+          <a href="currencies.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>货币管理</span>
+          </a>
           <a href="characters.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -301,8 +308,9 @@
   </div>
 
   <!-- 编辑任务模态框 -->
-  <div class="modal-overlay" id="editModal" onclick="closeEditModal(event)">
-    <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal" id="editModal">
+    <div class="modal-backdrop" onclick="closeEditModal(event)"></div>
+    <div class="modal-content modal-large" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3 class="modal-title">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -469,8 +477,9 @@
   </div>
 
   <!-- 新增任务模态框 -->
-  <div class="modal-overlay" id="addModal" onclick="closeAddModal(event)">
-    <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal" id="addModal">
+    <div class="modal-backdrop" onclick="closeAddModal(event)"></div>
+    <div class="modal-content modal-large" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3 class="modal-title">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -511,8 +520,9 @@
   </div>
 
   <!-- 添加要求模态框 -->
-  <div class="modal-overlay" id="requirementModal" onclick="closeRequirementModal(event)">
-    <div class="modal modal-sm" onclick="event.stopPropagation()">
+  <div class="modal" id="requirementModal">
+    <div class="modal-backdrop" onclick="closeRequirementModal(event)"></div>
+    <div class="modal-content modal-small" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3 class="modal-title">添加任务要求</h3>
         <button class="modal-close" onclick="closeRequirementModal()">&times;</button>
@@ -561,8 +571,9 @@
   </div>
 
   <!-- 添加任务目标模态框 -->
-  <div class="modal-overlay" id="taskModal" onclick="closeTaskModal(event)">
-    <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal" id="taskModal">
+    <div class="modal-backdrop" onclick="closeTaskModal(event)"></div>
+    <div class="modal-content modal-small" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3 class="modal-title">添加任务目标</h3>
         <button class="modal-close" onclick="closeTaskModal()">&times;</button>
@@ -604,8 +615,9 @@
   </div>
 
   <!-- 添加奖励模态框 -->
-  <div class="modal-overlay" id="rewardModal" onclick="closeRewardModal(event)">
-    <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal" id="rewardModal">
+    <div class="modal-backdrop" onclick="closeRewardModal(event)"></div>
+    <div class="modal-content modal-small" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3 class="modal-title">添加任务奖励</h3>
         <button class="modal-close" onclick="closeRewardModal()">&times;</button>
@@ -662,18 +674,30 @@
   </div>
 
   <style>
-    .form-input, .form-select {
+    /* Form inputs with premium contrast & framing */
+    .form-input, .form-select, .form-textarea {
       width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid var(--border-color);
+      padding: 0.6rem 0.85rem;
+      border: 1px solid rgba(148, 163, 184, 0.35); /* clearly visible border frame */
       border-radius: 6px;
-      background: var(--bg-tertiary);
+      background: var(--bg-primary); /* Contrasts beautifully against form-section's tertiary background */
       color: var(--text-primary);
       font-size: 0.875rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06); /* subtle premium inner shadow */
     }
-    .form-input:focus, .form-select:focus {
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
       outline: none;
       border-color: var(--primary);
+      background: var(--bg-primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.06);
+    }
+    .form-input:read-only, .form-textarea:read-only {
+      background: var(--bg-secondary);
+      border-color: var(--border-color);
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+      box-shadow: none;
     }
     .pagination {
       display: flex;
@@ -712,87 +736,22 @@
       font-size: 0.875rem;
     }
 
-    /* Modal styles */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      padding: 1rem;
-    }
-    .modal-overlay.active {
-      display: flex;
-    }
-    .modal {
-      background: var(--bg-secondary);
-      border-radius: 12px;
-      width: 100%;
-      max-width: 900px;
-      max-height: 90vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-      margin: auto;
-    }
-    .modal.modal-sm {
-      max-width: 500px;
-    }
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .modal-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      color: var(--text-tertiary);
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
-    }
-    .modal-close:hover {
-      color: var(--text-primary);
-    }
-    .modal-body {
-      padding: 1.5rem;
-      overflow-y: auto;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-      padding: 1rem 1.5rem;
-      border-top: 1px solid var(--border-color);
-    }
+
     .form-section {
+      background: var(--bg-tertiary);
+      padding: 1.25rem;
+      border-radius: 8px;
       margin-bottom: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     .form-section:last-child {
       margin-bottom: 0;
     }
     .form-section-title {
-      font-size: 0.875rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: var(--primary);
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--border-color);
     }
@@ -1180,6 +1139,49 @@
       }
 
       try {
+        // 构建扁平化的接取限制数据，供后端正确匹配实体
+        const requirements = currentRequirements.map(req => {
+          const questParamIndex = req.questParameter?.index || (typeof req.questParameter === 'number' ? req.questParameter : 0);
+          return {
+            requirement: req.requirement,
+            intParameter1: req.intParameter1,
+            questParameter: questParamIndex > 0 ? { index: questParamIndex } : null,
+            class: req.class
+          };
+        });
+
+        // 构建任务具体目标，如果包含选中的怪物，自动为其附加默认的 MonsterDetails 实体
+        const tasks = currentTasks.map(t => {
+          const itemIndex = t.itemParameter?.index || (typeof t.itemParameter === 'number' ? t.itemParameter : 0);
+          const mobIndex = t.mobParameter?.index || (typeof t.mobParameter === 'number' ? t.mobParameter : 0);
+          
+          return {
+            task: t.task,
+            itemParameter: itemIndex > 0 ? { index: itemIndex } : null,
+            mobDescription: t.mobDescription || t.mobParameter?.name || '',
+            amount: t.amount,
+            monsterDetails: mobIndex > 0 ? [{
+              monsterIndex: mobIndex,
+              chance: 1,
+              amount: t.amount,
+              dropSet: 0
+            }] : []
+          };
+        });
+
+        // 构建任务奖励，供后端关联道具和数值
+        const rewards = currentRewards.map(r => {
+          const itemIndex = r.item?.index || (typeof r.item === 'number' ? r.item : 0);
+          return {
+            item: itemIndex > 0 ? { index: itemIndex } : null,
+            amount: r.amount,
+            class: r.class,
+            choice: r.choice,
+            bound: r.bound,
+            duration: r.duration
+          };
+        });
+
         const request = {
           questName,
           acceptText: document.getElementById('editAcceptText').value,
@@ -1188,9 +1190,9 @@
           archiveText: document.getElementById('editArchiveText').value,
           startNPC: parseInt(document.getElementById('editStartNPC').value) || 0,
           finishNPC: parseInt(document.getElementById('editFinishNPC').value) || 0,
-          requirements: currentRequirements,
-          tasks: currentTasks,
-          rewards: currentRewards
+          requirements: requirements,
+          tasks: tasks,
+          rewards: rewards
         };
 
         const result = await api.put(`/api/game/quests/${index}`, request);
@@ -1273,10 +1275,7 @@
       const requirement = {
         requirement: document.getElementById('reqRequirement').value,
         intParameter1: parseInt(document.getElementById('reqIntParameter1').value) || 0,
-        questParameter: questInfo ? {
-          index: questInfo.index,
-          questName: questInfo.questName
-        } : null,
+        questParameter: questInfo ? { index: questInfo.index, questName: questInfo.questName } : null,
         class: document.getElementById('reqClass').value
       };
 
@@ -1299,18 +1298,14 @@
         return;
       }
 
-      tbody.innerHTML = currentTasks.map((task, idx) => {
-        let itemText = '-';
-        if (task.task === 'GainItem' && task.itemParameter) {
-          itemText = `${task.itemParameter.index || 0} - ${escapeHtml(task.itemParameter.name || '')}`;
-        } else if (task.task === 'KillMonster' && task.mobDescription) {
-          itemText = escapeHtml(task.mobDescription);
-        }
-
-        return `
+      tbody.innerHTML = currentTasks.map((task, idx) => `
         <tr>
           <td>${escapeHtml(task.task)}</td>
-          <td>${itemText}</td>
+          <td>
+            ${task.task === 'GainItem'
+              ? `${task.itemParameter?.index || 0} - ${escapeHtml(task.itemParameter?.name || '')}`
+              : `${task.mobParameter?.index || 0} - ${escapeHtml(task.mobParameter?.name || task.mobDescription || '-')}`}
+          </td>
           <td>${task.amount}</td>
           <td>${task.monsterDetails?.length || 0}</td>
           <td>
@@ -1322,7 +1317,7 @@
             </button>
           </td>
         </tr>
-      `}).join('');
+      `).join('');
     }
 
     async function openAddTaskModal() {
@@ -1482,21 +1477,19 @@
 
     function saveTask() {
       const taskType = document.getElementById('taskTask').value;
-      const itemParamIndex = parseInt(document.getElementById('taskItemParameter').value) || 0;
-      const mobParamIndex = parseInt(document.getElementById('taskMobParameter').value) || 0;
+      
+      const itemVal = parseInt(document.getElementById('taskItemParameter').value) || 0;
+      const itemObj = itemVal > 0 ? allItems.find(i => i.index === itemVal) : null;
 
-      const mobInfo = mobParamIndex > 0 ? allMonsters.find(m => m.index === mobParamIndex) : null;
-      const mobText = mobInfo ? `${mobInfo.index} - ${mobInfo.name}` : '';
+      const mobVal = parseInt(document.getElementById('taskMobParameter').value) || 0;
+      const mobObj = mobVal > 0 ? allMonsters.find(m => m.index === mobVal) : null;
 
       const task = {
         task: taskType,
-        itemParameter: itemParamIndex > 0 ? {
-          index: itemParamIndex,
-          name: allItems.find(i => i.index === itemParamIndex)?.name || ''
-        } : null,
-        mobDescription: mobText,
-        amount: parseInt(document.getElementById('taskAmount').value) || 1,
-        monsterDetails: []
+        itemParameter: itemObj ? { index: itemObj.index, name: itemObj.name } : null,
+        mobParameter: mobObj ? { index: mobObj.index, name: mobObj.name } : null,
+        mobDescription: mobObj ? mobObj.name : (document.getElementById('taskMobSearch').value || ''),
+        amount: parseInt(document.getElementById('taskAmount').value) || 1
       };
 
       currentTasks.push(task);
@@ -1518,14 +1511,9 @@
         return;
       }
 
-      tbody.innerHTML = currentRewards.map((reward, idx) => {
-        const itemInfo = reward.item;
-        const itemText = itemInfo
-          ? `${itemInfo.index || 0} - ${escapeHtml(itemInfo.name || '')}`
-          : '-';
-        return `
+      tbody.innerHTML = currentRewards.map((reward, idx) => `
         <tr>
-          <td>${itemText}</td>
+          <td>${reward.item?.name || '-'}</td>
           <td>${reward.amount}</td>
           <td>${reward.class}</td>
           <td>${reward.choice ? '是' : '否'}</td>
@@ -1535,11 +1523,11 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
+              </svg>
             </button>
           </td>
         </tr>
-      `}).join('');
+      `).join('');
     }
 
     async function openAddRewardModal() {
@@ -1567,13 +1555,11 @@
     }
 
     function saveReward() {
-      const itemIndex = parseInt(document.getElementById('rewardItem').value) || 0;
+      const itemVal = parseInt(document.getElementById('rewardItem').value) || 0;
+      const itemObj = itemVal > 0 ? allItems.find(i => i.index === itemVal) : null;
+
       const reward = {
-        index: 0,
-        item: itemIndex > 0 ? {
-          index: itemIndex,
-          name: allItems.find(i => i.index === itemIndex)?.name || ''
-        } : null,
+        item: itemObj ? { index: itemObj.index, name: itemObj.name } : null,
         amount: parseInt(document.getElementById('rewardAmount').value) || 1,
         duration: parseInt(document.getElementById('rewardDuration').value) || 0,
         class: document.getElementById('rewardClass').value,

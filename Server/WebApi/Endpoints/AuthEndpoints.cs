@@ -50,6 +50,9 @@ namespace Server.WebApi.Endpoints
             var token = jwtHelper.GenerateToken(account.EMailAddress, account.Identify);
             var refreshToken = jwtHelper.GenerateRefreshToken();
 
+            // [后台管理员登录] 详细记录管理员登录Web后台管理界面的操作日志
+            Server.Envir.SEnvir.Log($"[后台管理员登录] 账号={account.EMailAddress}, 身份={Functions.GetEnumDesc(account.Identify)}");
+
             return Results.Ok(new LoginResponse
             {
                 Token = token,

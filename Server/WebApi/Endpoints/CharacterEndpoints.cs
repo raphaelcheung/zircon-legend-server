@@ -87,6 +87,10 @@ namespace Server.WebApi.Endpoints
             var success = dataService.SetCharacterLevel(name, request.Level);
             if (success)
             {
+                // [后台调整等级] 详细记录管理员从Web后台调整玩家角色等级的操作日志
+                var adminEmail = JwtHelper.GetEmail(user);
+                Server.Envir.SEnvir.Log($"[后台调整等级] 管理员={adminEmail}, 目标角色={name}, 新等级={request.Level}");
+
                 return Results.Ok(new { message = $"Character level set to {request.Level}" });
             }
 

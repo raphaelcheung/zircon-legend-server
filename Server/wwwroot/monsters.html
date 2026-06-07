@@ -51,6 +51,13 @@
             </svg>
             <span>账号管理</span>
           </a>
+          <a href="currencies.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>货币管理</span>
+          </a>
           <a href="characters.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -212,17 +219,6 @@
             <div class="stat-value" id="totalMonsters">--</div>
             <div class="stat-label">怪物总数</div>
           </div>
-          <div class="stat-card animate-in animate-delay-1">
-            <div class="stat-card-header">
-              <div class="stat-icon error">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                </svg>
-              </div>
-            </div>
-            <div class="stat-value" id="bossCount">--</div>
-            <div class="stat-label">Boss数量</div>
-          </div>
         </div>
 
         <!-- 搜索栏 -->
@@ -231,10 +227,6 @@
             <div style="flex: 1; min-width: 200px;">
               <input type="text" id="searchInput" class="form-input" placeholder="搜索怪物名称..." onkeyup="handleSearchKeyup(event)">
             </div>
-            <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); cursor: pointer;">
-              <input type="checkbox" id="bossFilter" onchange="doSearch()" style="accent-color: var(--primary);">
-              仅显示Boss
-            </label>
             <button class="btn btn-primary" onclick="doSearch()">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -307,8 +299,9 @@
   </div>
 
   <!-- 编辑怪物模态框 -->
-  <div class="modal-overlay" id="editModal" onclick="closeEditModal(event)">
-    <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal" id="editModal">
+    <div class="modal-backdrop" onclick="closeEditModal(event)"></div>
+    <div class="modal-content modal-large" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3 class="modal-title">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -353,11 +346,6 @@
               <div class="form-group">
                 <label class="form-label">生命值HP</label>
                 <input type="number" id="editHealth" class="form-input" min="1">
-              </div>
-              <div class="form-group">
-                <label class="form-label">生命百分比HP%</label>
-                <input type="number" id="editHealthPercent" class="form-input" min="0" step="1">
-                <small class="form-hint">额外HP百分比（如50表示+50%）</small>
               </div>
               <div class="form-group">
                 <label class="form-label">AI</label>
@@ -507,8 +495,9 @@
   </div>
 
   <!-- 召唤怪物模态框 -->
-  <div class="modal-overlay" id="spawnModal" onclick="closeSpawnModal(event)">
-    <div class="modal modal-sm" onclick="event.stopPropagation()">
+  <div class="modal" id="spawnModal">
+    <div class="modal-backdrop" onclick="closeSpawnModal(event)"></div>
+    <div class="modal-content modal-small" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3 class="modal-title">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -553,8 +542,9 @@
   </div>
 
   <!-- 添加/编辑掉落物品模态框 -->
-  <div class="modal-overlay" id="dropModal" onclick="closeDropModal(event)">
-    <div class="modal modal-sm" onclick="event.stopPropagation()">
+  <div class="modal" id="dropModal">
+    <div class="modal-backdrop" onclick="closeDropModal(event)"></div>
+    <div class="modal-content modal-small" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3 class="modal-title">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -613,22 +603,34 @@
   </div>
 
   <style>
-    .form-input, .form-select {
+    /* Form inputs with premium contrast & framing */
+    .form-input, .form-select, .form-textarea {
       width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid var(--border-color);
+      padding: 0.6rem 0.85rem;
+      border: 1px solid rgba(148, 163, 184, 0.35); /* clearly visible border frame */
       border-radius: 6px;
-      background: var(--bg-tertiary);
+      background: var(--bg-primary); /* Contrasts beautifully against form-section's tertiary background */
       color: var(--text-primary);
       font-size: 0.875rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06); /* subtle premium inner shadow */
     }
-    .form-input:focus, .form-select:focus {
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
       outline: none;
       border-color: var(--primary);
+      background: var(--bg-primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.06);
     }
-    .form-input:read-only {
+    .form-input:read-only, .form-textarea:read-only {
       background: var(--bg-secondary);
+      border-color: var(--border-color);
       color: var(--text-tertiary);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .form-textarea {
+      resize: vertical;
+      font-family: inherit;
     }
     .pagination {
       display: flex;
@@ -698,87 +700,22 @@
     .level-badge.high { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
     .level-badge.max { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
 
-    /* Modal styles */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      padding: 1rem;
-    }
-    .modal-overlay.active {
-      display: flex;
-    }
-    .modal {
-      background: var(--bg-secondary);
-      border-radius: 12px;
-      width: 100%;
-      max-width: 600px;
-      max-height: 90vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-      margin: auto;
-    }
-    .modal.modal-sm {
-      max-width: 450px;
-    }
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .modal-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      color: var(--text-tertiary);
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
-    }
-    .modal-close:hover {
-      color: var(--text-primary);
-    }
-    .modal-body {
-      padding: 1.5rem;
-      overflow-y: auto;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-      padding: 1rem 1.5rem;
-      border-top: 1px solid var(--border-color);
-    }
+
     .form-section {
+      background: var(--bg-tertiary);
+      padding: 1.25rem;
+      border-radius: 8px;
       margin-bottom: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     .form-section:last-child {
       margin-bottom: 0;
     }
     .form-section-title {
-      font-size: 0.875rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: var(--primary);
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--border-color);
     }
@@ -946,7 +883,6 @@
     let totalMonsters = 0;
     let totalPages = 0;
     let searchQuery = '';
-    let bossCount = 0;
     let currentMonsterIndex = 0;
     let allItems = []; // 物品数据缓存
     let itemSearchTimeout = null; // 搜索防抖定时器
@@ -1002,7 +938,6 @@
 
     function resetSearch() {
       document.getElementById('searchInput').value = '';
-      document.getElementById('bossFilter').checked = false;
       searchQuery = '';
       currentPage = 1;
       loadMonsters();
@@ -1021,17 +956,11 @@
 
         // Count bosses
         const monsters = data.monsters || [];
-        bossCount = monsters.filter(m => m.isBoss).length;
 
         document.getElementById('totalMonsters').textContent = totalMonsters.toLocaleString();
-        document.getElementById('bossCount').textContent = bossCount;
         document.getElementById('pageInfo').textContent = `第 ${currentPage} / ${totalPages} 页，共 ${totalMonsters} 条`;
 
-        // Apply client-side boss filter
-        const bossFilter = document.getElementById('bossFilter').checked;
-        const filteredMonsters = bossFilter ? monsters.filter(m => m.isBoss) : monsters;
-
-        renderMonsters(filteredMonsters);
+        renderMonsters(monsters);
         renderPagination();
       } catch (error) {
         console.error('加载怪物列表失败:', error);
@@ -1477,7 +1406,6 @@
         // Load and populate stats if available
         if (monster.stats) {
           document.getElementById('editHealth').value = monster.stats.health || 0;
-          document.getElementById('editHealthPercent').value = monster.stats.healthPercent || 0;
           document.getElementById('editMinDC').value = monster.stats.minDC || 0;
           document.getElementById('editMaxDC').value = monster.stats.maxDC || 0;
           document.getElementById('editMinSC').value = monster.stats.minSC || 0;
@@ -1493,7 +1421,6 @@
         } else {
           // Clear stats fields if no stats data
           document.getElementById('editHealth').value = 0;
-          document.getElementById('editHealthPercent').value = 0;
           document.getElementById('editMinDC').value = 0;
           document.getElementById('editMaxDC').value = 0;
           document.getElementById('editMinSC').value = 0;
@@ -1544,7 +1471,6 @@
       // 收集怪物属性（Stats）
       const stats = {
         health: safeParseInt(document.getElementById('editHealth').value, 0),
-        healthPercent: safeParseInt(document.getElementById('editHealthPercent').value, 0),
         minDC: safeParseInt(document.getElementById('editMinDC').value, 0),
         maxDC: safeParseInt(document.getElementById('editMaxDC').value, 0),
         minSC: safeParseInt(document.getElementById('editMinSC').value, 0),

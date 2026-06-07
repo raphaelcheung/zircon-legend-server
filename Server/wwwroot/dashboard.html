@@ -6,6 +6,107 @@
   <title>仪表盘 - 皓石传奇三管理后台</title>
   <link rel="stylesheet" href="css/themes.css">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* 运行倍率条暗色毛玻璃及呼吸微光样式 */
+    .rates-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      background: var(--card-bg, rgba(30, 41, 59, 0.45));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color, rgba(255, 255, 255, 0.06));
+      border-radius: 8px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    }
+    .rates-bar-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted, #94a3b8);
+      letter-spacing: 0.5px;
+    }
+    .rates-bar-title svg {
+      width: 16px;
+      height: 16px;
+      color: var(--primary, #3b82f6);
+    }
+    .rates-items {
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .rate-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.35rem 0.75rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-color, #e2e8f0);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    }
+    .rate-badge .rate-val {
+      font-weight: 700;
+      margin-left: 2px;
+      text-shadow: 0 0 8px currentColor;
+    }
+    .rate-badge.exp .rate-val { color: #f59e0b; }
+    .rate-badge.drop .rate-val { color: #10b981; }
+    .rate-badge.gold .rate-val { color: #facc15; }
+    
+    /* 运维面板按钮动效增强 */
+    .card button.btn-secondary {
+      transition: all 0.2s ease;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+    }
+    .card button.btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .card button.btn-danger {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .card button.btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+    }
+    .card button.btn-warning {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .card button.btn-warning:hover {
+      background: rgba(245, 158, 11, 0.25) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+    }
+    
+    /* 可点击状态卡片高品质拟物微浮动及流光外发光 */
+    .stat-card.clickable-card, .card.clickable-card {
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .stat-card.clickable-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(16, 185, 129, 0.3);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(16, 185, 129, 0.15);
+    }
+    .card.clickable-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(59, 130, 246, 0.35);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(59, 130, 246, 0.2);
+    }
+  </style>
 </head>
 <body>
   <div class="app-layout">
@@ -53,6 +154,13 @@
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
             <span>账号管理</span>
+          </a>
+          <a href="currencies.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>货币管理</span>
           </a>
 
           <a href="characters.html" class="nav-item">
@@ -219,35 +327,8 @@
       <div class="page-content">
         <!-- 统计卡片 -->
         <div class="stats-grid">
+          <!-- 1. 服务器状态 -->
           <div class="stat-card animate-in animate-delay-1">
-            <div class="stat-card-header">
-              <div class="stat-icon success">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-              </div>
-            </div>
-            <div class="stat-value" id="onlinePlayers">--</div>
-            <div class="stat-label">在线玩家</div>
-          </div>
-
-          <div class="stat-card animate-in animate-delay-2">
-            <div class="stat-card-header">
-              <div class="stat-icon info">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-              </div>
-            </div>
-            <div class="stat-value" id="totalAccounts">--</div>
-            <div class="stat-label">注册账户</div>
-          </div>
-
-          <div class="stat-card animate-in animate-delay-3">
             <div class="stat-card-header">
               <div class="stat-icon" id="statusIcon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -265,7 +346,8 @@
             <div class="stat-label">服务器状态</div>
           </div>
 
-          <div class="stat-card animate-in animate-delay-4">
+          <!-- 2. 运行时长 -->
+          <div class="stat-card animate-in animate-delay-2">
             <div class="stat-card-header">
               <div class="stat-icon warning">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -277,109 +359,136 @@
             <div class="stat-value" id="uptime">--</div>
             <div class="stat-label">运行时长</div>
           </div>
-        </div>
 
-        <!-- 快速操作 & 在线玩家列表 -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.25rem;">
-          <!-- 快速操作 -->
-          <div class="card animate-in animate-delay-2">
-            <div class="card-header">
-              <h3 class="card-title">
+          <!-- 3. 物理内存占用 -->
+          <div class="stat-card animate-in animate-delay-3">
+            <div class="stat-card-header">
+              <div class="stat-icon info">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  <path d="M2 20h20M5 17h14M9 5h6M9 9h6M9 13h6"></path>
+                  <rect x="5" y="2" width="14" height="15" rx="2" ry="2"></rect>
                 </svg>
-                快速操作
-              </h3>
-            </div>
-            <div class="card-body">
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
-                <a href="players.html" class="btn btn-secondary">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                  </svg>
-                  在线玩家
-                </a>
-                <a href="accounts.html" class="btn btn-secondary">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                  账号管理
-                </a>
-                <a href="logs.html" class="btn btn-secondary">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                  </svg>
-                  系统日志
-                </a>
-                <button class="btn btn-secondary" onclick="saveUserDatas()">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                    <polyline points="7 3 7 8 15 8"></polyline>
-                  </svg>
-                  保存用户数据
-                </button>
-                <button class="btn btn-secondary" onclick="saveSystem()">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                  保存系统数据
-                </button>
-                <button class="btn btn-secondary" onclick="kickAllPlayers()">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                  </svg>
-                  踢出所有玩家
-                </button>
-                <a href="settings.html" class="btn btn-secondary" style="grid-column: span 3;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4"></path>
-                  </svg>
-                  服务器配置
-                </a>
               </div>
             </div>
+            <div class="stat-value" id="memoryUsage">--</div>
+            <div class="stat-label">物理内存占用</div>
           </div>
 
-          <!-- 在线玩家预览 -->
-          <div class="card animate-in animate-delay-3">
-            <div class="card-header">
-              <h3 class="card-title">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- 4. 注册账号数 -->
+          <div class="stat-card clickable-card animate-in animate-delay-4" onclick="location.href='accounts.html'">
+            <div class="stat-card-header">
+              <div class="stat-icon info" style="color: var(--primary, #3b82f6); background: rgba(59, 130, 246, 0.1); width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="totalAccounts">--</div>
+            <div class="stat-label">注册账号数</div>
+          </div>
+
+          <!-- 5. 在线玩家数量 -->
+          <div class="stat-card clickable-card animate-in animate-delay-5" onclick="location.href='players.html'">
+            <div class="stat-card-header">
+              <div class="stat-icon success" style="color: var(--success, #10b981); background: rgba(16, 185, 129, 0.1); width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                   <circle cx="9" cy="7" r="4"></circle>
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
-                在线玩家
-              </h3>
-              <a href="players.html" class="btn btn-ghost btn-sm">查看全部</a>
+              </div>
             </div>
-            <div class="card-body">
-              <div class="table-container">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>角色名</th>
-                      <th>等级</th>
-                      <th>职业</th>
-                      <th>地图</th>
-                    </tr>
-                  </thead>
-                  <tbody id="onlinePlayersTable">
-                    <tr>
-                      <td colspan="4" style="text-align: center; color: var(--text-tertiary);">加载中...</td>
-                    </tr>
-                  </tbody>
-                </table>
+            <div class="stat-value" id="onlineCount">--</div>
+            <div class="stat-label">在线玩家数</div>
+          </div>
+        </div>
+
+        <!-- 快速操作 & 系统监控（左右网格并排，左右两边各占 50% 轴对称并排，高度对齐！） -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.25rem; margin-top: 1.25rem; align-items: stretch;">
+          
+          <!-- 大卡片 1. 系统运行倍率（图标改至左侧，与快捷运维大卡片及分割线像素级对称！） -->
+          <div class="card clickable-card animate-in animate-delay-2" onclick="location.href='settings.html?section=Rates'" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+            <div class="card-header" style="border-bottom: 1px solid var(--border-primary, rgba(255,255,255,0.08)); padding-bottom: 0.75rem;">
+              <h3 class="card-title" style="display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.3));">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                系统运行倍率
+              </h3>
+            </div>
+            <div class="card-body" style="padding-top: 1rem; flex: 1; display: flex; align-items: center;">
+              <div id="ratesListContent" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; font-size: 0.85rem; color: var(--text-muted, #94a3b8); width: 100%;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.03); padding-bottom: 6px;"><span>🌟 经验倍率:</span><span id="rateExp" style="color: #fbbf24; font-weight: 600;">--</span></div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.03); padding-bottom: 6px;"><span>💎 掉落倍率:</span><span id="rateDrop" style="color: #10b981; font-weight: 600;">--</span></div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.03); padding-bottom: 6px;"><span>🪙 金币倍率:</span><span id="rateGold" style="color: #3b82f6; font-weight: 600;">--</span></div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.03); padding-bottom: 6px;"><span>👑 Boss掉落:</span><span id="rateBossDrop" style="color: #ef4444; font-weight: 600;">--</span></div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.03); padding-bottom: 6px;"><span>📖 技能低级:</span><span id="rateSkillLow" style="color: #8b5cf6; font-weight: 600;">--</span></div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.03); padding-bottom: 6px;"><span>🎓 技能高级:</span><span id="rateSkillHigh" style="color: #ec4899; font-weight: 600;">--</span></div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.03); padding-bottom: 6px; grid-column: span 2;"><span>🐾 宠物经验加成:</span><span id="rateCompanion" style="color: #14b8a6; font-weight: 600;">--</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧大列：快捷运维控制台（左右 50% 完美的几何对称，高度自适应拉平对齐） -->
+          <div class="card animate-in animate-delay-3" style="display: flex; flex-direction: column; height: 100%;">
+            <div class="card-header" style="border-bottom: 1px solid var(--border-primary, rgba(255,255,255,0.08)); padding-bottom: 0.75rem;">
+              <h3 class="card-title" style="display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.3));">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                快捷运维控制台
+              </h3>
+            </div>
+            <div class="card-body" style="padding-top: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; flex: 1; justify-content: center;">
+              
+              <!-- 1. 基础一键操作区（升级为保存玩家数据与保存系统数据） -->
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+                <button onclick="handleSaveUsers()" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0.55rem 0;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 1px 3px rgba(6, 182, 212, 0.25));"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                  保存玩家数据
+                </button>
+                <button onclick="handleSaveSystem()" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0.55rem 0;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 1px 3px rgba(245, 158, 11, 0.25));"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                  保存系统数据
+                </button>
+                <button onclick="handleGC()" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0.55rem 0;">
+                  <span style="font-size: 1.05rem; line-height: 1; filter: drop-shadow(0 1px 3px rgba(16, 185, 129, 0.25));">♻️</span>
+                  垃圾回收
+                </button>
+              </div>
+
+              <!-- 2. 核心高危操作板块（合并广播倒计时输入，无多余边框隔离且自适应防溢出！） -->
+              <div style="border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 1.25rem; display: flex; flex-direction: column; gap: 1rem;">
+                
+                <!-- 踢人和自重启并排 -->
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+                  <button onclick="handleKickAll()" class="btn btn-danger" style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; padding: 0.55rem 0; font-weight: 500;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="18" y1="8" x2="23" y2="13"></line><line x1="23" y1="8" x2="18" y2="13"></line></svg>
+                    踢出所有玩家
+                  </button>
+                  <button onclick="handleRestart()" class="btn btn-warning" style="display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; padding: 0.55rem 0; font-weight: 500;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                    安全重启服务
+                  </button>
+                </div>
+
+                <!-- 广播倒计时弹性内凹盒（在极端分辨率和网页放缩下弹性缩放，永不跑出卡片之外！） -->
+                <div class="countdown-panel" style="padding: 0.75rem 0.85rem; background: rgba(0, 0, 0, 0.18); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 6px; width: 100%; box-sizing: border-box;">
+                  <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                      <span style="font-size: 0.82rem; color: var(--text-muted, #94a3b8); font-weight: 500; display: flex; align-items: center; gap: 4px;">
+                        📢 广播延时参数:
+                      </span>
+                      <div style="display: flex; align-items: center; gap: 6px;">
+                        <input type="number" id="opDelaySeconds" value="60" class="form-input" style="width: 70px; text-align: center; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; color: var(--text-color, #e2e8f0); height: 26px; padding: 0 4px; font-size: 0.82rem;" min="0">
+                        <span style="font-size: 0.82rem; color: var(--text-secondary);">秒</span>
+                      </div>
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-tertiary, #64748b); line-height: 1.4;">*(0为立即执行；非0值将周期发布系统滚屏公告)</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -394,7 +503,7 @@
   <script>
     // 页面加载
     document.addEventListener('DOMContentLoaded', async () => {
-      // 检查登录状态
+      // 检查登录 status
       if (!checkAuth()) {
         window.location.href = 'index.html';
         return;
@@ -425,11 +534,19 @@
       try {
         const stats = await api.get('/api/dashboard/stats');
 
-        // 更新在线玩家数
-        document.getElementById('onlinePlayers').textContent = stats.onlinePlayers || 0;
+        // 同时更新第一排的大数值卡片和左下角的在线玩家卡片头部的小 Badge
+        const onlineCount = stats.onlinePlayers || 0;
+        const onlineCountEl = document.getElementById('onlineCount');
+        if (onlineCountEl) onlineCountEl.textContent = onlineCount;
+        const onlineCountBadge = document.getElementById('onlineCountBadge');
+        if (onlineCountBadge) onlineCountBadge.textContent = `${onlineCount} 人`;
 
-        // 更新注册账户数
-        document.getElementById('totalAccounts').textContent = stats.totalAccounts || 0;
+        // 更新物理内存占用
+        document.getElementById('memoryUsage').textContent = stats.memoryUsage || '0.0 MB';
+
+        // 更新注册账号数
+        const totalAccountsEl = document.getElementById('totalAccounts');
+        if (totalAccountsEl) totalAccountsEl.textContent = stats.totalAccounts || 0;
 
         // 更新服务器状态
         const statusEl = document.getElementById('serverStatus');
@@ -447,15 +564,112 @@
         // 更新运行时长
         document.getElementById('uptime').textContent = stats.uptime || '--';
 
-        // 加载在线玩家列表
-        if (stats.recentPlayers && stats.recentPlayers.length > 0) {
-          renderOnlinePlayers(stats.recentPlayers);
-        } else {
-          document.getElementById('onlinePlayersTable').innerHTML =
-            '<tr><td colspan="4" style="text-align: center; color: var(--text-tertiary);">暂无在线玩家</td></tr>';
+        // 【多重转译与高精度计算】以 0 为默认 1 倍，100 代表额外增加 100%（2倍）
+        const formatRate = (rate) => {
+          if (rate === 0) return '100% (默认)';
+          const total = rate + 100;
+          return `${total}% (${(total / 100.0).toFixed(1)}倍)`;
+        };
+
+        // 【多重转译与高精度计算】技能经验倍率，以 100 为 1 倍基础，0 为无经验
+        const formatSkillRate = (rate) => {
+          if (rate === 100) return '100% (默认)';
+          if (rate === 0) return '0% (关闭)';
+          return `${rate}% (${(rate / 100.0).toFixed(1)}倍)`;
+        };
+
+        // 【多重转译与高精度计算】宠物经验倍率，平直加成数值
+        const formatCompanionRate = (rate) => {
+          if (rate === 0) return '+0 (默认)';
+          return `+${rate} 点/次`;
+        };
+
+        // 实时绑定 7 大倍率数据
+        document.getElementById('rateExp').textContent = formatRate(stats.experienceRate || 0);
+        document.getElementById('rateDrop').textContent = formatRate(stats.dropRate || 0);
+        document.getElementById('rateBossDrop').textContent = formatRate(stats.bossDropRate || 0);
+        document.getElementById('rateGold').textContent = formatRate(stats.goldRate || 0);
+        document.getElementById('rateSkillLow').textContent = formatSkillRate(stats.skillLowRate || 0);
+        document.getElementById('rateSkillHigh').textContent = formatSkillRate(stats.skillHighRate || 0);
+        document.getElementById('rateCompanion').textContent = formatCompanionRate(stats.companionRate || 0);
+
+        // 加载在线玩家列表 (防空保护卫哨，防止由于删除了页面下方的最近活跃玩家列表 DOM 而导致脚本崩溃)
+        const onlinePlayersTable = document.getElementById('onlinePlayersTable');
+        if (onlinePlayersTable) {
+          if (stats.recentPlayers && stats.recentPlayers.length > 0) {
+            renderOnlinePlayers(stats.recentPlayers);
+          } else {
+            onlinePlayersTable.innerHTML =
+              '<tr><td colspan="4" style="text-align: center; color: var(--text-tertiary);">暂无在线玩家</td></tr>';
+          }
         }
       } catch (error) {
         console.error('加载仪表盘数据失败:', error);
+      }
+    }
+
+    // 快捷运维操作 Ajax 回调处理 (照顾初学者，全部配置有详细弹窗确认和参数解算)
+    async function handleSaveUsers() {
+      if (!confirm('确定要立即将【所有在线玩家数据】保存到数据库 users.db 中吗？')) return;
+      try {
+        const res = await api.post('/api/dashboard/save-users');
+        alert(res.message || '玩家数据已成功保存！');
+        await loadDashboardData();
+      } catch (error) {
+        alert('保存玩家数据失败：' + error.message);
+      }
+    }
+
+    async function handleSaveSystem() {
+      if (!confirm('确定要立即将【系统全局配置及状态】保存到数据库 system.db 中吗？')) return;
+      try {
+        const res = await api.post('/api/dashboard/save-system');
+        alert(res.message || '系统配置已成功保存！');
+        await loadDashboardData();
+      } catch (error) {
+        alert('保存系统数据失败：' + error.message);
+      }
+    }
+
+    async function handleGC() {
+      try {
+        const res = await api.post('/api/dashboard/gc');
+        alert(`系统垃圾清理与内存回收整理完毕！\n\n清理前内存: ${res.before}\n清理后内存: ${res.after}\n共释放内存: ${res.freed}`);
+        await loadDashboardData();
+      } catch (error) {
+        alert('触发内存垃圾回收失败：' + error.message);
+      }
+    }
+
+    async function handleKickAll() {
+      const delay = parseInt(document.getElementById('opDelaySeconds').value) || 0;
+      const confirmMsg = delay === 0 
+        ? '⚠️ 紧急警戒：您当前选择的是【立即断网踢人】！\n这会立刻强制将所有在线玩家断开连接，确定要执行此紧急操作吗？'
+        : `确定要发布【倒计时 ${delay} 秒】强制下线在线玩家的指令吗？\n游戏内将持续滚动发出警示公告，倒计时结束时强制执行断开。`;
+        
+      if (!confirm(confirmMsg)) return;
+      try {
+        const res = await api.post(`/api/dashboard/kick-all?delaySeconds=${delay}`);
+        alert(res.message || '踢人指令已发布执行！');
+        await loadDashboardData();
+      } catch (error) {
+        alert('踢出玩家执行失败：' + error.message);
+      }
+    }
+
+    async function handleRestart() {
+      const delay = parseInt(document.getElementById('opDelaySeconds').value) || 0;
+      const confirmMsg = delay === 0
+        ? '🚨 极高危警示：您当前选择的是【立即自重启】！\n服务器将瞬间断开玩家并安全关服，随即重新秒级拉起一个新进程窗口！\n确定要立即执行此命令吗？'
+        : `确定要发布【自重启 倒计时 ${delay} 秒】指令吗？\n游戏内将滚动广播安全重启通知，倒计时结束时服务器自动收尾保存并自动重启。`;
+
+      if (!confirm(confirmMsg)) return;
+      try {
+        const res = await api.post(`/api/dashboard/restart?delaySeconds=${delay}`);
+        alert(res.message || '自重启指令已成功发布！');
+        await loadDashboardData();
+      } catch (error) {
+        alert('执行自重启失败：' + error.message);
       }
     }
 
@@ -471,9 +685,10 @@
       return classNameMap[classEn] || classEn;
     }
 
-    // 渲染在线玩家列表
+    // 渲染在线玩家列表 (防空安全卫哨)
     function renderOnlinePlayers(players) {
       const tbody = document.getElementById('onlinePlayersTable');
+      if (!tbody) return;
       tbody.innerHTML = players.slice(0, 5).map(player => `
         <tr>
           <td>${escapeHtml(player.name)}</td>
@@ -507,50 +722,6 @@
       if (confirm('确定要退出登录吗？')) {
         logout();
         window.location.href = 'index.html';
-      }
-    }
-
-    // 保存用户数据
-    async function saveUserDatas() {
-      if (!confirm('确定要保存用户数据吗？')) return;
-
-      try {
-        const result = await api.post('/api/dashboard/save-users');
-        alert(result.message || '保存成功');
-      } catch (error) {
-        alert('保存失败: ' + error.message);
-      }
-    }
-
-    // 保存系统数据
-    async function saveSystem() {
-      if (!confirm('确定要保存系统数据吗？')) return;
-
-      try {
-        const result = await api.post('/api/dashboard/save-system');
-        alert(result.message || '保存成功');
-      } catch (error) {
-        alert('保存失败: ' + error.message);
-      }
-    }
-
-    // 踢出所有玩家
-    async function kickAllPlayers() {
-      const onlineCount = document.getElementById('onlinePlayers').textContent;
-      if (onlineCount === '--' || onlineCount === '0') {
-        alert('当前没有在线玩家');
-        return;
-      }
-
-      if (!confirm(`确定要踢出所有 ${onlineCount} 个在线玩家吗？\n\n此操作将强制所有玩家断开连接！`)) return;
-
-      try {
-        const result = await api.post('/api/dashboard/kick-all');
-        alert(result.message || '操作成功');
-        // 刷新数据
-        await loadDashboardData();
-      } catch (error) {
-        alert('操作失败: ' + error.message);
       }
     }
   </script>
