@@ -35,13 +35,14 @@ namespace Server.WebApi.Endpoints
             group.MapPost("/maps/{index:int}/respawns", AddMapRespawn);
             group.MapPut("/maps/{index:int}/respawns/{respawnId:int}", UpdateMapRespawn);
             group.MapDelete("/maps/{index:int}/respawns/{respawnId:int}", DeleteMapRespawn);
-            group.MapPut("/maps/{index:int}", UpdateMap);
-            group.MapPost("/maps/teleport", TeleportPlayer);
-            group.MapPost("/maps/{index:int}/clear-monsters", ClearMonstersOnMap);
             group.MapGet("/maps/{index:int}/movements", GetMapMovements);
             group.MapPost("/maps/{index:int}/movements", AddMapMovement);
             group.MapPut("/maps/{index:int}/movements/{movementId:int}", UpdateMapMovement);
             group.MapDelete("/maps/{index:int}/movements/{movementId:int}", DeleteMapMovement);
+            group.MapPut("/maps/{index:int}", UpdateMap);
+            group.MapPost("/maps/teleport", TeleportPlayer);
+            group.MapPost("/maps/{index:int}/clear-monsters", ClearMonstersOnMap);
+
 
             // Monsters
             group.MapGet("/monsters", GetMonsters);
@@ -99,7 +100,8 @@ namespace Server.WebApi.Endpoints
             ServerDataService dataService,
             int page = 1,
             int pageSize = 50,
-            string? search = null)
+            string? search = null,
+            string? type = null)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
             {
@@ -109,7 +111,7 @@ namespace Server.WebApi.Endpoints
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 200) pageSize = 50;
 
-            var (items, total) = dataService.GetItems(page, pageSize, search);
+            var (items, total) = dataService.GetItems(page, pageSize, search, type);
 
             return Results.Ok(new
             {
@@ -231,6 +233,10 @@ namespace Server.WebApi.Endpoints
             {
                 return Results.BadRequest(new { message });
             }
+
+            // [后台赠送物品] 详细记录管理员从Web后台向玩家赋予物品的操作日志
+            var adminEmail = JwtHelper.GetEmail(user);
+            Server.Envir.SEnvir.Log($"[后台赠送物品] 管理员={adminEmail}, 目标角色={request.CharacterName}, 物品ID={request.ItemIndex}, 数量={request.Count}");
 
             return Results.Ok(new { message });
         }
@@ -526,6 +532,10 @@ namespace Server.WebApi.Endpoints
             {
                 return Results.BadRequest(new { message });
             }
+
+            // [后台传送玩家] 详细记录管理员从Web后台传送玩家到指定地图和坐标的操作日志
+            var adminEmail = JwtHelper.GetEmail(user);
+            Server.Envir.SEnvir.Log($"[后台传送玩家] 管理员={adminEmail}, 目标角色={request.CharacterName}, 目标地图ID={request.MapIndex}, 坐标=({request.X}, {request.Y})");
 
             return Results.Ok(new { message });
         }
@@ -941,6 +951,10 @@ namespace Server.WebApi.Endpoints
             {
                 return Results.BadRequest(new { message });
             }
+
+            // [后台赠送技能] 详细记录管理员从Web后台向玩家赋予/修改技能的操作日志
+            var adminEmail = JwtHelper.GetEmail(user);
+            Server.Envir.SEnvir.Log($"[后台赠送技能] 管理员={adminEmail}, 目标角色={request.CharacterName}, 技能ID={request.MagicIndex}, 技能等级={request.Level}");
 
             return Results.Ok(new { message });
         }
@@ -1428,10 +1442,10 @@ namespace Server.WebApi.Endpoints
 
         #endregion
 
-        #region Movement Management
+        #region Map Movements Management
 
         /// <summary>
-        /// Get movements for a map
+        /// 获取当前地图的所有传送链接点列表
         /// </summary>
         private static IResult GetMapMovements(
             ClaimsPrincipal user,
@@ -1452,7 +1466,7 @@ namespace Server.WebApi.Endpoints
         }
 
         /// <summary>
-        /// Add movement to map
+        /// 向指定地图添加一个新的传送链接点
         /// </summary>
         private static IResult AddMapMovement(
             ClaimsPrincipal user,
@@ -1475,7 +1489,7 @@ namespace Server.WebApi.Endpoints
         }
 
         /// <summary>
-        /// Update map movement
+        /// 修改指定地图的传送链接点
         /// </summary>
         private static IResult UpdateMapMovement(
             ClaimsPrincipal user,
@@ -1499,7 +1513,7 @@ namespace Server.WebApi.Endpoints
         }
 
         /// <summary>
-        /// Delete map movement
+        /// 删除指定地图下的一个传送链接点
         /// </summary>
         private static IResult DeleteMapMovement(
             ClaimsPrincipal user,

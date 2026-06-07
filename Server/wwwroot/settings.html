@@ -50,6 +50,13 @@
             </svg>
             <span>账号管理</span>
           </a>
+          <a href="currencies.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>货币管理</span>
+          </a>
           <a href="characters.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -562,15 +569,18 @@
     function renderNavButtons() {
       const nav = document.getElementById('configNav');
       nav.innerHTML = '';
-      let isFirst = true;
+      
+      // 【高级跳转解析】从 URL 解析 section/group，使外部大卡片能直达指定设置项
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetSection = urlParams.get('section') || urlParams.get('group') || Object.keys(configMeta)[0];
+      
       for (const [section, meta] of Object.entries(configMeta)) {
         const btn = document.createElement('button');
-        btn.className = 'config-nav-btn' + (isFirst ? ' active' : '');
+        btn.className = 'config-nav-btn' + (section === targetSection ? ' active' : '');
         btn.dataset.section = section;
         btn.textContent = meta.name;
         btn.onclick = () => filterBySection(section);
         nav.appendChild(btn);
-        isFirst = false;
       }
     }
 
@@ -626,10 +636,31 @@
         titleDiv.innerHTML = `${sectionMeta.icon} ${sectionMeta.name}`;
         container.appendChild(titleDiv);
 
+        // 【新增防错提示】如果当前渲染的是“倍率设置 Rates”分组，动态追加美观暗调安全提示面板
+        if (sectionKey === 'Rates') {
+          const tipDiv = document.createElement('div');
+          tipDiv.className = 'config-section-group';
+          tipDiv.dataset.section = sectionKey;
+          // 使用全站暗灰主调，搭配微金极简文字，去噪去花哨
+          tipDiv.style = 'margin: 0.5rem 0 1.25rem 0; padding: 0.85rem 1.25rem; background: var(--bg-tertiary, #151d30); border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.08)); border-radius: 6px; color: var(--text-secondary, #9ca3af); font-size: 0.82rem; line-height: 1.6;';
+          tipDiv.innerHTML = `
+            <div style="font-weight: 600; color: var(--text-primary, #f3f4f6); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 6px;">
+              <span>ℹ️</span> 倍率数值配置规范说明：
+            </div>
+            <ul style="margin: 0; padding-left: 1.2rem; list-style-type: disc; color: var(--text-secondary, #9ca3af);">
+              <li>经验、掉落、金币、Boss掉落倍率：以 <code>0</code> 为系统默认（1倍）。以 <code>100</code> 为基数进行累加，如 100 代表 2 倍，200 代表 3 倍。</li>
+              <li>技能经验倍率（低级/高级）：以 <code>100</code> 为 1 倍基础，200 代表 2 倍，0 代表关闭技能经验获取。</li>
+              <li>宠物经验倍率：该数值为宠物定时增加的固定经验加成点数，而非百分比倍率（如填 10 代表每次增加 10 点经验值）。</li>
+            </ul>
+          `;
+          container.appendChild(tipDiv);
+        }
+
+
         // Config cards
         for (const [key, meta] of Object.entries(sectionMeta.items)) {
-          const value = sectionData[key];
-          if (value === undefined) continue;
+          // 如果文件中没有该配置，赋予一个空字符串而不是隐藏它，允许用户在界面上填写
+          const value = sectionData[key] !== undefined ? sectionData[key] : '';
 
           const card = createConfigCard(sectionKey, key, meta, value);
           card.classList.add('config-section-group');
@@ -655,10 +686,16 @@
         document.body.appendChild(saveBar);
       }
 
-      // 默认只显示第一个分组
-      const firstSection = Object.keys(configMeta)[0];
-      if (firstSection) {
-        filterBySection(firstSection);
+      // 【高级跳转解析】默认激活与高亮 URL 指定的分组，如果没有则默认第一个
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetSection = urlParams.get('section') || urlParams.get('group') || Object.keys(configMeta)[0];
+      if (targetSection && configMeta[targetSection]) {
+        filterBySection(targetSection);
+      } else {
+        const firstSection = Object.keys(configMeta)[0];
+        if (firstSection) {
+          filterBySection(firstSection);
+        }
       }
     }
 

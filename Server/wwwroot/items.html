@@ -51,6 +51,13 @@
             </svg>
             <span>账号管理</span>
           </a>
+          <a href="currencies.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>货币管理</span>
+          </a>
           <a href="characters.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -779,23 +786,31 @@
   </div>
 
   <style>
-    .form-input, .form-select {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid var(--border-color);
+    /* Form inputs with premium contrast & framing */
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid rgba(148, 163, 184, 0.35); /* clearly visible border frame */
       border-radius: 6px;
-      background: var(--bg-tertiary);
+      background: var(--bg-primary); /* Contrasts beautifully against form-section's tertiary background */
       color: var(--text-primary);
       font-size: 0.875rem;
-      width: 100%;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06); /* subtle premium inner shadow */
       box-sizing: border-box;
     }
-    .form-input:focus, .form-select:focus {
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
       outline: none;
       border-color: var(--primary);
+      background: var(--bg-primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.06);
     }
-    .form-input[readonly] {
+    .form-input[readonly], .form-textarea[readonly] {
       background: var(--bg-secondary);
+      border-color: var(--border-color);
+      color: var(--text-tertiary);
       cursor: not-allowed;
+      box-shadow: none;
     }
     .form-select {
       min-width: 150px;
@@ -879,76 +894,6 @@
       background: var(--bg-tertiary);
       border-color: var(--border-color);
       color: var(--text-secondary);
-    }
-
-    /* Modal styles */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1000;
-    }
-    .modal.show {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-backdrop {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-    }
-    .modal-content {
-      position: relative;
-      background: var(--bg-secondary);
-      border-radius: 12px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-    }
-    .modal-content.modal-large {
-      max-width: 800px;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .modal-title {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 600;
-    }
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--text-secondary);
-      line-height: 1;
-    }
-    .modal-close:hover {
-      color: var(--text-primary);
-    }
-    .modal-body {
-      padding: 1.5rem;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-      padding: 1rem 1.5rem;
-      border-top: 1px solid var(--border-color);
     }
 
     /* Form styles */
@@ -1111,6 +1056,11 @@
           url += `&search=${encodeURIComponent(searchQuery)}`;
         }
 
+        const typeFilter = document.getElementById('typeFilter').value;
+        if (typeFilter) {
+          url += `&type=${encodeURIComponent(typeFilter)}`;
+        }
+
         const data = await api.get(url);
         totalItems = data.total || 0;
         totalPages = data.totalPages || 0;
@@ -1143,20 +1093,13 @@
 
     function renderItems(items) {
       const tbody = document.getElementById('itemsTable');
-      const typeFilter = document.getElementById('typeFilter').value;
 
-      // Client-side type filter
-      let filteredItems = items;
-      if (typeFilter) {
-        filteredItems = items.filter(item => item.type === typeFilter);
-      }
-
-      if (filteredItems.length === 0) {
+      if (items.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-tertiary);">暂无物品数据</td></tr>';
         return;
       }
 
-      tbody.innerHTML = filteredItems.map(item => `
+      tbody.innerHTML = items.map(item => `
         <tr>
           <td><code>${item.index}</code></td>
           <td><strong>${escapeHtml(item.name)}</strong></td>

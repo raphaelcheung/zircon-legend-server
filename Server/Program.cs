@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Runtime;
 using Library;
 using Server.Envir;
@@ -109,6 +109,66 @@ WebApiStartup.Start();
 
 SEnvir.StartServer();
 
-while(!stop) Thread.Sleep(100);
+// 【修复自重启死循环】当游戏主服务循环退出后，立即将 running 设为 false，以通知日志守护后台线程优雅退出
+running = false;
 
-//ConfigReader.Save();
+// 增加 30 秒超时防死锁机制
+int waitCount = 0;
+while(!stop && waitCount < 300)
+{
+    Thread.Sleep(100);
+    waitCount++;
+}
+if (!stop)
+{
+    Console.WriteLine("[警告] 后台日志线程未能在 30 秒内优雅退出，强制继续退出流程！");
+}
+
+// 【新增】系统安全自重启检测机制
+// 如果 SEnvir.RequestRestart 被设置为 true，说明管理员在后台网页触发了安全重启指令
+if (SEnvir.RequestRestart)
+{
+    try
+    {
+        // 1. 获取当前正在运行的 C# 服务器程序的完整绝对路径
+        // 【修复】改用 Environment.ProcessPath 适配跨平台，而不是 MainModule.FileName
+        string? exePath = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(exePath))
+        {
+            Console.WriteLine("[系统自重启] 无法获取当前进程路径，重启失败！");
+        }
+        else
+        {
+            // 2. 构造进程启动信息，并设定使用系统 Shell 独立运行，从而拉起一个干净的全新服务器实例
+            var startInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = exePath,
+                UseShellExecute = false // 【修复】关闭 ShellExecute 兼容 Linux/Docker 无界面环境
+            };
+
+            // 传递原有的命令行参数（跳过第 0 个参数，即执行程序本身）
+            var cmdArgs = Environment.GetCommandLineArgs();
+            for (int i = 1; i < cmdArgs.Length; i++)
+            {
+                startInfo.ArgumentList.Add(cmdArgs[i]);
+            }
+            
+            // 3. 拉起新实例
+            var process = System.Diagnostics.Process.Start(startInfo);
+            if (process == null)
+            {
+                Console.WriteLine("[系统自重启] 拉起新进程实例失败，Process.Start 返回 null。");
+            }
+            else
+            {
+                Console.WriteLine($"[系统自重启] 成功拉起新进程实例，执行路径: {exePath}");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[系统自重启] 启动新进程时发生异常: {ex.Message}");
+    }
+}
+
+//ConfigReader.Save();

@@ -51,6 +51,13 @@
             </svg>
             <span>账号管理</span>
           </a>
+          <a href="currencies.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>货币管理</span>
+          </a>
           <a href="characters.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -310,8 +317,9 @@
   </div>
 
   <!-- 编辑基础属性模态框 -->
-  <div class="modal-overlay" id="editStatModal">
-    <div class="modal" style="max-width: 700px;">
+  <div class="modal" id="editStatModal">
+    <div class="modal-backdrop" onclick="closeEditStatModal()"></div>
+    <div class="modal-content modal-large">
       <div class="modal-header">
         <h3 class="modal-title">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
@@ -325,86 +333,101 @@
         </div>
         <input type="hidden" id="editStatIndex">
 
-        <div class="form-grid" style="grid-template-columns: repeat(5, 1fr); gap: 1rem;">
-          <div class="form-group">
-            <label class="form-label">生命值</label>
-            <input type="number" id="editHealth" class="form-input" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">魔法值</label>
-            <input type="number" id="editMana" class="form-input" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">负重</label>
-            <input type="number" id="editBagWeight" class="form-input" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">穿戴</label>
-            <input type="number" id="editWearWeight" class="form-input" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">腕力</label>
-            <input type="number" id="editHandWeight" class="form-input" min="0">
-          </div>
-        </div>
-
-        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
-          <div class="form-group">
-            <label class="form-label">准确</label>
-            <input type="number" id="editAccuracy" class="form-input" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">敏捷</label>
-            <input type="number" id="editAgility" class="form-input" min="0">
+        <!-- 卡片 1：核心基础属性 -->
+        <div class="form-section">
+          <div class="form-section-title">核心基础属性</div>
+          <div class="form-grid" style="grid-template-columns: repeat(5, 1fr); gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">生命值</label>
+              <input type="number" id="editHealth" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">魔法值</label>
+              <input type="number" id="editMana" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">负重</label>
+              <input type="number" id="editBagWeight" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">穿戴</label>
+              <input type="number" id="editWearWeight" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">腕力</label>
+              <input type="number" id="editHandWeight" class="form-input" min="0">
+            </div>
           </div>
         </div>
 
-        <div class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem;">
-          <div class="form-group">
-            <label class="form-label">最小AC</label>
-            <input type="number" id="editMinAC" class="form-input" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最大AC</label>
-            <input type="number" id="editMaxAC" class="form-input" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最小MR</label>
-            <input type="number" id="editMinMR" class="form-input" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最大MR</label>
-            <input type="number" id="editMaxMR" class="form-input" min="0">
+        <!-- 卡片 2：战斗修正 -->
+        <div class="form-section">
+          <div class="form-section-title">核心战斗修正</div>
+          <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">准确</label>
+              <input type="number" id="editAccuracy" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">敏捷</label>
+              <input type="number" id="editAgility" class="form-input" min="0">
+            </div>
           </div>
         </div>
 
-        <div class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem;">
-          <div class="form-group">
-            <label class="form-label">最小DC</label>
-            <input type="number" id="editMinDC" class="form-input" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最大DC</label>
-            <input type="number" id="editMaxDC" class="form-input" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最小MC</label>
-            <input type="number" id="editMinMC" class="form-input" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最大MC</label>
-            <input type="number" id="editMaxMC" class="form-input" min="0">
+        <!-- 卡片 3：防御与魔御抗性 -->
+        <div class="form-section">
+          <div class="form-section-title">防御与魔御抗性</div>
+          <div class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">最小AC</label>
+              <input type="number" id="editMinAC" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最大AC</label>
+              <input type="number" id="editMaxAC" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最小MR</label>
+              <input type="number" id="editMinMR" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最大MR</label>
+              <input type="number" id="editMaxMR" class="form-input" min="0">
+            </div>
           </div>
         </div>
 
-        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
-          <div class="form-group">
-            <label class="form-label">最小SC</label>
-            <input type="number" id="editMinSC" class="form-input" min="0">
+        <!-- 卡片 4：物理、魔法与道术攻击 -->
+        <div class="form-section">
+          <div class="form-section-title">职业攻击力修正</div>
+          <div class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+              <label class="form-label">最小DC</label>
+              <input type="number" id="editMinDC" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最大DC</label>
+              <input type="number" id="editMaxDC" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最小MC</label>
+              <input type="number" id="editMinMC" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最大MC</label>
+              <input type="number" id="editMaxMC" class="form-input" min="0">
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">最大SC</label>
-            <input type="number" id="editMaxSC" class="form-input" min="0">
+          <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">最小SC</label>
+              <input type="number" id="editMinSC" class="form-input" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最大SC</label>
+              <input type="number" id="editMaxSC" class="form-input" min="0">
+            </div>
           </div>
         </div>
       </div>
@@ -419,8 +442,9 @@
   </div>
 
   <!-- 新增基础属性模态框 -->
-  <div class="modal-overlay" id="addStatModal">
-    <div class="modal" style="max-width: 700px;">
+  <div class="modal" id="addStatModal">
+    <div class="modal-backdrop" onclick="closeAddStatModal()"></div>
+    <div class="modal-content modal-large">
       <div class="modal-header">
         <h3 class="modal-title">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -446,86 +470,101 @@
           </div>
         </div>
 
-        <div class="form-grid" style="grid-template-columns: repeat(5, 1fr); gap: 1rem;">
-          <div class="form-group">
-            <label class="form-label">生命值</label>
-            <input type="number" id="addHealth" class="form-input" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">魔法值</label>
-            <input type="number" id="addMana" class="form-input" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">负重</label>
-            <input type="number" id="addBagWeight" class="form-input" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">穿戴</label>
-            <input type="number" id="addWearWeight" class="form-input" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">腕力</label>
-            <input type="number" id="addHandWeight" class="form-input" min="0" value="0">
-          </div>
-        </div>
-
-        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
-          <div class="form-group">
-            <label class="form-label">准确</label>
-            <input type="number" id="addAccuracy" class="form-input" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">敏捷</label>
-            <input type="number" id="addAgility" class="form-input" min="0" value="0">
+        <!-- 卡片 1：核心基础属性 -->
+        <div class="form-section">
+          <div class="form-section-title">核心基础属性</div>
+          <div class="form-grid" style="grid-template-columns: repeat(5, 1fr); gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">生命值</label>
+              <input type="number" id="addHealth" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">魔法值</label>
+              <input type="number" id="addMana" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">负重</label>
+              <input type="number" id="addBagWeight" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">穿戴</label>
+              <input type="number" id="addWearWeight" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">腕力</label>
+              <input type="number" id="addHandWeight" class="form-input" min="0" value="0">
+            </div>
           </div>
         </div>
 
-        <div class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem;">
-          <div class="form-group">
-            <label class="form-label">最小AC</label>
-            <input type="number" id="addMinAC" class="form-input" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最大AC</label>
-            <input type="number" id="addMaxAC" class="form-input" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最小MR</label>
-            <input type="number" id="addMinMR" class="form-input" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最大MR</label>
-            <input type="number" id="addMaxMR" class="form-input" min="0" value="0">
+        <!-- 卡片 2：战斗修正 -->
+        <div class="form-section">
+          <div class="form-section-title">核心战斗修正</div>
+          <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">准确</label>
+              <input type="number" id="addAccuracy" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">敏捷</label>
+              <input type="number" id="addAgility" class="form-input" min="0" value="0">
+            </div>
           </div>
         </div>
 
-        <div class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem;">
-          <div class="form-group">
-            <label class="form-label">最小DC</label>
-            <input type="number" id="addMinDC" class="form-input" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最大DC</label>
-            <input type="number" id="addMaxDC" class="form-input" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最小MC</label>
-            <input type="number" id="addMinMC" class="form-input" min="0" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">最大MC</label>
-            <input type="number" id="addMaxMC" class="form-input" min="0" value="0">
+        <!-- 卡片 3：防御与魔御抗性 -->
+        <div class="form-section">
+          <div class="form-section-title">防御与魔御抗性</div>
+          <div class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">最小AC</label>
+              <input type="number" id="addMinAC" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最大AC</label>
+              <input type="number" id="addMaxAC" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最小MR</label>
+              <input type="number" id="addMinMR" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最大MR</label>
+              <input type="number" id="addMaxMR" class="form-input" min="0" value="0">
+            </div>
           </div>
         </div>
 
-        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
-          <div class="form-group">
-            <label class="form-label">最小SC</label>
-            <input type="number" id="addMinSC" class="form-input" min="0" value="0">
+        <!-- 卡片 4：物理、魔法与道术攻击 -->
+        <div class="form-section">
+          <div class="form-section-title">职业攻击力修正</div>
+          <div class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+              <label class="form-label">最小DC</label>
+              <input type="number" id="addMinDC" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最大DC</label>
+              <input type="number" id="addMaxDC" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最小MC</label>
+              <input type="number" id="addMinMC" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最大MC</label>
+              <input type="number" id="addMaxMC" class="form-input" min="0" value="0">
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">最大SC</label>
-            <input type="number" id="addMaxSC" class="form-input" min="0" value="0">
+          <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">最小SC</label>
+              <input type="number" id="addMinSC" class="form-input" min="0" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">最大SC</label>
+              <input type="number" id="addMaxSC" class="form-input" min="0" value="0">
+            </div>
           </div>
         </div>
       </div>
@@ -756,71 +795,50 @@
     .form-grid {
       display: grid;
     }
-    /* Modal styles */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      padding: 1rem;
-    }
-    .modal-overlay.show {
-      display: flex;
-    }
-    .modal {
-      background: var(--bg-secondary);
-      border-radius: 12px;
+    /* Form inputs with premium contrast & framing */
+    .form-input, .form-select, .form-textarea {
       width: 100%;
-      max-height: 90vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-      margin: auto;
-    }
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .modal-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 1.1rem;
-      font-weight: 600;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid rgba(148, 163, 184, 0.35); /* clearly visible border frame */
+      border-radius: 6px;
+      background: var(--bg-primary); /* Contrasts beautifully against form-section's tertiary background */
       color: var(--text-primary);
+      font-size: 0.875rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06); /* subtle premium inner shadow */
     }
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--bg-primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.06);
+    }
+    .form-input:read-only, .form-textarea:read-only {
+      background: var(--bg-secondary);
+      border-color: var(--border-color);
       color: var(--text-tertiary);
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
+      cursor: not-allowed;
+      box-shadow: none;
     }
-    .modal-close:hover {
-      color: var(--text-primary);
+
+
+    .form-section {
+      background: var(--bg-tertiary);
+      padding: 1.25rem;
+      border-radius: 8px;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
-    .modal-body {
-      padding: 1.5rem;
-      overflow-y: auto;
+    .form-section:last-child {
+      margin-bottom: 0;
     }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-      padding: 1rem 1.5rem;
-      border-top: 1px solid var(--border-color);
+    .form-section-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
     }
     .form-group {
       display: flex;

@@ -78,6 +78,10 @@ namespace Server.WebApi.Endpoints
             var success = dataService.KickPlayer(name);
             if (success)
             {
+                // [后台强制下线] 详细记录管理员从Web后台强制将玩家踢下线的操作日志
+                var adminEmail = JwtHelper.GetEmail(user);
+                Server.Envir.SEnvir.Log($"[后台强制下线] 管理员={adminEmail}, 目标角色={name}");
+
                 return Results.Ok(new { message = $"Player '{name}' has been kicked" });
             }
 

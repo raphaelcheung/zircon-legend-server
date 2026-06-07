@@ -1,4 +1,4 @@
-﻿using Library;
+using Library;
 using Library.Network;
 using Library.Network.ServerPackets;
 using Library.SystemModels;
@@ -651,6 +651,9 @@ namespace Zircon.Server.Models
             Character.Account.TotalPlaySeconds += Math.Max(0, duration);
             Character.LastLogin = SEnvir.Now;
 
+            // [角色下线] 记录玩家角色离开游戏世界的详细日志（包含账号、角色名以及本次在线时长）
+            SEnvir.Log($"[角色下线] 账号={Character.Account.EMailAddress}, 角色={Name}, 在线时长={duration}秒");
+
             if (Character.Account.GuildMember != null)
             {
                 foreach (GuildMemberInfo member in Character.Account.GuildMember.Guild.Members)
@@ -726,6 +729,9 @@ namespace Zircon.Server.Models
             Character.Player = this;
             Connection.Player = this;
             Connection.Stage = GameStage.Game;
+
+            // [角色登录] 记录玩家角色成功进入游戏的详细日志（包含账号、角色名、当前地图以及坐标位置）
+            SEnvir.Log($"[角色登录] 账号={Character.Account.EMailAddress}, 角色={Name}, 地图={CurrentMap.Info.Description}({CurrentMap.Info.FileName}), 坐标={CurrentLocation}");
 
             ShoutTime = SEnvir.Now.AddSeconds(10);
 
@@ -1593,6 +1599,9 @@ namespace Zircon.Server.Models
                             BuffRemove(BuffType.Developer);
 
                         Connection.ReceiveChat($"GM模式: {(GameMaster ? "开启" : "关闭")}", MessageType.Hint);
+
+                        // [GM模式切换] 记录管理员切换GM开发者模式的日志
+                        SEnvir.Log($"[GM模式切换] 管理员={Character.Account.EMailAddress}({Character.CharacterName}), 状态={(GameMaster ? "开启" : "关闭")}");
                         break;
                     case "GOLDBOT":
                         if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
@@ -1637,6 +1646,10 @@ namespace Zircon.Server.Models
                         if (player == null) return;
 
                         Teleport(player.CurrentMap, player.CurrentLocation);
+
+                        // [GM传送] 记录管理员强制传送到指定玩家坐标的操作日志
+                        SEnvir.Log($"[GM传送] 管理员={Character.Account.EMailAddress}({Character.CharacterName}), 目标玩家={player.Name}, 地图={player.CurrentMap.Info.Description}({player.CurrentMap.Info.FileName}), 坐标={player.CurrentLocation}");
+
                         break;
                     case "GIVESKILLS":
                         if (!GameMaster) return;
@@ -1773,7 +1786,8 @@ namespace Zircon.Server.Models
                             GainItem(userItem);
                         }
 
-                        SEnvir.Log($"[制造道具] 管理员=[{Character.Account.EMailAddress}-{Character.CharacterName}] 道具=[{item.ItemName} x {counter}]");
+                        // [GM制造物品] 规范化管理员制造物品的中文日志记录
+                        SEnvir.Log($"[GM制造物品] 管理员={Character.Account.EMailAddress}({Character.CharacterName}), 物品={item.ItemName}, 数量={counter}");
 
                         break;
                     case "GCCOLLECT":
@@ -1832,6 +1846,9 @@ namespace Zircon.Server.Models
 
                         Connection.ReceiveChat(string.Format("[获取游戏币] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
 
+                        // [GM调整元宝] 记录管理员向其他玩家增加元宝的操作日志
+                        SEnvir.Log($"[GM调整元宝] 管理员={Character.Account.EMailAddress}({Character.CharacterName}), 目标玩家={character.CharacterName}, 增加数量={count}");
+
                         break;
                     case "REMOVEGAMEGOLD":
                         if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
@@ -1882,6 +1899,10 @@ namespace Zircon.Server.Models
                         character.Player.Enqueue(new S.GameGoldChanged { GameGold = character.Account.GameGold });
 
                         Connection.ReceiveChat(string.Format("[赠送游戏币] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
+
+                        // [GM扣除元宝] 记录管理员向其他玩家扣除元宝的操作日志
+                        SEnvir.Log($"[GM扣除元宝] 管理员={Character.Account.EMailAddress}({Character.CharacterName}), 目标玩家={character.CharacterName}, 扣除数量={count}");
+
                         break;
                     case "REFUNDGAMEGOLD":
                         if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
@@ -1900,6 +1921,10 @@ namespace Zircon.Server.Models
                         character.Player.Enqueue(new S.GameGoldChanged { GameGold = character.Account.GameGold });
 
                         Connection.ReceiveChat(string.Format("[退还游戏币] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
+
+                        // [GM退还元宝] 记录管理员向其他玩家退还元宝的操作日志
+                        SEnvir.Log($"[GM退还元宝] 管理员={Character.Account.EMailAddress}({Character.CharacterName}), 目标玩家={character.CharacterName}, 退还数量={count}");
+
                         break;
                     case "REFUNDHUNTGOLD":
                         if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
@@ -1918,6 +1943,10 @@ namespace Zircon.Server.Models
                         character.Player.Enqueue(new S.HuntGoldChanged { HuntGold = character.Account.HuntGold });
 
                         Connection.ReceiveChat(string.Format("[退还狩猎金] {0} 数量: {1}", character.CharacterName, count), MessageType.System);
+
+                        // [GM退还猎币] 记录管理员向其他玩家退还猎币的操作日志
+                        SEnvir.Log($"[GM退还猎币] 管理员={Character.Account.EMailAddress}({Character.CharacterName}), 目标玩家={character.CharacterName}, 退还数量={count}");
+
                         break;
                     case "CHATBAN":
                         if (!GameMaster || Character.Account.Identify < AccountIdentity.Admin) return;
@@ -1931,6 +1960,10 @@ namespace Zircon.Server.Models
                             count = 1440 * 365 * 10;
 
                         character.Account.ChatBanExpiry = SEnvir.Now.AddMinutes(count);
+
+                        // [GM禁言] 记录管理员对指定角色进行禁言的操作日志
+                        SEnvir.Log($"[GM禁言] 管理员={Character.Account.EMailAddress}({Character.CharacterName}), 目标玩家={character.CharacterName}, 禁言时长={count}分钟");
+
                         break;
                     case "GLOBALBAN":
                         if (!GameMaster || Character.Account.Identify <= AccountIdentity.Normal) return;
@@ -1944,6 +1977,10 @@ namespace Zircon.Server.Models
                             count = 1440 * 365 * 10;
 
                         character.Account.GlobalTime = SEnvir.Now.AddMinutes(count);
+
+                        // [GM全服封禁] 记录管理员对指定角色进行账号全服封禁的操作日志
+                        SEnvir.Log($"[GM全服封禁] 管理员={Character.Account.EMailAddress}({Character.CharacterName}), 目标玩家={character.CharacterName}, 封禁时长={count}分钟");
+
                         break;
                     case "MOVE":
                         //If Is GM or Teleport Ring
@@ -1962,6 +1999,10 @@ namespace Zircon.Server.Models
                         if (map == null) return;
 
                         Teleport(map, map.GetRandomLocation());
+
+                        // [GM地图传送] 记录管理员强制发起到指定地图的操作日志
+                        SEnvir.Log($"[GM地图传送] 管理员={Character.Account.EMailAddress}({Character.CharacterName}), 目标地图={map.Info.Description}({map.Info.FileName})");
+
                         break;
                     case "CLEARBELT":
                         for (int i = Character.BeltLinks.Count - 1; i >= 0; i--)
@@ -12480,7 +12521,8 @@ namespace Zircon.Server.Models
             if (Character.Account.Identify > AccountIdentity.Normal)
                 Connection.ReceiveChat($"武器精炼结果：Random={result}  Chance={info.Chance}  MaxChance={info.MaxChance}", MessageType.Hint);
 
-            SEnvir.Log($"[{Character.CharacterName}] 武器精炼：Weapon={info.Weapon.Info.ItemName}  Random={result}  Chance={info.Chance}  MaxChance={info.MaxChance}");
+            // 记录武器精炼开始进行鉴定的系统日志
+            SEnvir.Log($"[{Character.CharacterName}] 武器精炼鉴定：Weapon={info.Weapon.Info.ItemName}  随机值={result}  成功率={info.Chance}%  最大成功率={info.MaxChance}%");
 
             if (result < info.Chance)
             {
@@ -12591,6 +12633,9 @@ namespace Zircon.Server.Models
 
                 foreach (SConnection con in Connection.Observers)
                     con.ReceiveChat(con.Language.NPCRefineSuccess, MessageType.System);
+
+                // [武器精炼成功] 详细记录玩家武器精炼成功的中文属性日志
+                SEnvir.Log($"[武器精炼成功] 角色={Character.CharacterName}, 装备={info.Weapon.Info.ItemName}, 精炼属性={info.Type}, 成功率={info.Chance}%, 随机摇点={result}");
             }
             else
             {
@@ -12598,6 +12643,9 @@ namespace Zircon.Server.Models
 
                 foreach (SConnection con in Connection.Observers)
                     con.ReceiveChat(con.Language.NPCRefineFailed, MessageType.System);
+
+                // [武器精炼失败] 详细记录玩家武器精炼失败的中文日志
+                SEnvir.Log($"[武器精炼失败] 角色={Character.CharacterName}, 装备={info.Weapon.Info.ItemName}, 精炼属性={info.Type}, 成功率={info.Chance}%, 随机摇点={result}");
             }
 
             weapon.Flags &= ~UserItemFlags.Refinable;

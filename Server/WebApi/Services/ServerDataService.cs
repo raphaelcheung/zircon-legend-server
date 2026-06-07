@@ -57,6 +57,37 @@ namespace Server.WebApi.Services
         private static readonly object _questUpdateLock = new object();
 
         /// <summary>
+        /// 【防抖保存】用于合并 WebAPI 触发的高频 SaveSystem 调用，避免短时间内重复序列化造成内存峰值
+        /// </summary>
+        private static readonly object _saveDebouncelock = new object();
+        private static System.Threading.Timer? _saveDebounceTimer = null;
+        private const int SaveDebounceMs = 800; // 800ms 内多次调用只触发一次实际保存
+
+        /// <summary>
+        /// 防抖触发系统数据保存。管理后台短时间内的连续编辑操作将被合并，
+        /// 最后一次操作完成 800ms 后才真正执行 SaveSystem，避免每次操作都序列化全量数据。
+        /// </summary>
+        private static void DebouncedSaveSystem()
+        {
+            lock (_saveDebouncelock)
+            {
+                // 取消上一次已计划但尚未执行的保存，重新开始计时
+                _saveDebounceTimer?.Dispose();
+                _saveDebounceTimer = new System.Threading.Timer(_ =>
+                {
+                    try
+                    {
+                        SEnvir.SaveSystem();
+                    }
+                    catch (Exception ex)
+                    {
+                        SEnvir.Log($"[防抖保存] SaveSystem 执行异常: {ex.Message}");
+                    }
+                }, null, SaveDebounceMs, System.Threading.Timeout.Infinite);
+            }
+        }
+
+        /// <summary>
         /// Get server start time
         /// </summary>
         public DateTime ServerStartTime { get; } = DateTime.UtcNow;
@@ -343,6 +374,7 @@ namespace Server.WebApi.Services
                     LastLogin = a.LastLogin,
                     LastIP = a.LastIP,
                     CharacterCount = a.Characters?.Count(c => !c.Deleted) ?? 0,
+                    Gold = a.Gold,
                     GameGold = a.GameGold,
                     HuntGold = a.HuntGold
                 })
@@ -396,6 +428,7 @@ namespace Server.WebApi.Services
             account.Banned = true;
             account.BanReason = reason;
             account.ExpiryDate = expiryDate ?? DateTime.MaxValue;
+            SEnvir.SaveUserDatas();
             return true;
         }
 
@@ -410,6 +443,7 @@ namespace Server.WebApi.Services
             account.Banned = false;
             account.BanReason = "";
             account.ExpiryDate = DateTime.MinValue;
+            SEnvir.SaveUserDatas();
             return true;
         }
 
@@ -480,6 +514,141 @@ namespace Server.WebApi.Services
             // Save to database
             SEnvir.SaveUserDatas();
             return (true, "Account created successfully");
+        }
+
+        /// <summary>
+        /// 为账号充值或扣除元宝 (GameGold)
+        /// </summary>
+        /// <param name="email">账号邮箱</param>
+        /// <param name="amount">变更数量（正数为充值存入，负数为系统扣除）</param>
+        /// <returns>操作是否成功</returns>
+        public Task<bool> AddGameGold(string email, int amount)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            var account = GetAccountByEmail(email);
+            if (account == null)
+            {
+                tcs.SetResult(false);
+                return tcs.Task;
+            }
+
+            // 【安全修复】跨线程数据竞争修复：将操作转交游戏主线程异步处理
+            SEnvir.Post(_ =>
+            {
+                // 限制最低为 0
+                account.GameGold = Math.Max(0, account.GameGold + amount);
+                SEnvir.SaveUserDatas();
+
+                // 安全复制快照：防止多线程遍历时集合被修改报 InvalidOperationException 异常
+                var player = SEnvir.Players.ToArray().FirstOrDefault(p => p.Character?.Account == account);
+                if (player != null)
+                {
+                    player.Enqueue(new S.GameGoldChanged { GameGold = account.GameGold });
+                    
+                    // 商业中性红字通告
+                    if (amount > 0)
+                    {
+                        player.Connection?.ReceiveChat($"系统成功为你的账户存入 {amount} 元宝！", MessageType.System);
+                    }
+                    else if (amount < 0)
+                    {
+                        player.Connection?.ReceiveChat($"系统扣除了你 {Math.Abs(amount)} 元宝。", MessageType.System);
+                    }
+                }
+                
+                tcs.SetResult(true);
+            });
+            return tcs.Task;
+        }
+
+        /// <summary>
+        /// 为账号充值或扣除猎币 (HuntGold)
+        /// </summary>
+        /// <param name="email">账号邮箱</param>
+        /// <param name="amount">变更数量（正数为充值存入，负数为系统扣除）</param>
+        /// <returns>操作是否成功</returns>
+        public Task<bool> AddHuntGold(string email, int amount)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            var account = GetAccountByEmail(email);
+            if (account == null)
+            {
+                tcs.SetResult(false);
+                return tcs.Task;
+            }
+
+            // 【安全修复】跨线程数据竞争修复：将操作转交游戏主线程异步处理
+            SEnvir.Post(_ =>
+            {
+                // 限制最低为 0
+                account.HuntGold = Math.Max(0, account.HuntGold + amount);
+                SEnvir.SaveUserDatas();
+
+                // 安全复制快照：防止多线程遍历时集合被修改报 InvalidOperationException 异常
+                var player = SEnvir.Players.ToArray().FirstOrDefault(p => p.Character?.Account == account);
+                if (player != null)
+                {
+                    player.Enqueue(new S.HuntGoldChanged { HuntGold = account.HuntGold });
+                    
+                    // 商业中性红字通告
+                    if (amount > 0)
+                    {
+                        player.Connection?.ReceiveChat($"系统成功为你的账户存入 {amount} 猎币！", MessageType.System);
+                    }
+                    else if (amount < 0)
+                    {
+                        player.Connection?.ReceiveChat($"系统扣除了你 {Math.Abs(amount)} 猎币。", MessageType.System);
+                    }
+                }
+
+                tcs.SetResult(true);
+            });
+            return tcs.Task;
+        }
+
+        /// <summary>
+        /// 为账号充值或扣除普通金币 (Gold)
+        /// </summary>
+        /// <param name="email">账号邮箱</param>
+        /// <param name="amount">变更数量（正数为充值存入，负数为系统扣除）</param>
+        /// <returns>操作是否成功</returns>
+        public Task<bool> AddNormalGold(string email, long amount)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            var account = GetAccountByEmail(email);
+            if (account == null)
+            {
+                tcs.SetResult(false);
+                return tcs.Task;
+            }
+
+            // 【安全修复】跨线程数据竞争修复：将操作转交游戏主线程异步处理
+            SEnvir.Post(_ =>
+            {
+                // 限制最低为 0
+                account.Gold = Math.Max(0, account.Gold + amount);
+                SEnvir.SaveUserDatas();
+
+                // 安全复制快照：防止多线程遍历时集合被修改报 InvalidOperationException 异常
+                var player = SEnvir.Players.ToArray().FirstOrDefault(p => p.Character?.Account == account);
+                if (player != null)
+                {
+                    player.Enqueue(new S.GoldChanged { Gold = account.Gold });
+                    
+                    // 商业中性红字通告
+                    if (amount > 0)
+                    {
+                        player.Connection?.ReceiveChat($"系统成功为你的账户存入 {amount} 金币！", MessageType.System);
+                    }
+                    else if (amount < 0)
+                    {
+                        player.Connection?.ReceiveChat($"系统扣除了你 {Math.Abs(amount)} 金币。", MessageType.System);
+                    }
+                }
+
+                tcs.SetResult(true);
+            });
+            return tcs.Task;
         }
 
         #endregion
@@ -584,7 +753,7 @@ namespace Server.WebApi.Services
         /// <summary>
         /// Get items with pagination
         /// </summary>
-        public (List<ItemInfoDto> items, int total) GetItems(int page, int pageSize, string? search = null)
+        public (List<ItemInfoDto> items, int total) GetItems(int page, int pageSize, string? search = null, string? type = null)
         {
             var items = SEnvir.ItemInfoList;
             if (items == null) return (new List<ItemInfoDto>(), 0);
@@ -593,6 +762,10 @@ namespace Server.WebApi.Services
             for (int i = 0; i < items.Count; i++)
             {
                 var item = items[i];
+
+                if (!string.IsNullOrEmpty(type) && !string.Equals(item.ItemType.ToString(), type, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
                 if (string.IsNullOrEmpty(search) ||
                     item.ItemName?.Contains(search, StringComparison.OrdinalIgnoreCase) == true)
                 {
@@ -725,6 +898,9 @@ namespace Server.WebApi.Services
                 if (request.PartCount.HasValue) item.PartCount = request.PartCount.Value;
                 if (request.BlockMonsterDrop.HasValue) item.BlockMonsterDrop = request.BlockMonsterDrop.Value;
 
+                // 【安全补齐】更新物品后执行落盘保存，防止服务器重启或崩服回档
+                DebouncedSaveSystem();
+
                 return (true, "物品更新成功");
             }
         }
@@ -794,6 +970,9 @@ namespace Server.WebApi.Services
                 newItem.BuffIcon = request.BuffIcon;
                 newItem.PartCount = request.PartCount;
                 newItem.BlockMonsterDrop = request.BlockMonsterDrop;
+
+                // 【安全补齐】创建新物品后执行系统保存落盘
+                DebouncedSaveSystem();
 
                 SEnvir.Log($"创建新物品: Index={newItem.Index}, Name={newItem.ItemName}, Type={newItem.ItemType}");
 
@@ -1997,8 +2176,8 @@ namespace Server.WebApi.Services
                     }
                 }
 
-                // Save to database
-                SEnvir.SaveUserDatas();
+                // 【防抖保存】静态系统配置数据保存，合并短时间内的重复调用，避免全服保存卡顿
+                DebouncedSaveSystem();
 
                 return (true, "任务创建成功", GetQuestDetail(newQuest.Index));
             }
@@ -2059,51 +2238,64 @@ namespace Server.WebApi.Services
                     }
                 }
 
-                // Update Requirements
+                // 更新任务限制条件 (Requirements)
                 if (request.Requirements != null)
                 {
-                    // Clear existing requirements
-                    questInfo.Requirements.Clear();
-
-                    // Add new requirements
-                    var questList = SEnvir.QuestInfoList;
+                    // 清空原有的所有限制条件
+                    while (questInfo.Requirements.Count > 0)
+                    {
+                        questInfo.Requirements[0].Delete();
+                    }
+                    // 重新创建并赋值新传入的限制条件
                     foreach (var reqDto in request.Requirements)
                     {
-                        var requirement = questInfo.Requirements.AddNew();
-                        requirement.Requirement = Enum.Parse<QuestRequirementType>(reqDto.Requirement);
-                        requirement.IntParameter1 = reqDto.IntParameter1;
-                        requirement.Class = Enum.Parse<RequiredClass>(reqDto.Class);
-
-                        if (reqDto.QuestParameter != null && questList != null)
+                        var req = questInfo.Requirements.AddNew();
+                        if (Enum.TryParse<QuestRequirementType>(reqDto.Requirement, out var reqType))
                         {
-                            for (int i = 0; i < questList.Count; i++)
+                            req.Requirement = reqType;
+                        }
+                        req.IntParameter1 = reqDto.IntParameter1;
+                        if (reqDto.QuestParameter != null)
+                        {
+                            for (int i = 0; i < quests.Count; i++)
                             {
-                                if (questList[i].Index == reqDto.QuestParameter.Index)
+                                if (quests[i].Index == reqDto.QuestParameter.Index)
                                 {
-                                    requirement.QuestParameter = questList[i];
+                                    req.QuestParameter = quests[i];
                                     break;
                                 }
                             }
                         }
+                        if (Enum.TryParse<RequiredClass>(reqDto.Class, out var reqClass))
+                        {
+                            req.Class = reqClass;
+                        }
                     }
                 }
 
-                // Update Tasks
+                // 更新任务具体目标 (Tasks)
                 if (request.Tasks != null)
                 {
-                    // Clear existing tasks
-                    questInfo.Tasks.Clear();
-
-                    // Add new tasks
+                    // 清空原有的所有任务目标
+                    while (questInfo.Tasks.Count > 0)
+                    {
+                        questInfo.Tasks[0].Delete();
+                    }
                     var items = SEnvir.ItemInfoList;
+                    var monsters = SEnvir.MonsterInfoList;
+                    var maps = SEnvir.MapInfoList;
+                    // 重新创建并赋值新传入的任务目标
                     foreach (var taskDto in request.Tasks)
                     {
                         var task = questInfo.Tasks.AddNew();
-                        task.Task = Enum.Parse<QuestTaskType>(taskDto.Task);
+                        if (Enum.TryParse<QuestTaskType>(taskDto.Task, out var taskType))
+                        {
+                            task.Task = taskType;
+                        }
+                        task.MobDescription = taskDto.MobDescription ?? "";
                         task.Amount = taskDto.Amount;
-                        task.MobDescription = taskDto.MobDescription;
-
-                        // Set ItemParameter
+                        
+                        // 关联道具参数
                         if (taskDto.ItemParameter != null && items != null)
                         {
                             for (int i = 0; i < items.Count; i++)
@@ -2116,28 +2308,64 @@ namespace Server.WebApi.Services
                             }
                         }
 
-                        // MonsterDetails are handled separately (not in this simple implementation)
+                        // 关联怪物详细参数
+                        if (taskDto.MonsterDetails != null && taskDto.MonsterDetails.Count > 0)
+                        {
+                            foreach (var detailDto in taskDto.MonsterDetails)
+                            {
+                                var detail = task.MonsterDetails.AddNew();
+                                detail.Chance = detailDto.Chance;
+                                detail.Amount = detailDto.Amount;
+                                detail.DropSet = detailDto.DropSet;
+                                if (detailDto.MonsterIndex.HasValue && monsters != null)
+                                {
+                                    for (int i = 0; i < monsters.Count; i++)
+                                    {
+                                        if (monsters[i].Index == detailDto.MonsterIndex.Value)
+                                        {
+                                            detail.Monster = monsters[i];
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (detailDto.MapIndex.HasValue && maps != null)
+                                {
+                                    for (int i = 0; i < maps.Count; i++)
+                                    {
+                                        if (maps[i].Index == detailDto.MapIndex.Value)
+                                        {
+                                            detail.Map = maps[i];
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
-                // Update Rewards
+                // 更新任务奖励 (Rewards)
                 if (request.Rewards != null)
                 {
-                    // Clear existing rewards
-                    questInfo.Rewards.Clear();
-
-                    // Add new rewards
+                    // 清空原有的所有奖励
+                    while (questInfo.Rewards.Count > 0)
+                    {
+                        questInfo.Rewards[0].Delete();
+                    }
                     var items = SEnvir.ItemInfoList;
+                    // 重新创建并赋值新传入的奖励
                     foreach (var rewardDto in request.Rewards)
                     {
                         var reward = questInfo.Rewards.AddNew();
                         reward.Amount = rewardDto.Amount;
-                        reward.Class = Enum.Parse<RequiredClass>(rewardDto.Class);
                         reward.Choice = rewardDto.Choice;
                         reward.Bound = rewardDto.Bound;
                         reward.Duration = rewardDto.Duration;
-
-                        // Set Item
+                        if (Enum.TryParse<RequiredClass>(rewardDto.Class, out var rClass))
+                        {
+                            reward.Class = rClass;
+                        }
+                        // 关联奖励物品
                         if (rewardDto.Item != null && items != null)
                         {
                             for (int i = 0; i < items.Count; i++)
@@ -2152,8 +2380,8 @@ namespace Server.WebApi.Services
                     }
                 }
 
-                // Save to database
-                SEnvir.SaveUserDatas();
+                // 【防抖保存】静态系统配置数据保存，合并短时间内的重复调用
+                DebouncedSaveSystem();
 
                 return (true, "任务更新成功");
             }
@@ -2197,8 +2425,8 @@ namespace Server.WebApi.Services
 
                 quest.Delete();
 
-                // Save to database
-                SEnvir.SaveUserDatas();
+                // 【防抖保存】静态系统配置数据保存，合并短时间内的重复调用
+                DebouncedSaveSystem();
 
                 return (true, "删除成功");
             }
@@ -2325,8 +2553,8 @@ namespace Server.WebApi.Services
                 newStoreItem.Available = request.Available;
                 newStoreItem.Duration = request.Duration;
 
-                // Save to database
-                SEnvir.SaveUserDatas();
+                // 【防抖保存】商城配置更新保存至 System.db，合并短时间内的重复调用
+                DebouncedSaveSystem();
 
                 return (true, "商城商品添加成功", GetStoreItemDetail(newStoreItem.Index));
             }
@@ -2362,8 +2590,8 @@ namespace Server.WebApi.Services
                 if (request.Available.HasValue) storeItem.Available = request.Available.Value;
                 if (request.Duration.HasValue) storeItem.Duration = request.Duration.Value;
 
-                // Save to database
-                SEnvir.SaveUserDatas();
+                // 【防抖保存】商城配置更新保存至 System.db，合并短时间内的重复调用
+                DebouncedSaveSystem();
 
                 return (true, "商城商品更新成功");
             }
@@ -2394,8 +2622,8 @@ namespace Server.WebApi.Services
 
                 storeItem.Delete();
 
-                // Save to database
-                SEnvir.SaveUserDatas();
+                // 【安全修复】商城配置更新保存至 System.db
+                DebouncedSaveSystem();
 
                 return (true, "删除成功");
             }
@@ -2668,6 +2896,9 @@ namespace Server.WebApi.Services
             if (request.ExperienceRate.HasValue) mapInfo.ExperienceRate = request.ExperienceRate.Value;
             if (request.GoldRate.HasValue) mapInfo.GoldRate = request.GoldRate.Value;
 
+            // 【防抖保存】将地图静态更新保存至 System.db，合并短时间内的重复调用
+            DebouncedSaveSystem();
+
             return (true, "地图更新成功");
         }
 
@@ -2910,6 +3141,9 @@ namespace Server.WebApi.Services
                     UpdateMonsterStats(monster, request.Stats);
                 }
 
+                // 【防抖保存】修改怪物配置后延迟合并保存，防止重启回档
+                DebouncedSaveSystem();
+
                 return (true, "怪物更新成功");
             }
         }
@@ -3150,35 +3384,127 @@ namespace Server.WebApi.Services
         #region Logs
 
         /// <summary>
-        /// Get system logs
+        /// 系统日志结构化传输模型
         /// </summary>
-        public List<string> GetSystemLogs(int count = 100)
+        public class LogEntryDto
         {
-            var logs = new List<string>();
-            var displayLogs = SEnvir.DisplayLogs.ToArray();
-
-            foreach (var log in displayLogs.TakeLast(count))
-            {
-                logs.Add(log);
-            }
-
-            return logs;
+            public string Time { get; set; } = "";
+            public string Level { get; set; } = ""; // "Info", "Warning", "Error"
+            public string Message { get; set; } = "";
+            public string Raw { get; set; } = "";
         }
 
         /// <summary>
-        /// Get chat logs
+        /// 获取系统日志，支持按级别与搜索内容过滤（最新产生的日志排在最前面）
         /// </summary>
-        public List<string> GetChatLogs(int count = 100)
+        public List<LogEntryDto> GetSystemLogs(int count = 100, string level = "all", string search = "")
         {
-            var logs = new List<string>();
-            var chatLogs = SEnvir.DisplayChatLogs.ToArray();
+            var result = new List<LogEntryDto>();
+            string[] history;
 
-            foreach (var log in chatLogs.TakeLast(count))
+            lock (SEnvir.LogHistoryLock)
             {
-                logs.Add(log);
+                history = SEnvir.SystemLogHistory.ToArray();
             }
 
-            return logs;
+            // 倒序排列，优先展示最新的日志
+            var query = history.Reverse();
+
+            foreach (var raw in query)
+            {
+                var entry = ParseLogEntry(raw);
+
+                // 级别过滤
+                if (level != "all" && !string.Equals(entry.Level, level, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                // 搜索检索过滤
+                if (!string.IsNullOrEmpty(search) && !entry.Raw.Contains(search, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                result.Add(entry);
+                if (result.Count >= count)
+                {
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 获取聊天日志，支持内容检索过滤（最新产生的日志排在最前面）
+        /// </summary>
+        public List<LogEntryDto> GetChatLogs(int count = 100, string search = "")
+        {
+            var result = new List<LogEntryDto>();
+            string[] history;
+
+            lock (SEnvir.LogHistoryLock)
+            {
+                history = SEnvir.ChatLogHistory.ToArray();
+            }
+
+            var query = history.Reverse();
+
+            foreach (var raw in query)
+            {
+                var entry = ParseLogEntry(raw);
+
+                if (!string.IsNullOrEmpty(search) && !entry.Raw.Contains(search, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                result.Add(entry);
+                if (result.Count >= count)
+                {
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 将原始的单行日志解析为结构化对象，提取时间戳、级别和消息体
+        /// </summary>
+        private LogEntryDto ParseLogEntry(string raw)
+        {
+            var dto = new LogEntryDto { Raw = raw };
+
+            // 尝试提取格式如 "[yyyy-MM-dd HH:mm:ss]: Message" 中的时间
+            if (raw.StartsWith("[") && raw.Contains("]:"))
+            {
+                int endIdx = raw.IndexOf("]:");
+                dto.Time = raw.Substring(1, endIdx - 1);
+                dto.Message = raw.Substring(endIdx + 2).Trim();
+            }
+            else
+            {
+                dto.Message = raw;
+            }
+
+            // 确定日志级别 (Level)
+            var msg = dto.Message;
+            if (msg.Contains("发生异常") || msg.Contains("崩溃") || msg.Contains("Error") || msg.Contains("Exception") || msg.Contains("网络包太多") || msg.Contains("错误") || msg.Contains("失败"))
+            {
+                dto.Level = "Error";
+            }
+            else if (msg.Contains("恢复默认值") || msg.Contains("无效值") || msg.Contains("警告") || msg.Contains("Warning") || msg.Contains("重置") || msg.Contains("未找到") || msg.Contains("warn"))
+            {
+                dto.Level = "Warning";
+            }
+            else
+            {
+                dto.Level = "Info";
+            }
+
+            return dto;
         }
 
         #endregion
@@ -3342,6 +3668,9 @@ namespace Server.WebApi.Services
                 EasterEvent = newDrop.EasterEvent
             };
 
+            // 【防抖保存】保存掉落表配置，合并短时间内的重复调用
+            DebouncedSaveSystem();
+
             return (true, "添加成功", dto);
         }
 
@@ -3376,6 +3705,9 @@ namespace Server.WebApi.Services
             if (request.DropSet.HasValue) drop.DropSet = request.DropSet.Value;
             if (request.PartOnly.HasValue) drop.PartOnly = request.PartOnly.Value;
             if (request.EasterEvent.HasValue) drop.EasterEvent = request.EasterEvent.Value;
+
+            // 【防抖保存】保存掉落表配置，合并短时间内的重复调用
+            DebouncedSaveSystem();
 
             return (true, "更新成功");
         }
@@ -3418,6 +3750,10 @@ namespace Server.WebApi.Services
             {
                 drop.Delete();
                 SEnvir.Log($"删除掉落记录成功: DropId={dropId}");
+
+                // 【防抖保存】系统配置数据库同步保存删除操作，合并短时间内的重复调用
+                DebouncedSaveSystem();
+
                 return (true, "删除成功");
             }
             catch (Exception ex)
@@ -3467,6 +3803,7 @@ namespace Server.WebApi.Services
                         MonsterName = respawn.Monster?.MonsterName ?? "",
                         RegionIndex = respawn.Region?.Index,
                         RegionDescription = respawn.Region?.Description ?? "",
+                        RegionPointCount = respawn.Region?.PointList?.Count ?? 0,
                         Delay = respawn.Delay,
                         Count = respawn.Count,
                         DropSet = respawn.DropSet,
@@ -3558,6 +3895,9 @@ namespace Server.WebApi.Services
                 EasterEventChance = newRespawn.EasterEventChance
             };
 
+            // 【防抖保存】将刷怪点新增配置延迟合并保存到 System.db
+            DebouncedSaveSystem();
+
             return (true, "添加成功", dto);
         }
 
@@ -3635,6 +3975,9 @@ namespace Server.WebApi.Services
             if (request.EasterEventChance.HasValue) respawn.EasterEventChance = request.EasterEventChance.Value;
             if (request.EventSpawn.HasValue) respawn.EventSpawn = request.EventSpawn.Value;
 
+            // 【防抖保存】保存系统数据库，确保刷怪点修改不丢失，合并短时间内的重复调用
+            DebouncedSaveSystem();
+
             return (true, "更新成功");
         }
 
@@ -3665,238 +4008,272 @@ namespace Server.WebApi.Services
             }
 
             respawn.Delete();
+
+            // 【防抖保存】保存系统数据库，确保刷怪点删除落盘，合并短时间内的重复调用
+            DebouncedSaveSystem();
+
             return (true, "删除成功");
         }
 
         #endregion
 
-        #region Movement Management
+        #region Map Movements Management
 
         /// <summary>
-        /// Get movements for a map
+        /// 获取地图的所有传送点列表
         /// </summary>
-        public List<MovementInfoDto> GetMapMovements(int mapIndex)
+        public List<MapMovementDto> GetMapMovements(int mapIndex)
         {
-            var movements = SEnvir.MovementInfoList;
-            if (movements == null) return new List<MovementInfoDto>();
+            // 先找到 MapInfo 对象（与 GetMapRespawns 一致的模式）
+            var maps = SEnvir.MapInfoList;
+            if (maps == null) return new List<MapMovementDto>();
 
-            var result = new List<MovementInfoDto>();
+            MapInfo? map = null;
+            for (int i = 0; i < maps.Count; i++)
+            {
+                if (maps[i].Index == mapIndex)
+                {
+                    map = maps[i];
+                    break;
+                }
+            }
+
+            if (map == null) return new List<MapMovementDto>();
+
+            var movements = SEnvir.MovementInfoList;
+            if (movements == null) return new List<MapMovementDto>();
+
+            var result = new List<MapMovementDto>();
             for (int i = 0; i < movements.Count; i++)
             {
                 var movement = movements[i];
-                if (movement.SourceRegion?.Map?.Index == mapIndex)
+                // 使用对象引用比较（与 GetMapRespawns 一致），避免 Map 关联为 null 时整数比较失败
+                if (movement.SourceRegion?.Map == map)
                 {
-                    var dto = new MovementInfoDto
+                    // 计算起点区域代表坐标（PointList 中心点，与日志中 X/Y 坐标对应）
+                    var srcPoints = movement.SourceRegion?.PointList;
+                    int? srcX = null, srcY = null;
+                    if (srcPoints != null && srcPoints.Count > 0)
+                    {
+                        srcX = (int)srcPoints.Average(p => p.X);
+                        srcY = (int)srcPoints.Average(p => p.Y);
+                    }
+
+                    // 计算终点区域代表坐标
+                    var dstPoints = movement.DestinationRegion?.PointList;
+                    int? dstX = null, dstY = null;
+                    if (dstPoints != null && dstPoints.Count > 0)
+                    {
+                        dstX = (int)dstPoints.Average(p => p.X);
+                        dstY = (int)dstPoints.Average(p => p.Y);
+                    }
+
+                    result.Add(new MapMovementDto
                     {
                         Index = movement.Index,
                         SourceRegionIndex = movement.SourceRegion?.Index ?? 0,
                         SourceRegionDescription = movement.SourceRegion?.Description ?? "",
-                        SourceMapName = movement.SourceRegion?.Map?.Description ?? "",
+                        SourceRegionX = srcX,
+                        SourceRegionY = srcY,
+                        SourceRegionPointCount = movement.SourceRegion?.PointList?.Count,
                         DestinationRegionIndex = movement.DestinationRegion?.Index ?? 0,
                         DestinationRegionDescription = movement.DestinationRegion?.Description ?? "",
-                        DestinationMapName = movement.DestinationRegion?.Map?.Description ?? "",
+                        DestRegionX = dstX,
+                        DestRegionY = dstY,
+                        DestRegionPointCount = movement.DestinationRegion?.PointList?.Count,
                         Icon = movement.Icon.ToString(),
-                        NeedItemIndex = movement.NeedItem?.Index ?? 0,
-                        NeedItemName = movement.NeedItem?.ItemName ?? "",
-                        NeedSpawnIndex = movement.NeedSpawn?.Index ?? 0,
-                        NeedSpawnName = movement.NeedSpawn?.MonsterName ?? "",
+                        NeedItemIndex = movement.NeedItem?.Index,
+                        NeedItemName = movement.NeedItem?.ItemName,
+                        NeedSpawnIndex = movement.NeedSpawn?.Index,
+                        NeedSpawnName = movement.NeedSpawn?.Monster?.MonsterName,
                         Effect = movement.Effect.ToString(),
                         RequiredClass = movement.RequiredClass.ToString()
-                    };
-
-                    // 填充源区域坐标信息
-                    if (movement.SourceRegion != null)
-                    {
-                        var srcWidth = 0;
-                        if (movement.SourceRegion.Map != null)
-                        {
-                            var srcMap = SEnvir.GetMap(movement.SourceRegion.Map);
-                            srcWidth = srcMap?.Width ?? 0;
-                        }
-                        movement.SourceRegion.CreatePoints(srcWidth);
-                        if (movement.SourceRegion.PointList != null)
-                        {
-                            dto.SourcePointCount = movement.SourceRegion.PointList.Count;
-                            var displayPoints = movement.SourceRegion.PointList.Take(20).Select(p => $"({p.X},{p.Y})").ToList();
-                            dto.SourcePoints = displayPoints;
-                            if (movement.SourceRegion.PointList.Count > 20)
-                            {
-                                dto.SourcePoints.Add($"...还有{movement.SourceRegion.PointList.Count - 20}个点");
-                            }
-                        }
-                    }
-
-                    // 填充目标区域坐标信息
-                    if (movement.DestinationRegion != null)
-                    {
-                        var destWidth = 0;
-                        if (movement.DestinationRegion.Map != null)
-                        {
-                            var destMap = SEnvir.GetMap(movement.DestinationRegion.Map);
-                            destWidth = destMap?.Width ?? 0;
-                        }
-                        movement.DestinationRegion.CreatePoints(destWidth);
-                        if (movement.DestinationRegion.PointList != null)
-                        {
-                            dto.DestinationPointCount = movement.DestinationRegion.PointList.Count;
-                            var displayPoints = movement.DestinationRegion.PointList.Take(20).Select(p => $"({p.X},{p.Y})").ToList();
-                            dto.DestinationPoints = displayPoints;
-                            if (movement.DestinationRegion.PointList.Count > 20)
-                            {
-                                dto.DestinationPoints.Add($"...还有{movement.DestinationRegion.PointList.Count - 20}个点");
-                            }
-                        }
-                    }
-
-                    result.Add(dto);
+                    });
                 }
             }
-            return result;
+
+            return result.OrderBy(r => r.SourceRegionDescription).ToList();
         }
 
         /// <summary>
-        /// Add movement to map
+        /// 添加传送点
         /// </summary>
-        public (bool success, string message, MovementInfoDto? movement) AddMapMovement(int mapIndex, AddMovementRequest request)
+        public (bool success, string message, MapMovementDto? movement) AddMapMovement(int mapIndex, AddMovementRequest request)
         {
-            var movementList = SEnvir.MovementInfoList;
-            if (movementList == null) return (false, "链接列表不可用", null);
+            var movements = SEnvir.MovementInfoList;
+            if (movements == null) return (false, "传送点列表不可用", null);
 
-            // Find source region
-            var sourceRegion = FindMapRegion(request.SourceRegionIndex, mapIndex);
-            if (sourceRegion == null) return (false, "源区域不存在或不属于该地图", null);
+            var regions = SEnvir.MapRegionList;
+            if (regions == null) return (false, "区域列表不可用", null);
 
-            // Find destination region (can be on different map)
-            var destinationRegion = FindMapRegion(request.DestinationRegionIndex, null);
-            if (destinationRegion == null) return (false, "目标区域不存在", null);
+            MapRegion? sourceRegion = null;
+            MapRegion? destRegion = null;
 
-            var movement = movementList.CreateNewObject();
-            movement.SourceRegion = sourceRegion;
-            movement.DestinationRegion = destinationRegion;
-
-            // Set optional fields
-            if (!string.IsNullOrWhiteSpace(request.Icon) && Enum.TryParse<MapIcon>(request.Icon, out var icon))
+            for (int i = 0; i < regions.Count; i++)
             {
-                movement.Icon = icon;
-            }
-            if (!string.IsNullOrWhiteSpace(request.Effect) && Enum.TryParse<MovementEffect>(request.Effect, out var effect))
-            {
-                movement.Effect = effect;
-            }
-            if (!string.IsNullOrWhiteSpace(request.RequiredClass) && Enum.TryParse<RequiredClass>(request.RequiredClass, out var requiredClass))
-            {
-                movement.RequiredClass = requiredClass;
+                if (regions[i].Index == request.SourceRegionIndex)
+                {
+                    sourceRegion = regions[i];
+                }
+                if (regions[i].Index == request.DestinationRegionIndex)
+                {
+                    destRegion = regions[i];
+                }
             }
 
-            // Set optional item requirement
-            if (request.NeedItemIndex > 0)
+            if (sourceRegion == null) return (false, "源区域不存在", null);
+            if (destRegion == null) return (false, "目的区域不存在", null);
+
+            // 先找到 MapInfo 对象，使用对象引用比较（与 GetMapRespawns 一致）
+            var maps = SEnvir.MapInfoList;
+            MapInfo? map = null;
+            if (maps != null)
+            {
+                for (int i = 0; i < maps.Count; i++)
+                {
+                    if (maps[i].Index == mapIndex)
+                    {
+                        map = maps[i];
+                        break;
+                    }
+                }
+            }
+            if (map == null) return (false, "地图不存在", null);
+            if (sourceRegion.Map != map) return (false, "源区域不属于当前地图", null);
+
+            ItemInfo? needItem = null;
+            if (request.NeedItemIndex.HasValue && request.NeedItemIndex.Value > 0)
             {
                 var items = SEnvir.ItemInfoList;
                 if (items != null)
                 {
                     for (int i = 0; i < items.Count; i++)
                     {
-                        if (items[i].Index == request.NeedItemIndex)
+                        if (items[i].Index == request.NeedItemIndex.Value)
                         {
-                            movement.NeedItem = items[i];
+                            needItem = items[i];
                             break;
                         }
                     }
                 }
             }
 
-            // Set optional spawn requirement
-            if (request.NeedSpawnIndex > 0)
+            RespawnInfo? needSpawn = null;
+            if (request.NeedSpawnIndex.HasValue && request.NeedSpawnIndex.Value > 0)
             {
                 var spawns = SEnvir.RespawnInfoList;
                 if (spawns != null)
                 {
                     for (int i = 0; i < spawns.Count; i++)
                     {
-                        if (spawns[i].Index == request.NeedSpawnIndex)
+                        if (spawns[i].Index == request.NeedSpawnIndex.Value)
                         {
-                            movement.NeedSpawn = spawns[i];
+                            needSpawn = spawns[i];
                             break;
                         }
                     }
                 }
             }
 
-            return (true, "添加成功", new MovementInfoDto
+            Enum.TryParse<MapIcon>(request.Icon, out var icon);
+            Enum.TryParse<MovementEffect>(request.Effect, out var effect);
+            Enum.TryParse<RequiredClass>(request.RequiredClass, out var requiredClass);
+
+            var newMovement = movements.CreateNewObject();
+            newMovement.SourceRegion = sourceRegion;
+            newMovement.DestinationRegion = destRegion;
+            newMovement.Icon = icon;
+            newMovement.NeedItem = needItem;
+            newMovement.NeedSpawn = needSpawn;
+            newMovement.Effect = effect;
+            newMovement.RequiredClass = requiredClass;
+
+            // 【防抖保存】持久化防丢失，合并短时间内的重复调用
+            DebouncedSaveSystem();
+
+            var dto = new MapMovementDto
             {
-                Index = movement.Index,
-                SourceRegionIndex = movement.SourceRegion?.Index ?? 0,
-                SourceRegionDescription = movement.SourceRegion?.Description ?? "",
-                SourceMapName = movement.SourceRegion?.Map?.Description ?? "",
-                DestinationRegionIndex = movement.DestinationRegion?.Index ?? 0,
-                DestinationRegionDescription = movement.DestinationRegion?.Description ?? "",
-                DestinationMapName = movement.DestinationRegion?.Map?.Description ?? "",
-                Icon = movement.Icon.ToString(),
-                NeedItemIndex = movement.NeedItem?.Index ?? 0,
-                NeedItemName = movement.NeedItem?.ItemName ?? "",
-                NeedSpawnIndex = movement.NeedSpawn?.Index ?? 0,
-                NeedSpawnName = movement.NeedSpawn?.MonsterName ?? "",
-                Effect = movement.Effect.ToString(),
-                RequiredClass = movement.RequiredClass.ToString()
-            });
+                Index = newMovement.Index,
+                SourceRegionIndex = sourceRegion.Index,
+                SourceRegionDescription = sourceRegion.Description ?? "",
+                DestinationRegionIndex = destRegion.Index,
+                DestinationRegionDescription = destRegion.Description ?? "",
+                Icon = newMovement.Icon.ToString(),
+                NeedItemIndex = newMovement.NeedItem?.Index,
+                NeedItemName = newMovement.NeedItem?.ItemName,
+                NeedSpawnIndex = newMovement.NeedSpawn?.Index,
+                NeedSpawnName = newMovement.NeedSpawn?.Monster?.MonsterName,
+                Effect = newMovement.Effect.ToString(),
+                RequiredClass = newMovement.RequiredClass.ToString()
+            };
+
+            return (true, "添加成功", dto);
         }
 
         /// <summary>
-        /// Update map movement
+        /// 更新传送点
         /// </summary>
         public (bool success, string message) UpdateMapMovement(int mapIndex, int movementId, UpdateMovementRequest request)
         {
-            var movementList = SEnvir.MovementInfoList;
-            if (movementList == null) return (false, "链接列表不可用");
+            var movements = SEnvir.MovementInfoList;
+            if (movements == null) return (false, "传送点列表不可用");
 
             MovementInfo? movement = null;
-            for (int i = 0; i < movementList.Count; i++)
+            for (int i = 0; i < movements.Count; i++)
             {
-                if (movementList[i].Index == movementId)
+                if (movements[i].Index == movementId)
                 {
-                    movement = movementList[i];
+                    movement = movements[i];
                     break;
                 }
             }
 
-            if (movement == null) return (false, "链接信息不存在");
+            if (movement == null) return (false, "传送点不存在");
+            if (movement.SourceRegion?.Map?.Index != mapIndex) return (false, "传送点不属于当前地图");
 
-            // Verify movement belongs to map
-            if (movement.SourceRegion?.Map?.Index != mapIndex)
+            var regions = SEnvir.MapRegionList;
+            if (regions != null)
             {
-                return (false, "链接信息不属于该地图");
+                if (request.SourceRegionIndex.HasValue)
+                {
+                    MapRegion? newSource = null;
+                    for (int i = 0; i < regions.Count; i++)
+                    {
+                        if (regions[i].Index == request.SourceRegionIndex.Value)
+                        {
+                            newSource = regions[i];
+                            break;
+                        }
+                    }
+                    if (newSource != null)
+                    {
+                        if (newSource.Map?.Index != mapIndex) return (false, "源区域不属于当前地图");
+                        movement.SourceRegion = newSource;
+                    }
+                }
+
+                if (request.DestinationRegionIndex.HasValue)
+                {
+                    MapRegion? newDest = null;
+                    for (int i = 0; i < regions.Count; i++)
+                    {
+                        if (regions[i].Index == request.DestinationRegionIndex.Value)
+                        {
+                            newDest = regions[i];
+                            break;
+                        }
+                    }
+                    if (newDest != null)
+                    {
+                        movement.DestinationRegion = newDest;
+                    }
+                }
             }
 
-            // Update destination region
-            if (request.DestinationRegionIndex.HasValue)
-            {
-                var destinationRegion = FindMapRegion(request.DestinationRegionIndex.Value, null);
-                if (destinationRegion == null) return (false, "目标区域不存在");
-                movement.DestinationRegion = destinationRegion;
-            }
-
-            // Update optional fields
-            if (!string.IsNullOrWhiteSpace(request.Icon) && Enum.TryParse<MapIcon>(request.Icon, out var icon))
-            {
-                movement.Icon = icon;
-            }
-            if (!string.IsNullOrWhiteSpace(request.Effect) && Enum.TryParse<MovementEffect>(request.Effect, out var effect))
-            {
-                movement.Effect = effect;
-            }
-            if (!string.IsNullOrWhiteSpace(request.RequiredClass) && Enum.TryParse<RequiredClass>(request.RequiredClass, out var requiredClass))
-            {
-                movement.RequiredClass = requiredClass;
-            }
-
-            // Update item requirement
             if (request.NeedItemIndex.HasValue)
             {
-                if (request.NeedItemIndex.Value <= 0)
-                {
-                    movement.NeedItem = null;
-                }
-                else
+                ItemInfo? needItem = null;
+                if (request.NeedItemIndex.Value > 0)
                 {
                     var items = SEnvir.ItemInfoList;
                     if (items != null)
@@ -3905,22 +4282,19 @@ namespace Server.WebApi.Services
                         {
                             if (items[i].Index == request.NeedItemIndex.Value)
                             {
-                                movement.NeedItem = items[i];
+                                needItem = items[i];
                                 break;
                             }
                         }
                     }
                 }
+                movement.NeedItem = needItem;
             }
 
-            // Update spawn requirement
             if (request.NeedSpawnIndex.HasValue)
             {
-                if (request.NeedSpawnIndex.Value <= 0)
-                {
-                    movement.NeedSpawn = null;
-                }
-                else
+                RespawnInfo? needSpawn = null;
+                if (request.NeedSpawnIndex.Value > 0)
                 {
                     var spawns = SEnvir.RespawnInfoList;
                     if (spawns != null)
@@ -3929,78 +4303,76 @@ namespace Server.WebApi.Services
                         {
                             if (spawns[i].Index == request.NeedSpawnIndex.Value)
                             {
-                                movement.NeedSpawn = spawns[i];
+                                needSpawn = spawns[i];
                                 break;
                             }
                         }
                     }
                 }
+                movement.NeedSpawn = needSpawn;
             }
+
+            if (request.Icon != null)
+            {
+                if (Enum.TryParse<MapIcon>(request.Icon, out var icon))
+                {
+                    movement.Icon = icon;
+                }
+            }
+
+            if (request.Effect != null)
+            {
+                if (Enum.TryParse<MovementEffect>(request.Effect, out var effect))
+                {
+                    movement.Effect = effect;
+                }
+            }
+
+            if (request.RequiredClass != null)
+            {
+                if (Enum.TryParse<RequiredClass>(request.RequiredClass, out var requiredClass))
+                {
+                    movement.RequiredClass = requiredClass;
+                }
+            }
+
+            // 【防抖保存】持久化防丢失，合并短时间内的重复调用
+            DebouncedSaveSystem();
 
             return (true, "更新成功");
         }
 
         /// <summary>
-        /// Delete map movement
+        /// 删除传送点
         /// </summary>
         public (bool success, string message) DeleteMapMovement(int mapIndex, int movementId)
         {
-            var movementList = SEnvir.MovementInfoList;
-            if (movementList == null) return (false, "链接列表不可用");
+            var movements = SEnvir.MovementInfoList;
+            if (movements == null) return (false, "传送点列表不可用");
 
             MovementInfo? movement = null;
-            for (int i = 0; i < movementList.Count; i++)
+            for (int i = 0; i < movements.Count; i++)
             {
-                if (movementList[i].Index == movementId)
+                if (movements[i].Index == movementId)
                 {
-                    movement = movementList[i];
+                    movement = movements[i];
                     break;
                 }
             }
 
-            if (movement == null) return (false, "链接信息不存在");
-
-            // Verify movement belongs to map
-            if (movement.SourceRegion?.Map?.Index != mapIndex)
-            {
-                return (false, "链接信息不属于该地图");
-            }
+            if (movement == null) return (false, "传送点不存在");
+            if (movement.SourceRegion?.Map?.Index != mapIndex) return (false, "传送点不属于当前地图");
 
             movement.Delete();
+
+            // 【防抖保存】持久化防丢失，合并短时间内的重复调用
+            DebouncedSaveSystem();
+
             return (true, "删除成功");
         }
 
-        /// <summary>
-        /// Helper method to find map region
-        /// </summary>
-        private MapRegion? FindMapRegion(int regionIndex, int? mapIndexFilter)
-        {
-            var regions = SEnvir.MapRegionList;
-            if (regions == null) return null;
-
-            for (int i = 0; i < regions.Count; i++)
-            {
-                if (regions[i].Index == regionIndex)
-                {
-                    // If map filter is provided, check that region belongs to that map
-                    if (mapIndexFilter.HasValue)
-                    {
-                        if (regions[i].Map?.Index == mapIndexFilter.Value)
-                        {
-                            return regions[i];
-                        }
-                    }
-                    else
-                    {
-                        // No map filter, return any region with matching index
-                        return regions[i];
-                    }
-                }
-            }
-            return null;
-        }
-
         #endregion
+
 
         #region Helpers
 
@@ -4037,6 +4409,7 @@ namespace Server.WebApi.Services
         public DateTime LastLogin { get; set; }
         public string? LastIP { get; set; }
         public int CharacterCount { get; set; }
+        public long Gold { get; set; }
         public int GameGold { get; set; }
         public int HuntGold { get; set; }
     }
@@ -4569,6 +4942,7 @@ namespace Server.WebApi.Services
         public string MonsterName { get; set; } = "";
         public int? RegionIndex { get; set; }
         public string RegionDescription { get; set; } = "";
+        public int RegionPointCount { get; set; }
         public int Delay { get; set; }
         public int Count { get; set; }
         public int DropSet { get; set; }
@@ -4723,26 +5097,30 @@ namespace Server.WebApi.Services
 
     #endregion
 
-    #region Movement
+    #region Map Movements
 
-    public class MovementInfoDto
+    public class MapMovementDto
     {
         public int Index { get; set; }
         public int SourceRegionIndex { get; set; }
         public string SourceRegionDescription { get; set; } = "";
-        public string SourceMapName { get; set; } = "";
-        public int SourcePointCount { get; set; }
-        public List<string> SourcePoints { get; set; } = new List<string>();
+        /// <summary>起点区域的代表坐标 X（PointList 中心点，用于对照日志中的错误坐标）</summary>
+        public int? SourceRegionX { get; set; }
+        /// <summary>起点区域的代表坐标 Y</summary>
+        public int? SourceRegionY { get; set; }
+        public int? SourceRegionPointCount { get; set; }
         public int DestinationRegionIndex { get; set; }
         public string DestinationRegionDescription { get; set; } = "";
-        public string DestinationMapName { get; set; } = "";
-        public int DestinationPointCount { get; set; }
-        public List<string> DestinationPoints { get; set; } = new List<string>();
+        /// <summary>终点区域的代表坐标 X</summary>
+        public int? DestRegionX { get; set; }
+        /// <summary>终点区域的代表坐标 Y</summary>
+        public int? DestRegionY { get; set; }
+        public int? DestRegionPointCount { get; set; }
         public string Icon { get; set; } = "";
-        public int NeedItemIndex { get; set; }
-        public string NeedItemName { get; set; } = "";
-        public int NeedSpawnIndex { get; set; }
-        public string NeedSpawnName { get; set; } = "";
+        public int? NeedItemIndex { get; set; }
+        public string? NeedItemName { get; set; }
+        public int? NeedSpawnIndex { get; set; }
+        public string? NeedSpawnName { get; set; }
         public string Effect { get; set; } = "";
         public string RequiredClass { get; set; } = "";
     }
@@ -4751,15 +5129,16 @@ namespace Server.WebApi.Services
     {
         public int SourceRegionIndex { get; set; }
         public int DestinationRegionIndex { get; set; }
-        public string? Icon { get; set; }
-        public int NeedItemIndex { get; set; } = 0;
-        public int NeedSpawnIndex { get; set; } = 0;
-        public string? Effect { get; set; }
-        public string? RequiredClass { get; set; }
+        public string Icon { get; set; } = "None";
+        public int? NeedItemIndex { get; set; }
+        public int? NeedSpawnIndex { get; set; }
+        public string Effect { get; set; } = "None";
+        public string RequiredClass { get; set; } = "All";
     }
 
     public class UpdateMovementRequest
     {
+        public int? SourceRegionIndex { get; set; }
         public int? DestinationRegionIndex { get; set; }
         public string? Icon { get; set; }
         public int? NeedItemIndex { get; set; }

@@ -22,7 +22,9 @@ namespace Server.WebApi.Endpoints
             group.MapPut("/{email}/unban", UnbanAccount);
             group.MapPut("/{email}/identity", ChangeIdentity);
             group.MapPut("/{email}/reset-password", ResetPassword);
-            group.MapPut("/{email}/gold", UpdateGold);
+            group.MapPut("/{email}/gold", ChangeGameGold);
+            group.MapPut("/{email}/hunt-gold", ChangeHuntGold);
+            group.MapPut("/{email}/normal-gold", ChangeNormalGold);
         }
 
         /// <summary>
@@ -148,6 +150,10 @@ namespace Server.WebApi.Endpoints
             var success = dataService.BanAccount(email, request.Reason ?? "Banned by admin", expiryDate);
             if (success)
             {
+                // [后台封禁账号] 详细记录管理员从Web后台封禁玩家账号的操作日志
+                var adminEmail = JwtHelper.GetEmail(user);
+                Server.Envir.SEnvir.Log($"[后台封禁账号] 管理员={adminEmail}, 目标账号={email}, 原因={request.Reason ?? "无"}, 过期时间={(expiryDate.HasValue ? expiryDate.Value.ToString("yyyy-MM-dd HH:mm:ss") : "永久")}");
+
                 return Results.Ok(new { message = "Account banned successfully" });
             }
 
@@ -167,6 +173,10 @@ namespace Server.WebApi.Endpoints
             var success = dataService.UnbanAccount(email);
             if (success)
             {
+                // [后台解封账号] 详细记录管理员从Web后台解封玩家账号的操作日志
+                var adminEmail = JwtHelper.GetEmail(user);
+                Server.Envir.SEnvir.Log($"[后台解封账号] 管理员={adminEmail}, 目标账号={email}");
+
                 return Results.Ok(new { message = "Account unbanned successfully" });
             }
 
@@ -212,6 +222,10 @@ namespace Server.WebApi.Endpoints
             var success = dataService.ChangeAccountIdentity(email, newIdentity);
             if (success)
             {
+                // [后台调整权限] 详细记录管理员从Web后台修改玩家账号权限等级的操作日志
+                var adminEmail = JwtHelper.GetEmail(user);
+                Server.Envir.SEnvir.Log($"[后台调整权限] 管理员={adminEmail}, 目标账号={email}, 原权限={targetAccount.Identify}, 新权限={newIdentity}");
+
                 return Results.Ok(new { message = "Account identity changed successfully" });
             }
 
@@ -258,42 +272,130 @@ namespace Server.WebApi.Endpoints
         }
 
         /// <summary>
-        /// Update account gold and game gold
+        /// <summary>
+        /// 调整账号元宝数量（仅限 Admin 级以上账号）
         /// </summary>
-        private static IResult UpdateGold(string email, UpdateGoldRequest request, ClaimsPrincipal user, ServerDataService dataService)
+        private static async Task<IResult> ChangeGameGold(string email, ChangeGameGoldRequest request, ClaimsPrincipal user, ServerDataService dataService)
         {
-            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Operator))
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Admin))
             {
                 return Results.Forbid();
             }
 
-            if (request.GameGold < 0 || request.HuntGold < 0)
-            {
-                return Results.BadRequest(new { message = "Gold values cannot be negative" });
-            }
-
             var currentIdentity = JwtHelper.GetIdentity(user);
 
-            // Check target account
+            // 检查目标账号是否存在
             var targetAccount = dataService.GetAccountByEmail(email);
             if (targetAccount == null)
             {
-                return Results.NotFound(new { message = "Account not found" });
+                return Results.NotFound(new { message = "未找到该账号" });
             }
 
-            // Cannot modify gold for accounts with higher or equal identity (unless SuperAdmin)
+            // 安全限制：防止同级或低级管理员修改高级/同级账号的钱包数据（超级管理员除外）
             if (targetAccount.Identify >= currentIdentity && currentIdentity < AccountIdentity.SuperAdmin)
             {
                 return Results.Forbid();
             }
 
-            var success = dataService.UpdateAccountGold(email, request.GameGold, request.HuntGold);
-            if (success)
+            // 【安全校验】防止大数值输入导致底层整数溢出清空玩家金币
+            if (request.Amount < -2_000_000_000 || request.Amount > 2_000_000_000)
             {
-                return Results.Ok(new { message = "Gold updated successfully" });
+                return Results.BadRequest(new { message = "调整金额超限，允许的范围是 ±2,000,000,000" });
             }
 
-            return Results.Problem("Failed to update gold");
+            var success = await dataService.AddGameGold(email, (int)request.Amount);
+            if (success)
+            {
+                // [后台调整元宝] 记录管理员从Web后台调整玩家元宝的操作日志
+                var adminEmail = JwtHelper.GetEmail(user);
+                Server.Envir.SEnvir.Log($"[后台调整元宝] 管理员={adminEmail}, 目标账号={email}, 变动数量={request.Amount}");
+
+                return Results.Ok(new { message = "元宝调整成功" });
+            }
+
+            return Results.Problem("调整元宝失败");
+        }
+
+        /// <summary>
+        /// 调整账号猎币数量（仅限 Admin 级以上账号）
+        /// </summary>
+        private static async Task<IResult> ChangeHuntGold(string email, ChangeHuntGoldRequest request, ClaimsPrincipal user, ServerDataService dataService)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Admin))
+            {
+                return Results.Forbid();
+            }
+
+            var currentIdentity = JwtHelper.GetIdentity(user);
+
+            // 检查目标账号是否存在
+            var targetAccount = dataService.GetAccountByEmail(email);
+            if (targetAccount == null)
+            {
+                return Results.NotFound(new { message = "未找到该账号" });
+            }
+
+            // 安全限制：防止同级或低级管理员修改高级/同级账号的钱包数据（超级管理员除外）
+            if (targetAccount.Identify >= currentIdentity && currentIdentity < AccountIdentity.SuperAdmin)
+            {
+                return Results.Forbid();
+            }
+
+            // 【安全校验】防止大数值输入导致底层整数溢出清空玩家金币
+            if (request.Amount < -2_000_000_000 || request.Amount > 2_000_000_000)
+            {
+                return Results.BadRequest(new { message = "调整金额超限，允许的范围是 ±2,000,000,000" });
+            }
+
+            var success = await dataService.AddHuntGold(email, (int)request.Amount);
+            if (success)
+            {
+                // [后台调整猎币] 记录管理员从Web后台调整玩家猎币的操作日志
+                var adminEmail = JwtHelper.GetEmail(user);
+                Server.Envir.SEnvir.Log($"[后台调整猎币] 管理员={adminEmail}, 目标账号={email}, 变动数量={request.Amount}");
+
+                return Results.Ok(new { message = "猎币调整成功" });
+            }
+
+            return Results.Problem("调整猎币失败");
+        }
+
+        /// <summary>
+        /// 调整账号普通金币数量（仅限 Admin 级以上账号）
+        /// </summary>
+        private static async Task<IResult> ChangeNormalGold(string email, ChangeNormalGoldRequest request, ClaimsPrincipal user, ServerDataService dataService)
+        {
+            if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Admin))
+            {
+                return Results.Forbid();
+            }
+
+            var currentIdentity = JwtHelper.GetIdentity(user);
+
+            // 检查目标账号是否存在
+            var targetAccount = dataService.GetAccountByEmail(email);
+            if (targetAccount == null)
+            {
+                return Results.NotFound(new { message = "未找到该账号" });
+            }
+
+            // 安全限制：防止同级或低级管理员修改高级/同级账号的钱包数据（超级管理员除外）
+            if (targetAccount.Identify >= currentIdentity && currentIdentity < AccountIdentity.SuperAdmin)
+            {
+                return Results.Forbid();
+            }
+
+            var success = await dataService.AddNormalGold(email, request.Amount);
+            if (success)
+            {
+                // [后台调整金币] 记录管理员从Web后台调整玩家金币的操作日志
+                var adminEmail = JwtHelper.GetEmail(user);
+                Server.Envir.SEnvir.Log($"[后台调整金币] 管理员={adminEmail}, 目标账号={email}, 变动数量={request.Amount}");
+
+                return Results.Ok(new { message = "金币调整成功" });
+            }
+
+            return Results.Problem("调整金币失败");
         }
     }
 
@@ -322,10 +424,19 @@ namespace Server.WebApi.Endpoints
         public string NewPassword { get; set; } = "";
     }
 
-    public class UpdateGoldRequest
+    public class ChangeGameGoldRequest
     {
-        public int GameGold { get; set; }
-        public int HuntGold { get; set; }
+        public long Amount { get; set; }
+    }
+
+    public class ChangeHuntGoldRequest
+    {
+        public long Amount { get; set; }
+    }
+
+    public class ChangeNormalGoldRequest
+    {
+        public long Amount { get; set; }
     }
 
     #endregion
