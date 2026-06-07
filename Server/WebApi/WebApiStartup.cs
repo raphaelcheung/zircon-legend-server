@@ -5,6 +5,7 @@ using Server.Envir;
 using Server.WebApi.Auth;
 using Server.WebApi.Services;
 using Server.WebApi.Endpoints;
+using Server.WebApi.Admin;
 
 namespace Server.WebApi
 {
@@ -155,6 +156,7 @@ namespace Server.WebApi
             GameDataEndpoints.Map(app);
             LogEndpoints.Map(app);
             ConfigEndpoints.Map(app);
+            MovementAdminEndpoints.Map(app);   // 地图连接点管理
 
             // Fallback to index.html for SPA routing
             app.MapFallbackToFile("index.html");
