@@ -77,7 +77,7 @@
 
 【[百度网盘](https://pan.baidu.com/s/1dKrpu6G4p4klMVOIMuhOdA?pwd=j1rm)】
 
-由于网盘总被和谐，这份运行依赖数据我也保存到了 QQ 群文件中，【[QQ群：915941142](https://qm.qq.com/q/JeoJOJ4z4e)】
+由于网盘总被和谐，这份运行依赖数据我也保存到了 QQ 群文件中，【[QQ群①：915941142](https://qm.qq.com/q/JeoJOJ4z4e)】【[QQ群②：1076553894](https://qm.qq.com/cgi-bin/qm/qr?k=gfaKhTO0Di536wKhU-82xSPn9EYUX4m9&jump_from=webapi&authKey=S5EV6SGeS7yoiT8YNuSFg5EZWhcUK3JVPjwUIxBUtkihVP/S6jVQcKMt+BWkXtEo)】
 
 内置账号： **zrf@zrf.zrf、raphael@gm.gm** ，密码均为  **123456** ， 可直接登录游玩。
 
@@ -85,7 +85,7 @@
 
 你也可以把` user.db `删除，直接新建账号  **raphael@gm.gm**  会默认具备管理员权限。
 
-去版本 [发布页面](https://gitee.com/raphaelcheung/zircon-legend-server/releases) 下载最新的服务器配置文件` Server.ini `，根据需要修改服务器 IP 以及端口。
+去版本 [发布页面](https://github.com/raphaelcheung/zircon-legend-server/releases) 下载最新的服务器配置文件` Server.ini `，根据需要修改服务器 IP 以及端口。
 
 ### 部署游戏服务
 
@@ -137,7 +137,7 @@ networks:
 
 - #### Windows 10 部署
 
-新建一个英文名服务器根目录，从 [发布页面](https://gitee.com/raphaelcheung/zircon-legend-server/releases) 下载运行包解压到根目录下。
+新建一个英文名服务器根目录，从 [发布页面](https://github.com/raphaelcheung/zircon-legend-server/releases) 下载运行包解压到根目录下。
 
 根目录下建立一个子目录` datas `。
 
@@ -147,7 +147,7 @@ networks:
 
 ### 配置自动更新
 
-- 要实现客户端的自动更新，要求 [启动器](https://gitee.com/raphaelcheung/zircon-legend-launcher)、客户端、服务器的版本均在 **v1.0.0** 以上。
+- 要实现客户端的自动更新，要求 [启动器](https://github.com/raphaelcheung/zircon-legend-laucher)、客户端、服务器的版本均在 **v1.0.0** 以上。
 
 - 首先保证服务器是停止运行的状态。
 
@@ -182,7 +182,7 @@ UseProxy=True
 
 ## 客户端
 
-获取客户端去这里看 【[ZirconLegend-Client](https://gitee.com/raphaelcheung/zircon-legend-client)】
+获取客户端去这里看 【[ZirconLegend-Client](https://github.com/raphaelcheung/zircon-legend-client)】
 
 ## 服务器 代码编译
 
@@ -202,7 +202,7 @@ UseProxy=True
 <img src="Images/代码拉取.jpg" title="拉取代码"><br/>
 
 如果还是拉不下子模块，
-可以把【[ZirconLegend-Library](https://gitee.com/raphaelcheung/zircon-legend-library)】拉下来，
+可以把【[ZirconLegend-Library](https://github.com/raphaelcheung/zircon-legend-library)】拉下来，
 然后移动到` Library `目录下。
 
 项目的编译依赖都已预设好，直接编译即可
