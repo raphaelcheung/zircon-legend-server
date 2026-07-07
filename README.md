@@ -2,7 +2,7 @@
 
 本开源项目仅供学习游戏技术，禁止商用以及非法用途。
 
-**本项目主站为 [Gitee-晧石传奇三](https://gitee.com/raphaelcheung/zircon-legend-server.git)，其他平台均为镜像。
+**本项目主站为 [Github-晧石传奇三](https://github.com/raphaelcheung/zircon-legend-server)，其他平台均为镜像。
 版本发布只放在主站上！**
 
 ## 项目背景
