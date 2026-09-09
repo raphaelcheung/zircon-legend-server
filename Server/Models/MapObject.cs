@@ -384,11 +384,15 @@ namespace Zircon.Server.Models
         }
         public virtual void ProcessNameColour()
         { }
+        private bool _hasCloakOrTransparency;
+
         public virtual void ProcessBuff()
         {
             TimeSpan ticks = SEnvir.Now - BuffTime;
 
             BuffTime = SEnvir.Now;
+            _hasCloakOrTransparency = Buffs.Any(x => x.Type == BuffType.Cloak || x.Type == BuffType.Transparency);
+
             List<BuffInfo> expiredBuffs = new List<BuffInfo>();
 
             foreach (BuffInfo buff in Buffs)
@@ -945,7 +949,7 @@ namespace Zircon.Server.Models
             if (ob.GameMaster)
                 return true;
             
-            if (Buffs.Any(x => x.Type == BuffType.Cloak || x.Type == BuffType.Transparency))
+            if (_hasCloakOrTransparency)
             {
                 if (InGroup(ob))
                     return true;

@@ -610,6 +610,8 @@ namespace Server.Envir
         public static int EMailsSent;
 
         public static bool ServerBuffChanged;
+        public static bool DataChanged;
+        public static ConcurrentQueue<string> ErrorLogs = new ConcurrentQueue<string>();
 
         public static byte[]? DbSystemFile { get; private set; } = null;
         public static string DbSystemFileHash { get; private set; } = string.Empty;
@@ -1409,7 +1411,7 @@ namespace Server.Envir
             AutoClearUserDatasTime = Now.AddMinutes(Config.数据清理间隔分钟);
             var count = ClearUserDatas();
 
-            Log($"自动清理用户垃圾数据：共清理 {count} 条");
+            //Log($"自动清理用户垃圾数据：共清理 {count} 条");
         }
         public static void EnvirLoop()
         {
@@ -1514,6 +1516,8 @@ namespace Server.Envir
 
                     while (Time.Now <= loopTime)
                     {
+                        if (ActiveObjects.Count == 0) break;
+
                         lastindex--;
 
                         if (lastindex >= ActiveObjects.Count) continue;
@@ -1540,18 +1544,19 @@ namespace Server.Envir
                            
                             Log($"处理地图元素时时发生异常：【{ob.Name}-{ob.Race}】");
                             Log(ex);
-                            File.AppendAllText(@".\Errors.txt", ex.StackTrace + Environment.NewLine);
+                            ErrorLogs.Enqueue(ex.StackTrace + Environment.NewLine);
                         }
                     }
 
                     if (Now >= nextCount)
                     {
-                        if (Now >= DBTime && !Saving)
+                        if (Now >= DBTime && !Saving && (Players.Count > 0 || DataChanged))
                         {
                             DBTime = Time.Now + Config.DBSaveDelay;
                             saveTime = Time.Now;
 
                             Save();
+                            DataChanged = false;
 
                             SaveDelay = (Time.Now - saveTime).Ticks / TimeSpan.TicksPerMillisecond;
                         }
@@ -1654,10 +1659,15 @@ namespace Server.Envir
                                     webCommand.Account.Delete();
                                     break;
                             }
+
+                            DataChanged = true;
                         }
 
                         if (Config.ProcessGameGold)
+                        {
                             ProcessGameGold();
+                            DataChanged = true;
+                        }
 
                         nextCount = Now.AddSeconds(1);
 
@@ -1682,7 +1692,8 @@ namespace Server.Envir
                                 }
                             }
 
-                            GC.Collect(2, GCCollectionMode.Forced);
+                            GC.Collect(2, GCCollectionMode.Optimized);
+                            DataChanged = true;
                         }
 
                         foreach (CastleInfo info in CastleInfoList.Binding)
@@ -1696,13 +1707,16 @@ namespace Server.Envir
                     }
 
                     AutoClearUserDatas();
+
+                    if (Time.Now < loopTime)
+                        Thread.Sleep(1);
                 }
                 catch (Exception ex)
                 {
                     Session = null;
 
                     Log(ex);
-                    File.AppendAllText(@".\Errors.txt", ex.StackTrace + Environment.NewLine);
+                    ErrorLogs.Enqueue(ex.StackTrace + Environment.NewLine);
 
                     Packet p = new G.Disconnect { Reason = DisconnectReason.Crashed };
                     for (int i = Connections.Count - 1; i >= 0; i--)
@@ -1780,6 +1794,10 @@ namespace Server.Envir
         }
         private static void WriteLogs()
         {
+            string error;
+            while (ErrorLogs.TryDequeue(out error))
+                File.AppendAllText(@".\Errors.txt", error);
+
             List<string> lines = new List<string>();
             while (!Logs.IsEmpty)
             {

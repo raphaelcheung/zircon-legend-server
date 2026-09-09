@@ -227,6 +227,8 @@ namespace Zircon.Server.Models
             }
         }
 
+        private readonly HashSet<MonsterObject> _tagClearList = new HashSet<MonsterObject>();
+
         public override void Process()
         {
             base.Process();
@@ -244,15 +246,15 @@ namespace Zircon.Server.Models
 
             ProcessRegen();
 
-            HashSet<MonsterObject> clearList = new HashSet<MonsterObject>();
+            _tagClearList.Clear();
 
             foreach (MonsterObject ob in TaggedMonsters)
             {
                 if (SEnvir.Now < ob.EXPOwnerTime) continue;
-                clearList.Add(ob);
+                _tagClearList.Add(ob);
             }
 
-            foreach (MonsterObject ob in clearList)
+            foreach (MonsterObject ob in _tagClearList)
                 ob.EXPOwner = null;
 
             if (CanFlamingSword && SEnvir.Now >= FlamingSwordTime)

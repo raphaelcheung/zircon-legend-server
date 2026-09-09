@@ -217,9 +217,11 @@ namespace Zircon.Server.Models
         public int SummonCritical { get; set; } = 0;
         public int SummonCriticalDamage { get; set; } = 0;
 
+        private bool _hasAbyssPoison;
+
         public int ViewRange
         {
-            get { return PoisonList.Any(x => x.Type == PoisonType.Abyss) ? 2 : MonsterInfo.ViewRange; }
+            get { return _hasAbyssPoison ? 2 : MonsterInfo.ViewRange; }
         }
 
         public PoisonType PoisonType;
@@ -1086,6 +1088,8 @@ namespace Zircon.Server.Models
         public override void Process()
         {
             base.Process();
+
+            _hasAbyssPoison = PoisonList.Any(x => x.Type == PoisonType.Abyss);
                         
             if (Dead)
             {

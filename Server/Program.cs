@@ -12,7 +12,7 @@ string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
 
 Console.WriteLine($"皓石传奇三 v{version}");
-Console.WriteLine($"免费开源的传奇三，开源技术交流进QQ群 915941142");
+Console.WriteLine($"开源的传奇三，开源技术交流进QQ群① 915941142，群② 1076553894");
 Console.WriteLine($"客户端更新路径：{Config.ClientPath}");
 Console.WriteLine($"地图文件路径：{Config.MapPath}");
 
