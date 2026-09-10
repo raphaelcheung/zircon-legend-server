@@ -140,12 +140,56 @@ namespace Server.WebApi.Endpoints
             switch (request.Key.ToLower())
             {
                 case "onlyadminlogin":
-                    var boolValue = request.Value?.ToLower() == "true";
-                    Config.OnlyAdminLogin = boolValue;
-                    // 同时保存到 INI 文件
-                    configService.UpdateConfigValue("Control", "OnlyAdminLogin", boolValue.ToString());
-                    WebApiLogger.Audit(context, "修改运行时配置", request.Key, $"值={Config.OnlyAdminLogin}");
-                    return Results.Ok(new { message = $"OnlyAdminLogin set to {Config.OnlyAdminLogin}" });
+                    {
+                        var boolValue = request.Value?.ToLower() == "true";
+                        Config.OnlyAdminLogin = boolValue;
+                        configService.UpdateConfigValue("Control", "OnlyAdminLogin", boolValue.ToString());
+                        WebApiLogger.Audit(context, "修改运行时配置", request.Key, $"值={Config.OnlyAdminLogin}");
+                        return Results.Ok(new { message = $"OnlyAdminLogin set to {Config.OnlyAdminLogin}" });
+                    }
+                case "webhookenabled":
+                    {
+                        var boolVal = request.Value?.ToLower() == "true";
+                        Config.WebHookEnabled = boolVal;
+                        configService.UpdateConfigValue("WebHook", "WebHookEnabled", boolVal.ToString());
+                        WebApiLogger.Audit(context, "修改运行时配置", request.Key, $"值={Config.WebHookEnabled}");
+                        return Results.Ok(new { message = $"WebHookEnabled set to {Config.WebHookEnabled}" });
+                    }
+                case "webhookurl":
+                    {
+                        var strVal = request.Value ?? "";
+                        Config.WebHookUrl = strVal;
+                        configService.UpdateConfigValue("WebHook", "WebHookUrl", strVal);
+                        WebApiLogger.Audit(context, "修改运行时配置", request.Key, $"值={strVal}");
+                        return Results.Ok(new { message = $"WebHookUrl set to {strVal}" });
+                    }
+                case "webhookintervalminutes":
+                    {
+                        if (!int.TryParse(request.Value, out var intVal))
+                            return Results.BadRequest(new { message = "Invalid integer value" });
+                        Config.WebHookIntervalMinutes = intVal;
+                        configService.UpdateConfigValue("WebHook", "WebHookIntervalMinutes", intVal.ToString());
+                        WebApiLogger.Audit(context, "修改运行时配置", request.Key, $"值={intVal}");
+                        return Results.Ok(new { message = $"WebHookIntervalMinutes set to {intVal}" });
+                    }
+                case "webhookhighthreshold":
+                    {
+                        if (!int.TryParse(request.Value, out var intVal))
+                            return Results.BadRequest(new { message = "Invalid integer value" });
+                        Config.WebHookHighThreshold = intVal;
+                        configService.UpdateConfigValue("WebHook", "WebHookHighThreshold", intVal.ToString());
+                        WebApiLogger.Audit(context, "修改运行时配置", request.Key, $"值={intVal}");
+                        return Results.Ok(new { message = $"WebHookHighThreshold set to {intVal}" });
+                    }
+                case "webhooklowthreshold":
+                    {
+                        if (!int.TryParse(request.Value, out var intVal))
+                            return Results.BadRequest(new { message = "Invalid integer value" });
+                        Config.WebHookLowThreshold = intVal;
+                        configService.UpdateConfigValue("WebHook", "WebHookLowThreshold", intVal.ToString());
+                        WebApiLogger.Audit(context, "修改运行时配置", request.Key, $"值={intVal}");
+                        return Results.Ok(new { message = $"WebHookLowThreshold set to {intVal}" });
+                    }
                 default:
                     return Results.BadRequest(new { message = $"Unknown runtime config key: {request.Key}" });
             }

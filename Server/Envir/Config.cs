@@ -260,5 +260,12 @@ namespace Server.Envir
         public static string WebApiJwtSecret { get; set; } = "ZirconLegendServer2024SecretKey32";
         public static int WebApiJwtExpiration { get; set; } = 60;
 
+        [ConfigSection("WebHook")]
+        public static bool WebHookEnabled { get; set; } = false;
+        public static string WebHookUrl { get; set; } = "";
+        public static int WebHookIntervalMinutes { get; set; } = 5;
+        public static int WebHookHighThreshold { get; set; } = 0;
+        public static int WebHookLowThreshold { get; set; } = 0;
+
     }
 }

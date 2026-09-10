@@ -27,6 +27,7 @@ using System.Reflection.PortableExecutable;
 using Library.ContentSafe.SensitiveWord;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using Server.WebHook;
 
 namespace Server.Envir
 {
@@ -736,6 +737,9 @@ namespace Server.Envir
         public static List<MapObject> ActiveObjects { get; set; } = new List<MapObject>();
 
         public static List<PlayerObject> Players = new List<PlayerObject>();
+
+        private static WebHookScheduler _webHookScheduler;
+        private static ThresholdMonitor _thresholdMonitor;
         public static List<ConquestWar> ConquestWars = new List<ConquestWar>();
 
         public static List<SpawnInfo> Spawns = new List<SpawnInfo>();
@@ -1426,6 +1430,8 @@ namespace Server.Envir
             
             int count = 0, loopCount = 0;
             DateTime nextCount = Now.AddSeconds(1), UserCountTime = Now.AddMinutes(5), saveTime;
+            _webHookScheduler = new WebHookScheduler();
+            _thresholdMonitor = new ThresholdMonitor();
             long previousTotalSent = 0, previousTotalReceived = 0;
             int lastindex = 0;
             long conDelay = 0;
@@ -1667,6 +1673,15 @@ namespace Server.Envir
                         {
                             ProcessGameGold();
                             DataChanged = true;
+                        }
+
+                        if (_webHookScheduler.TryTick(Now))
+                        {
+                            var whCount = Players.Count;
+                            _ = WebHookSender.SendOnlineCountPeriodicAsync(whCount);
+                            var whEvents = _thresholdMonitor.Sample(whCount);
+                            foreach (var whEv in whEvents)
+                                _ = WebHookSender.SendThresholdEventAsync(whEv.IsHigh, whEv.CurrentCount, whEv.Threshold, whEv.Direction);
                         }
 
                         nextCount = Now.AddSeconds(1);

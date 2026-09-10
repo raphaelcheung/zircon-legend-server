@@ -2,6 +2,7 @@ using Library;
 using Library.SystemModels;
 using Server.DBModels;
 using Server.Envir;
+using Server.WebHook;
 using Zircon.Server.Models;
 using Zircon.Server.Models.Monsters;
 using System.Drawing;
@@ -144,6 +145,42 @@ namespace Server.WebApi.Services
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// 认证并返回离散失败原因（保留原 Authenticate 不动，不影响现有调用方）
+        /// </summary>
+        public AuthenticateResult AuthenticateWithReason(string email, string password)
+        {
+            var result = new AuthenticateResult();
+
+            var accounts = SEnvir.AccountInfoList;
+            if (accounts == null)
+            {
+                result.Status = LoginResultStatus.AccountNotFound;
+                return result;
+            }
+
+            for (int i = 0; i < accounts.Count; i++)
+            {
+                var account = accounts[i];
+                if (string.Equals(account.EMailAddress, email, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (account.Password != null && SEnvir.PasswordMatch(password, account.Password))
+                    {
+                        result.Status = LoginResultStatus.Success;
+                        result.Account = account;
+                    }
+                    else
+                    {
+                        result.Status = LoginResultStatus.PasswordError;
+                    }
+                    return result;
+                }
+            }
+
+            result.Status = LoginResultStatus.AccountNotFound;
+            return result;
         }
 
         /// <summary>
