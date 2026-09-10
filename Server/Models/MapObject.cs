@@ -854,10 +854,21 @@ namespace Zircon.Server.Models
                     ob.AddNearBy(this);
             }
 
-            foreach (PlayerObject ob in SEnvir.Players)
+            if (Race == ObjectType.Player || (Race == ObjectType.Monster && ((MonsterObject)this).MonsterInfo.IsBoss))
             {
-                if (CanDataBeSeenBy(ob))
-                    ob.AddDataObject(this);
+                foreach (PlayerObject ob in SEnvir.Players)
+                {
+                    if (CanDataBeSeenBy(ob))
+                        ob.AddDataObject(this);
+                }
+            }
+            else
+            {
+                foreach (PlayerObject ob in CurrentMap.Players)
+                {
+                    if (CanDataBeSeenBy(ob))
+                        ob.AddDataObject(this);
+                }
             }
         }
         public virtual void RemoveAllObjects()

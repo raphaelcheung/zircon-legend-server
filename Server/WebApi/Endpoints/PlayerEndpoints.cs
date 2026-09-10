@@ -68,7 +68,7 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Kick a player by character name
         /// </summary>
-        private static IResult KickPlayer(string name, ClaimsPrincipal user, ServerDataService dataService)
+        private static IResult KickPlayer(string name, ClaimsPrincipal user, HttpContext context, ServerDataService dataService)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Operator))
             {
@@ -78,6 +78,7 @@ namespace Server.WebApi.Endpoints
             var success = dataService.KickPlayer(name);
             if (success)
             {
+                WebApiLogger.Audit(context, "踢出玩家", name);
                 return Results.Ok(new { message = $"Player '{name}' has been kicked" });
             }
 

@@ -117,6 +117,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult UpdateItem(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             int index,
             UpdateItemRequest request)
@@ -132,6 +133,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "修改物品", $"index={index}");
             return Results.Ok(new { message });
         }
 
@@ -140,6 +142,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult GiveItem(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             GiveItemRequest request)
         {
@@ -169,6 +172,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "发放物品", request.CharacterName, $"物品ID={request.ItemIndex}, 数量={request.Count}");
             return Results.Ok(new { message });
         }
 
@@ -377,6 +381,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult UpdateMap(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             int index,
             UpdateMapRequest request)
@@ -392,6 +397,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "修改地图", $"index={index}");
             return Results.Ok(new { message });
         }
 
@@ -400,6 +406,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult TeleportPlayer(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             TeleportRequest request)
         {
@@ -419,6 +426,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "传送玩家", request.CharacterName, $"地图={request.MapIndex}, 坐标=({request.X},{request.Y})");
             return Results.Ok(new { message });
         }
 
@@ -427,6 +435,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult ClearMonstersOnMap(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             int index)
         {
@@ -441,6 +450,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "清空地图怪物", $"index={index}", $"数量={count}");
             return Results.Ok(new { message, count });
         }
 
@@ -475,6 +485,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult UpdateMonster(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             int index,
             UpdateMonsterRequest request)
@@ -490,6 +501,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "修改怪物", $"index={index}");
             return Results.Ok(new { message });
         }
 
@@ -498,6 +510,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult ClearMonstersByType(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             int index)
         {
@@ -512,6 +525,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "清空怪物类型", $"index={index}", $"数量={count}");
             return Results.Ok(new { message, count });
         }
 
@@ -520,6 +534,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult SpawnMonsterNearPlayer(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             SpawnMonsterRequest request)
         {
@@ -550,6 +565,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "刷怪", request.CharacterName, $"怪物ID={request.MonsterIndex}, 数量={request.Count}, 范围={request.Range}");
             return Results.Ok(new { message });
         }
 
@@ -584,6 +600,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult UpdateNpc(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             int index,
             UpdateNpcRequest request)
@@ -599,6 +616,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "修改NPC", $"index={index}");
             return Results.Ok(new { message });
         }
 
@@ -633,6 +651,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult UpdateMagic(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             int index,
             UpdateMagicRequest request)
@@ -648,6 +667,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "修改技能", $"index={index}");
             return Results.Ok(new { message });
         }
 
@@ -656,6 +676,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult GrantMagic(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             GrantMagicRequest request)
         {
@@ -686,6 +707,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "授予技能", request.CharacterName, $"技能ID={request.MagicIndex}, 等级={request.Level}");
             return Results.Ok(new { message });
         }
 
@@ -750,6 +772,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult CreateBaseStat(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             CreateBaseStatRequest request)
         {
@@ -774,6 +797,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "创建基础属性", request.Class, $"等级={request.Level}");
             return Results.Ok(new { message, stat });
         }
 
@@ -782,6 +806,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult UpdateBaseStat(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             int index,
             UpdateBaseStatRequest request)
@@ -797,6 +822,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "修改基础属性", $"index={index}");
             return Results.Ok(new { message });
         }
 
@@ -805,6 +831,7 @@ namespace Server.WebApi.Endpoints
         /// </summary>
         private static IResult DeleteBaseStat(
             ClaimsPrincipal user,
+            HttpContext context,
             ServerDataService dataService,
             int index)
         {
@@ -819,6 +846,7 @@ namespace Server.WebApi.Endpoints
                 return Results.BadRequest(new { message });
             }
 
+            WebApiLogger.Audit(context, "删除基础属性", $"index={index}");
             return Results.Ok(new { message });
         }
 

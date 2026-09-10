@@ -76,7 +76,7 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Create new account
         /// </summary>
-        private static IResult CreateAccount(CreateAccountRequest request, ClaimsPrincipal user, ServerDataService dataService)
+        private static IResult CreateAccount(CreateAccountRequest request, ClaimsPrincipal user, HttpContext context, ServerDataService dataService)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Admin))
             {
@@ -108,6 +108,7 @@ namespace Server.WebApi.Endpoints
 
             if (success)
             {
+                WebApiLogger.Audit(context, "创建账号", request.Email, $"权限={identity}");
                 return Results.Ok(new { message });
             }
 
@@ -117,7 +118,7 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Ban account
         /// </summary>
-        private static IResult BanAccount(string email, BanRequest request, ClaimsPrincipal user, ServerDataService dataService)
+        private static IResult BanAccount(string email, BanRequest request, ClaimsPrincipal user, HttpContext context, ServerDataService dataService)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Operator))
             {
@@ -147,6 +148,7 @@ namespace Server.WebApi.Endpoints
             var success = dataService.BanAccount(email, request.Reason ?? "Banned by admin", expiryDate);
             if (success)
             {
+                WebApiLogger.Audit(context, "封禁账号", email, $"原因={request.Reason ?? "Banned by admin"}, 过期={(expiryDate?.ToString() ?? "永久")}");
                 return Results.Ok(new { message = "Account banned successfully" });
             }
 
@@ -156,7 +158,7 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Unban account
         /// </summary>
-        private static IResult UnbanAccount(string email, ClaimsPrincipal user, ServerDataService dataService)
+        private static IResult UnbanAccount(string email, ClaimsPrincipal user, HttpContext context, ServerDataService dataService)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Operator))
             {
@@ -166,6 +168,7 @@ namespace Server.WebApi.Endpoints
             var success = dataService.UnbanAccount(email);
             if (success)
             {
+                WebApiLogger.Audit(context, "解封账号", email);
                 return Results.Ok(new { message = "Account unbanned successfully" });
             }
 
@@ -175,7 +178,7 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Change account identity level
         /// </summary>
-        private static IResult ChangeIdentity(string email, ChangeIdentityRequest request, ClaimsPrincipal user, ServerDataService dataService)
+        private static IResult ChangeIdentity(string email, ChangeIdentityRequest request, ClaimsPrincipal user, HttpContext context, ServerDataService dataService)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Admin))
             {
@@ -211,6 +214,7 @@ namespace Server.WebApi.Endpoints
             var success = dataService.ChangeAccountIdentity(email, newIdentity);
             if (success)
             {
+                WebApiLogger.Audit(context, "修改账号权限", email, $"新权限={newIdentity}");
                 return Results.Ok(new { message = "Account identity changed successfully" });
             }
 
@@ -220,7 +224,7 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Reset account password
         /// </summary>
-        private static IResult ResetPassword(string email, ResetPasswordRequest request, ClaimsPrincipal user, ServerDataService dataService)
+        private static IResult ResetPassword(string email, ResetPasswordRequest request, ClaimsPrincipal user, HttpContext context, ServerDataService dataService)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Admin))
             {
@@ -250,6 +254,7 @@ namespace Server.WebApi.Endpoints
             var success = dataService.ResetPassword(email, request.NewPassword);
             if (success)
             {
+                WebApiLogger.Audit(context, "重置密码", email);
                 return Results.Ok(new { message = "Password reset successfully" });
             }
 

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Logging;
 using System.Text;
 using Server.Envir;
 using Server.WebApi.Auth;
@@ -37,6 +38,11 @@ namespace Server.WebApi
                     ContentRootPath = Path.GetDirectoryName(wwwrootPath) ?? Environment.CurrentDirectory,
                     WebRootPath = wwwrootPath
                 });
+
+                // 屏蔽 ASP.NET Core 框架 Information 级噪声日志（请求起止/静态文件/路由匹配等），仅保留 Warning+
+                // 业务审计日志统一走 SEnvir.Log（见 WebApiLogger），不经过 ILogger 管线
+                builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
+                builder.Logging.AddFilter("System", LogLevel.Warning);
 
                 // Configure Kestrel to listen on specified port
                 builder.WebHost.ConfigureKestrel(options =>

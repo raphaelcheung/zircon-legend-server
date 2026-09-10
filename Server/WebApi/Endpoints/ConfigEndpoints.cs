@@ -43,7 +43,7 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Save Server.ini content
         /// </summary>
-        private static IResult SaveConfig(SaveConfigRequest request, ClaimsPrincipal user, ConfigService configService)
+        private static IResult SaveConfig(SaveConfigRequest request, ClaimsPrincipal user, HttpContext context, ConfigService configService)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
             {
@@ -59,6 +59,7 @@ namespace Server.WebApi.Endpoints
 
             if (success)
             {
+                WebApiLogger.Audit(context, "保存配置文件", null, $"内容长度={request.Content.Length}");
                 return Results.Ok(new { message });
             }
 
@@ -82,7 +83,7 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Update a specific configuration value
         /// </summary>
-        private static IResult UpdateConfigValue(UpdateConfigValueRequest request, ClaimsPrincipal user, ConfigService configService)
+        private static IResult UpdateConfigValue(UpdateConfigValueRequest request, ClaimsPrincipal user, HttpContext context, ConfigService configService)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
             {
@@ -98,6 +99,7 @@ namespace Server.WebApi.Endpoints
 
             if (success)
             {
+                WebApiLogger.Audit(context, "修改配置项", $"{request.Section ?? ""}/{request.Key}", $"值={request.Value ?? ""}");
                 return Results.Ok(new { message });
             }
 
@@ -123,7 +125,7 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Update runtime configuration value (updates both memory and INI file)
         /// </summary>
-        private static IResult UpdateRuntimeConfig(UpdateRuntimeConfigRequest request, ClaimsPrincipal user, ConfigService configService)
+        private static IResult UpdateRuntimeConfig(UpdateRuntimeConfigRequest request, ClaimsPrincipal user, HttpContext context, ConfigService configService)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.SuperAdmin))
             {
@@ -142,6 +144,7 @@ namespace Server.WebApi.Endpoints
                     Config.OnlyAdminLogin = boolValue;
                     // 同时保存到 INI 文件
                     configService.UpdateConfigValue("Control", "OnlyAdminLogin", boolValue.ToString());
+                    WebApiLogger.Audit(context, "修改运行时配置", request.Key, $"值={Config.OnlyAdminLogin}");
                     return Results.Ok(new { message = $"OnlyAdminLogin set to {Config.OnlyAdminLogin}" });
                 default:
                     return Results.BadRequest(new { message = $"Unknown runtime config key: {request.Key}" });

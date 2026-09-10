@@ -1742,14 +1742,27 @@ namespace Server.Envir
         private static void Save()
         {
             if (Session == null) return;
+            if (Saving) return;
 
             Saving = true;
-            Session.Save(false);
-            
-            HandledPayments.AddRange(PaymentList);
 
-            Thread saveThread = new Thread(CommitChanges) { IsBackground = true };
-            saveThread.Start(Session);
+            Thread saveThread = new Thread(() =>
+            {
+                try
+                {
+                    Session.Save(false);
+
+                    HandledPayments.AddRange(PaymentList);
+
+                    CommitChanges(Session);
+                }
+                catch (Exception ex)
+                {
+                    Log(ex);
+                    Saving = false;
+                }
+            }) { IsBackground = true };
+            saveThread.Start();
         }
         private static void CommitChanges(object data)
         {

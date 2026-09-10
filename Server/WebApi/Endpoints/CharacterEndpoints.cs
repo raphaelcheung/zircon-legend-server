@@ -72,7 +72,7 @@ namespace Server.WebApi.Endpoints
         /// <summary>
         /// Set character level
         /// </summary>
-        private static IResult SetLevel(string name, SetLevelRequest request, ClaimsPrincipal user, ServerDataService dataService)
+        private static IResult SetLevel(string name, SetLevelRequest request, ClaimsPrincipal user, HttpContext context, ServerDataService dataService)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Admin))
             {
@@ -87,6 +87,7 @@ namespace Server.WebApi.Endpoints
             var success = dataService.SetCharacterLevel(name, request.Level);
             if (success)
             {
+                WebApiLogger.Audit(context, "设置角色等级", name, $"等级={request.Level}");
                 return Results.Ok(new { message = $"Character level set to {request.Level}" });
             }
 
