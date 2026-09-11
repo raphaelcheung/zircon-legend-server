@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+	<PropertyGroup>
+	<!-- 将中间输出和编译产物统一放到 solution 下的 .build 和 .build\bin 目录中，按项目名和配置/目标框架分离 -->
+	<IntermediateOutputPath>$(SolutionDir).build\obj\$(MSBuildProjectName)\$(Configuration)\$(TargetFramework)\</IntermediateOutputPath>
+	<OutputPath>$(SolutionDir).build\bin\$(Configuration)\$(MSBuildProjectName)\</OutputPath>
+	<!-- Publish 输出至 .artifacts\publish 下，按项目名分离 -->
+	<PublishDir>$(SolutionDir).artifacts\publish\$(MSBuildProjectName)\</PublishDir>
+  </PropertyGroup>
+</Project>
