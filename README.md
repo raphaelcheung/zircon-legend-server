@@ -174,6 +174,12 @@ UseProxy=True
 
 这样服务器就能获取到转发流量的真实 IP 地址。
 
+### Webhook事件通知
+
+服务器会在触发重要事件时，自动调用自定义` webhook `，通过支持` webhook `的APP直接通知到你的手机上。
+
+【[Webhook使用说明书](Webhook通知使用指南.md)】
+
 ### GM 管理
 
 【[GM命令使用指南](GM命令使用指南.md)】
