@@ -1556,7 +1556,7 @@ namespace Server.Envir
 
                     if (Now >= nextCount)
                     {
-                        if (Now >= DBTime && !Saving && (Players.Count > 0 || DataChanged))
+                        if (Now >= DBTime && !Saving && (Players.Count > 0 || DataChanged || Session.SystemDataDirty))
                         {
                             DBTime = Time.Now + Config.DBSaveDelay;
                             saveTime = Time.Now;
