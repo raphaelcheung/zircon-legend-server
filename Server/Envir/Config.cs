@@ -259,7 +259,13 @@ namespace Server.Envir
         [ConfigSection("WebApi")]
         public static bool WebApiEnabled { get; set; } = true;
         public static int WebApiPort { get; set; } = 7080;
-        public static string WebApiJwtSecret { get; set; } = "ZirconLegendServer2024SecretKey32";
+
+        /// <summary>
+        /// JWT 签名密钥。默认留空:启动时由 JwtSecretStore 生成加密随机密钥并写入本配置文件的 [WebApi] 段。
+        /// 切勿在此设置公开的固定值 —— 密钥一旦公开,任何人都能伪造 SuperAdmin 令牌。
+        /// </summary>
+        public static string WebApiJwtSecret { get; set; } = string.Empty;
+
         public static int WebApiJwtExpiration { get; set; } = 60;
 
     }

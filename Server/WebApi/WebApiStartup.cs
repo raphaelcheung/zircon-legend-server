@@ -31,6 +31,9 @@ namespace Server.WebApi
 
             try
             {
+                // 解析 JWT 签名密钥:绝不使用已公开的默认密钥,未配置时生成随机密钥并写回配置
+                Config.WebApiJwtSecret = JwtSecretStore.Resolve();
+
                 // Determine wwwroot path - check multiple locations
                 string wwwrootPath = FindWwwrootPath();
 
