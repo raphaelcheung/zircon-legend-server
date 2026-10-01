@@ -68,7 +68,8 @@ namespace Server.WebApi.Endpoints
             ServerDataService dataService,
             int page = 1,
             int pageSize = 50,
-            string? search = null)
+            string? search = null,
+            string? type = null)
         {
             if (!JwtHelper.HasMinimumIdentity(user, AccountIdentity.Supervisor))
             {
@@ -78,7 +79,7 @@ namespace Server.WebApi.Endpoints
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 200) pageSize = 50;
 
-            var (items, total) = dataService.GetItems(page, pageSize, search);
+            var (items, total) = dataService.GetItems(page, pageSize, search, type);
 
             return Results.Ok(new
             {

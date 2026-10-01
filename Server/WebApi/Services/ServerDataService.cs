@@ -531,7 +531,7 @@ namespace Server.WebApi.Services
         /// <summary>
         /// Get items with pagination
         /// </summary>
-        public (List<ItemInfoDto> items, int total) GetItems(int page, int pageSize, string? search = null)
+        public (List<ItemInfoDto> items, int total) GetItems(int page, int pageSize, string? search = null, string? type = null)
         {
             var items = SEnvir.ItemInfoList;
             if (items == null) return (new List<ItemInfoDto>(), 0);
@@ -540,11 +540,16 @@ namespace Server.WebApi.Services
             for (int i = 0; i < items.Count; i++)
             {
                 var item = items[i];
-                if (string.IsNullOrEmpty(search) ||
-                    item.ItemName?.Contains(search, StringComparison.OrdinalIgnoreCase) == true)
-                {
-                    query.Add(item);
-                }
+
+                if (!string.IsNullOrEmpty(search) &&
+                    item.ItemName?.Contains(search, StringComparison.OrdinalIgnoreCase) != true)
+                    continue;
+
+                if (!string.IsNullOrEmpty(type) &&
+                    !string.Equals(item.ItemType.ToString(), type, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                query.Add(item);
             }
 
             var total = query.Count;

@@ -664,6 +664,10 @@ namespace Server.Envir
         {
             if (string.IsNullOrEmpty(p.Hash)) return;
 
+            // 运行中修改装备/物品等系统数据并保存后，文件已变，这里刷新缓存，
+            // 否则下发的仍是服务器启动时的旧库，客户端会一直同步不到更新。
+            SEnvir.RefreshDbSystemFileIfChanged();
+
             if (p.Hash == SEnvir.DbSystemFileHash)
                 Enqueue(new S.CheckClientDb()
                 {

@@ -786,9 +786,14 @@
 
     async function loadItems() {
       try {
+        const typeFilter = document.getElementById('typeFilter').value;
         let url = `/api/game/items?page=${currentPage}&pageSize=${pageSize}`;
         if (searchQuery) {
           url += `&search=${encodeURIComponent(searchQuery)}`;
+        }
+        if (typeFilter) {
+          // 类型过滤交给服务端，否则只会在当前页里过滤，导致选了类型却看不到物品
+          url += `&type=${encodeURIComponent(typeFilter)}`;
         }
 
         const data = await api.get(url);

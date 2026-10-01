@@ -616,6 +616,8 @@ namespace Server.Envir
 
         public static byte[]? DbSystemFile { get; private set; } = null;
         public static string DbSystemFileHash { get; private set; } = string.Empty;
+        //客户端 System.db 缓存对应的文件最后写入时间，用于文件变更后刷新缓存
+        private static DateTime DbSystemFileTime = DateTime.MinValue;
 
         public static DBCollection<AutoFightConfig> AutoFightConfList { get; set; }
 
@@ -847,6 +849,7 @@ namespace Server.Envir
             //@"./datas/Database/"
             DbSystemFile = File.ReadAllBytes(@"./datas/Database/System.db");
             DbSystemFileHash = Functions.CalcMD5(DbSystemFile);
+            DbSystemFileTime = File.GetLastWriteTimeUtc(@"./datas/Database/System.db");
 
             Random = new Random();
 
@@ -4635,6 +4638,30 @@ namespace Server.Envir
         }
         public static void SaveSystem() { Session.ForceSaveSystem(); }
         public static void SaveUserDatas() { Session.Save(true); }
+
+        // 文件变更时刷新发给客户端的 System.db 缓存，
+        // 否则运行中修改的装备/物品等数据要等服务器重启才会同步给客户端。
+        public static void RefreshDbSystemFileIfChanged()
+        {
+            try
+            {
+                string path = @"./datas/Database/System.db";
+
+                if (!File.Exists(path)) return;
+
+                DateTime time = File.GetLastWriteTimeUtc(path);
+
+                if (time == DbSystemFileTime && DbSystemFile != null) return;
+
+                DbSystemFile = File.ReadAllBytes(path);
+                DbSystemFileHash = Functions.CalcMD5(DbSystemFile);
+                DbSystemFileTime = time;
+            }
+            catch (Exception e)
+            {
+                Log($"刷新客户端数据库缓存失败：{e.Message}");
+            }
+        }
 
         #region Password Encryption
         private const int Iterations = 1354;
