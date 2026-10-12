@@ -707,23 +707,58 @@ namespace Server.WebApi.Services
                 return (false, "角色不在线，请确保角色在线后再试");
             }
 
-            // Create item check
-            int giveCount = Math.Min(count, itemInfo.StackSize > 0 ? itemInfo.StackSize : 1);
-            var itemCheck = new ItemCheck(itemInfo, giveCount, UserItemFlags.None, TimeSpan.Zero);
+            if (count <= 0) count = 1;
 
-            if (!player.CanGainItems(false, itemCheck))
+            // 每个物品对象的合法上限：金币/经验直接累加，其余无效堆叠数按不可堆叠处理
+            int stackSize = itemInfo.Effect == ItemEffect.Gold || itemInfo.Effect == ItemEffect.Experience
+                ? int.MaxValue
+                : (itemInfo.StackSize > 0 ? itemInfo.StackSize : 1);
+
+            // 计算本次实际能发放的最大合法数量（CanGainItems 对数量单调，装不下时二分求上限）
+            int giveTotal = count;
+            if (!player.CanGainItems(false, new ItemCheck(itemInfo, count, UserItemFlags.None, TimeSpan.Zero)))
             {
-                return (false, "角色背包已满");
+                int low = 0, high = count - 1;
+                while (low < high)
+                {
+                    int mid = low + (high - low + 1) / 2;
+
+                    if (player.CanGainItems(false, new ItemCheck(itemInfo, mid, UserItemFlags.None, TimeSpan.Zero)))
+                        low = mid;
+                    else
+                        high = mid - 1;
+                }
+                giveTotal = low;
             }
 
-            // Create and give item
-            var userItem = SEnvir.CreateFreshItem(itemInfo);
-            if (userItem == null) return (false, "创建物品失败");
+            if (giveTotal <= 0)
+                return (false, "角色背包已满，未发放任何物品");
 
-            userItem.Count = giveCount;
-            player.GainItem(userItem);
+            // 按每堆合法上限依次发放
+            int remaining = giveTotal;
+            int given = 0;
 
-            return (true, $"成功给予 {player.Character?.CharacterName} {giveCount} 个 {itemInfo.ItemName}");
+            while (remaining > 0)
+            {
+                int giveCount = Math.Min(remaining, stackSize);
+
+                if (!player.CanGainItems(false, new ItemCheck(itemInfo, giveCount, UserItemFlags.None, TimeSpan.Zero)))
+                    break;
+
+                var userItem = SEnvir.CreateFreshItem(itemInfo);
+                if (userItem == null) break;
+
+                userItem.Count = giveCount;
+                player.GainItem(userItem);
+
+                remaining -= giveCount;
+                given += giveCount;
+            }
+
+            if (given < count)
+                return (true, $"角色背包空间不足，已发放 {given}/{count} 个 {itemInfo.ItemName}");
+
+            return (true, $"成功给予 {player.Character?.CharacterName} {given} 个 {itemInfo.ItemName}");
         }
 
         /// <summary>
