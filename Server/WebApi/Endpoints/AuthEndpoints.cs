@@ -69,7 +69,7 @@ namespace Server.WebApi.Endpoints
             var refreshToken = jwtHelper.GenerateRefreshToken();
 
             _ = WebHookSender.SendLoginSuccessAsync(account.EMailAddress, ip);
-            WebApiLogger.Audit(account.EMailAddress, ip, "登录成功");
+            WebApiLogger.AuditPreLogin(account.EMailAddress, ip, "登录成功");
             return Results.Ok(new LoginResponse
             {
                 Token = token,
@@ -135,21 +135,37 @@ namespace Server.WebApi.Endpoints
         {
             var ip = WebApiLogger.GetClientIp(context);
 
-            if (dataService.HasSuperAdmin())
+            try
             {
-                WebApiLogger.Security(null, ip, "初始化超管被拒", "超管已存在");
-                return Results.BadRequest(new { message = "Super admin already exists" });
-            }
+                if (dataService.HasSuperAdmin())
+                {
+                    WebApiLogger.Security(null, ip, "初始化超管被拒", "超管已存在");
+                    return Results.BadRequest(new { message = "Super admin already exists" });
+                }
 
-            var success = dataService.InitializeSuperAdmin();
-            if (success)
+                var success = dataService.InitializeSuperAdmin();
+                if (success)
+                {
+                    // 登录前场景：无 ClaimsPrincipal，使用显式指定操作者的重载
+                    WebApiLogger.AuditPreLogin(email: null, ip: ip, action: "初始化超管", target: "创建默认超管账号");
+                    return Results.Ok(new { message = "Super admin initialized successfully" });
+                }
+
+                // InitializeSuperAdmin 返回 false 有两种可能：账号列表未就绪，或写入 Users.db 失败
+                WebApiLogger.Security(null, ip, "初始化超管失败");
+                return Results.Problem(
+                    detail: "初始化超管账号失败：账号数据未就绪或写入数据库失败，请查看服务器日志中的「保存用户数据失败」详细信息",
+                    statusCode: StatusCodes.Status500InternalServerError);
+            }
+            catch (Exception ex)
             {
-                WebApiLogger.Audit(null, ip, "初始化超管", "创建默认超管账号");
-                return Results.Ok(new { message = "Super admin initialized successfully" });
+                // 兜底：记录异常详情并返回结构化错误，避免无响应体的 500 让前端只看到"请求失败: 500"
+                WebApiLogger.Security(null, ip, "初始化超管异常", ex.Message);
+                Envir.SEnvir.Log(ex);
+                return Results.Problem(
+                    detail: $"初始化超管账号失败：{ex.Message}",
+                    statusCode: StatusCodes.Status500InternalServerError);
             }
-
-            WebApiLogger.Security(null, ip, "初始化超管失败");
-            return Results.Problem("Failed to initialize super admin");
         }
     }
 

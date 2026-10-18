@@ -218,7 +218,9 @@ namespace Server.WebApi.Endpoints
                 return Results.Ok(new { message = "Account identity changed successfully" });
             }
 
-            return Results.Problem("Failed to change account identity");
+            return Results.Problem(
+                detail: "修改账号权限失败：账号数据未就绪或写入数据库失败，请查看服务器日志中的「保存用户数据失败」详细信息",
+                statusCode: StatusCodes.Status500InternalServerError);
         }
 
         /// <summary>
@@ -258,7 +260,9 @@ namespace Server.WebApi.Endpoints
                 return Results.Ok(new { message = "Password reset successfully" });
             }
 
-            return Results.Problem("Failed to reset password");
+            return Results.Problem(
+                detail: "重置密码失败：账号数据未就绪或写入数据库失败，请查看服务器日志中的「保存用户数据失败」详细信息",
+                statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 

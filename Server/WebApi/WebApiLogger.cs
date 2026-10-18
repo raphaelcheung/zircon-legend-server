@@ -32,6 +32,8 @@ namespace Server.WebApi
         /// </summary>
         public static void Audit(HttpContext context, string action, string? target = null, string? detail = null)
         {
+            ArgumentNullException.ThrowIfNull(context);
+
             var email = JwtHelper.GetEmail(context.User) ?? "anonymous";
             var ip = GetClientIp(context);
             Write("[WebApi审计]", email, ip, action, target, detail);
@@ -40,8 +42,14 @@ namespace Server.WebApi
         /// <summary>
         /// 记录审计日志（登录前场景，手动指定操作者和 IP）。
         /// 用于：登录成功（此时 ClaimsPrincipal 尚未建立）、初始化超管等。
+        /// 
+        /// 注意：此重载原先名为 Audit，与上面的 Audit(HttpContext, ...) 形成重载歧义——
+        /// 调用 Audit(null, ip, action, target) 时，编译器会优先匹配
+        /// Audit(HttpContext, string, string?, string?)（4 个实参恰好填满必填+选填位），
+        /// 从而把 null 传成 HttpContext，导致 context.User 触发 NullReferenceException。
+        /// 改名可使编译期不再依赖重载决策，从结构上消除该类隐患。
         /// </summary>
-        public static void Audit(string? email, string? ip, string action, string? target = null, string? detail = null)
+        public static void AuditPreLogin(string? email, string? ip, string action, string? target = null, string? detail = null)
         {
             Write("[WebApi审计]", email, ip, action, target, detail);
         }

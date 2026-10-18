@@ -6,6 +6,7 @@ using Server.WebHook;
 using Zircon.Server.Models;
 using Zircon.Server.Models.Monsters;
 using System.Drawing;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using S = Library.Network.ServerPackets;
@@ -266,7 +267,11 @@ namespace Server.WebApi.Services
             }
 
             // Save to database
-            SEnvir.SaveUserDatas();
+            if (!SEnvir.SaveUserDatas())
+            {
+                return false;
+            }
+
             return true;
         }
 
@@ -383,8 +388,7 @@ namespace Server.WebApi.Services
             if (account == null) return false;
 
             account.Identify = newIdentity;
-            SEnvir.SaveUserDatas();
-            return true;
+            return SEnvir.SaveUserDatas();
         }
 
         /// <summary>
@@ -397,8 +401,7 @@ namespace Server.WebApi.Services
 
             account.Password = SEnvir.CreateHash(newPassword);
             account.RealPassword = SEnvir.CreateHash(Functions.CalcMD5($"{email}-{newPassword}"));
-            SEnvir.SaveUserDatas();
-            return true;
+            return SEnvir.SaveUserDatas();
         }
 
         /// <summary>
@@ -425,7 +428,11 @@ namespace Server.WebApi.Services
             account.CreationIP = "WebAPI";
 
             // Save to database
-            SEnvir.SaveUserDatas();
+            if (!SEnvir.SaveUserDatas())
+            {
+                return (false, "账号已创建但写入数据库失败，请检查服务器磁盘与 datas 目录权限，并重启服务器后重试");
+            }
+
             return (true, "Account created successfully");
         }
 
@@ -520,8 +527,7 @@ namespace Server.WebApi.Services
             if (character == null) return false;
 
             character.Level = level;
-            SEnvir.SaveUserDatas();
-            return true;
+            return SEnvir.SaveUserDatas();
         }
 
         #endregion
@@ -2061,6 +2067,111 @@ namespace Server.WebApi.Services
             foreach (var log in chatLogs.TakeLast(count))
             {
                 logs.Add(log);
+            }
+
+            return logs;
+        }
+
+        /// <summary>
+        /// Get system logs of a specific date from ./datas/logs/sys_logs_yyyyMMdd.txt
+        /// </summary>
+        public List<string> GetSystemLogsByDate(DateTime date, int count = 100)
+        {
+            return ReadLogFileTail(SEnvir.GetSystemLogPath(date), count);
+        }
+
+        /// <summary>
+        /// Get chat logs of a specific date from ./datas/logs/chat_logs_yyyyMMdd.txt
+        /// </summary>
+        public List<string> GetChatLogsByDate(DateTime date, int count = 100)
+        {
+            return ReadLogFileTail(SEnvir.GetChatLogPath(date), count);
+        }
+
+        /// <summary>
+        /// List the dates that currently have a system log file, most recent first
+        /// </summary>
+        public List<string> GetSystemLogDates(int max = 60)
+        {
+            return GetLogDates("sys_logs_", max);
+        }
+
+        /// <summary>
+        /// List the dates that currently have a chat log file, most recent first
+        /// </summary>
+        public List<string> GetChatLogDates(int max = 60)
+        {
+            return GetLogDates("chat_logs_", max);
+        }
+
+        /// <summary>
+        /// Scan the log directory for files named "{prefix}yyyyMMdd.txt" and return their dates
+        /// </summary>
+        private List<string> GetLogDates(string prefix, int max)
+        {
+            var dates = new List<string>();
+
+            try
+            {
+                if (!Directory.Exists(SEnvir.LogDirectory)) return dates;
+
+                foreach (var path in Directory.EnumerateFiles(SEnvir.LogDirectory, prefix + "*.txt"))
+                {
+                    var name = Path.GetFileNameWithoutExtension(path);
+
+                    if (name.Length != prefix.Length + 8) continue;
+
+                    var stamp = name.Substring(prefix.Length);
+
+                    if (!DateTime.TryParseExact(stamp, "yyyyMMdd", CultureInfo.InvariantCulture,
+                            DateTimeStyles.None, out var parsed)) continue;
+
+                    dates.Add(parsed.ToString("yyyy-MM-dd"));
+                }
+            }
+            catch
+            {
+                return dates;
+            }
+
+            dates.Sort();
+            dates.Reverse();
+
+            if (dates.Count > max)
+                dates = dates.Take(max).ToList();
+
+            return dates;
+        }
+
+        /// <summary>
+        /// Read the last {count} lines of a log file without loading the whole file into memory
+        /// </summary>
+        private List<string> ReadLogFileTail(string path, int count)
+        {
+            var logs = new List<string>();
+
+            try
+            {
+                if (!File.Exists(path)) return logs;
+
+                // 保留最近 count 行：环形替换，内存占用固定
+                var buffer = new Queue<string>(count + 1);
+
+                foreach (var line in File.ReadLines(path))
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    buffer.Enqueue(line);
+
+                    while (buffer.Count > count)
+                        buffer.Dequeue();
+                }
+
+                logs.AddRange(buffer);
+            }
+            catch
+            {
+                return logs;
             }
 
             return logs;

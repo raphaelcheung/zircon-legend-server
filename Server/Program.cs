@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Runtime;
 using Library;
 using Server.Envir;
@@ -86,12 +86,24 @@ bool running = true;
 Task.Run(() =>
 {
     stop = false;
+    long printedCount = 0;
     while (running)
     {
-        while (SEnvir.DisplayLogs.TryDequeue(out string? log))
+        // DisplayLogs 是环形缓冲区：DisplayLogsDropped 即当前首元素的绝对序号
+        var all = SEnvir.DisplayLogs.ToArray();
+        long firstIndex = SEnvir.DisplayLogsDropped;
+        long lastIndex = firstIndex + all.Length;
+
+        if (printedCount < firstIndex) printedCount = firstIndex;
+
+        for (long i = printedCount; i < lastIndex; i++)
         {
-            if (log != null) Console.WriteLine(log);
+            int index = (int)(i - firstIndex);
+            if (index < 0 || index >= all.Length) continue;
+            if (all[index] != null) Console.WriteLine(all[index]);
         }
+
+        printedCount = lastIndex;
 
         Thread.Sleep(100);
     }

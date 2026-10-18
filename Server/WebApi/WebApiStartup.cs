@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -129,6 +130,16 @@ namespace Server.WebApi
 
             services.AddAuthorization();
 
+            // 统一异常响应：把未捕获异常转换为 RFC 7807 ProblemDetails JSON，
+            // 避免 Kestrel 返回无响应体的裸 500（前端只能显示"请求失败: 500"）
+            services.AddProblemDetails(options =>
+            {
+                options.CustomizeProblemDetails = ctx =>
+                {
+                    ctx.ProblemDetails.Extensions["traceId"] = ctx.HttpContext.TraceIdentifier;
+                };
+            });
+
             // Add singleton services
             services.AddSingleton<JwtHelper>();
             services.AddSingleton<ServerDataService>();
@@ -137,6 +148,33 @@ namespace Server.WebApi
 
         private static void ConfigureMiddleware(WebApplication app)
         {
+            // 异常处理中间件必须位于管道最前端，才能捕获后续所有中间件与端点的异常
+            app.UseExceptionHandler(new ExceptionHandlerOptions
+            {
+                ExceptionHandler = async context =>
+                {
+                    var ex = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+                    if (ex != null)
+                    {
+                        SEnvir.Log($"WebAPI 未处理异常 {context.Request.Method} {context.Request.Path}: {ex}");
+                    }
+
+                    // 输出 RFC 7807 ProblemDetails JSON，前端可读取 title/detail
+                    var result = Results.Problem(
+                        detail: $"服务器处理请求时发生异常：{ex?.Message ?? "未知错误"}",
+                        instance: context.Request.Path,
+                        statusCode: StatusCodes.Status500InternalServerError,
+                        title: "服务器内部错误",
+                        extensions: new Dictionary<string, object?>
+                        {
+                            ["traceId"] = context.TraceIdentifier
+                        });
+
+                    await result.ExecuteAsync(context);
+                }
+            });
+
             app.UseCors("AllowAll");
 
             // Serve static files from wwwroot

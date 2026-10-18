@@ -40,8 +40,9 @@ const api = {
    * @returns {Promise<any>}
    */
   async handleResponse(response) {
-    const contentType = response.headers.get('content-type');
-    const isJson = contentType && contentType.includes('application/json');
+    const contentType = response.headers.get('content-type') || '';
+    // application/problem+json（RFC 7807）同样按 JSON 解析
+    const isJson = contentType.includes('application/json') || contentType.includes('problem+json');
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -57,7 +58,7 @@ const api = {
       }
 
       const error = isJson ? await response.json() : await response.text();
-      throw new Error(error.message || error || `请求失败: ${response.status}`);
+      throw new Error(this.extractErrorMessage(error, response.status));
     }
 
     if (isJson) {
@@ -65,6 +66,28 @@ const api = {
     }
 
     return response.text();
+  },
+
+  /**
+   * 从错误响应中提取尽可能可读的提示信息。
+   * 兼容后端三种错误格式：{ message }、ProblemDetails { title, detail }、纯文本。
+   * @param {any} error 已解析的响应体
+   * @param {number} status HTTP 状态码
+   * @returns {string}
+   */
+  extractErrorMessage(error, status) {
+    if (typeof error === 'string' && error.trim()) {
+      return error;
+    }
+
+    if (error && typeof error === 'object') {
+      return error.message
+        || error.detail
+        || error.title
+        || `请求失败: ${status}`;
+    }
+
+    return `请求失败: ${status}`;
   },
 
   /**

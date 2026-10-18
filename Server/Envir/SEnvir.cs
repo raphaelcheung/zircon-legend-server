@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
@@ -85,14 +85,33 @@ namespace Server.Envir
 
         public static ConcurrentQueue<string> DisplayLogs { get; set; } = new ConcurrentQueue<string>();
         public static ConcurrentQueue<string> Logs { get; set; } = new ConcurrentQueue<string>();
+
+        /// <summary>
+        /// 界面日志缓冲区保留的最大条数（超出后丢弃最旧的）
+        /// </summary>
+        public const int DisplayLogsLimit = 300;
+
+        /// <summary>
+        /// 因超出上限而被丢弃的界面日志条数，即当前缓冲区首元素对应的绝对序号。
+        /// 控制台等顺序读取方需先读本值再取 ToArray() 快照，用「绝对序号 - 本值」换算数组下标。
+        /// 两者非原子读取，极端情况下（两次读取之间又发生覆盖）可能漏印个位数行，仅影响控制台显示。
+        /// </summary>
+        public static long DisplayLogsDropped;
+
         public static void Log(string log, bool hardLog = true)
         {
             DateTime now = Time.Now.ToLocalTime();
 
             log = $"[{now.ToString("yyyy-MM-dd HH:mm:ss")}]: {log}";
 
-            if (DisplayLogs.Count < 300)
-                DisplayLogs.Enqueue(log);
+            // 先进后出队：保证界面上永远能看到最新的日志，而不是队列满后一条都进不来
+            DisplayLogs.Enqueue(log);
+
+            while (DisplayLogs.Count > DisplayLogsLimit)
+            {
+                if (!DisplayLogs.TryDequeue(out _)) break;
+                DisplayLogsDropped++;
+            }
 
             if (hardLog && Logs.Count < 1000)
                 Logs.Enqueue(log);
@@ -116,13 +135,21 @@ namespace Server.Envir
         
         public static ConcurrentQueue<string> DisplayChatLogs = new ConcurrentQueue<string>();
         public static ConcurrentQueue<string> ChatLogs = new ConcurrentQueue<string>();
+
+        /// <summary>
+        /// 界面聊天日志缓冲区保留的最大条数（超出后丢弃最旧的）
+        /// </summary>
+        public const int DisplayChatLogsLimit = 500;
+
         public static WordsLibrary? SensitiveWords = null;
         public static void LogChat(string log)
         {
             log = string.Format("[{0:F}]: {1}", Time.Now.ToLocalTime(), log);
 
-            if (DisplayChatLogs.Count < 500)
-                DisplayChatLogs.Enqueue(log);
+            DisplayChatLogs.Enqueue(log);
+
+            while (DisplayChatLogs.Count > DisplayChatLogsLimit)
+                DisplayChatLogs.TryDequeue(out _);
 
             if (ChatLogs.Count < 1000)
                 ChatLogs.Enqueue(log);
@@ -1760,9 +1787,13 @@ namespace Server.Envir
         private static void Save()
         {
             if (Session == null) return;
-            if (Saving) return;
 
-            Saving = true;
+            // 与 SaveUserDatas 共用同一把锁，保证同一时刻只有一个保存流程在改写数据库文件
+            lock (SaveUserDatasLock)
+            {
+                if (Saving) return;
+                Saving = true;
+            }
 
             Thread saveThread = new Thread(() =>
             {
@@ -1777,7 +1808,11 @@ namespace Server.Envir
                 catch (Exception ex)
                 {
                     Log(ex);
-                    Saving = false;
+
+                    lock (SaveUserDatasLock)
+                    {
+                        Saving = false;
+                    }
                 }
             }) { IsBackground = true };
             saveThread.Start();
@@ -1804,8 +1839,41 @@ namespace Server.Envir
             HandledPayments.Clear();
 
 
-            Saving = false;
+            lock (SaveUserDatasLock)
+            {
+                Saving = false;
+            }
         }
+        /// <summary>
+        /// 日志文件目录（系统日志 / 聊天日志统一存放）
+        /// </summary>
+        public const string LogDirectory = "./datas/logs";
+
+        /// <summary>
+        /// 获取指定日期的系统日志文件路径
+        /// </summary>
+        public static string GetSystemLogPath(DateTime date)
+        {
+            return string.Format("{0}/sys_logs_{1:yyyyMMdd}.txt", LogDirectory, date);
+        }
+
+        /// <summary>
+        /// 获取指定日期的聊天日志文件路径
+        /// </summary>
+        public static string GetChatLogPath(DateTime date)
+        {
+            return string.Format("{0}/chat_logs_{1:yyyyMMdd}.txt", LogDirectory, date);
+        }
+
+        /// <summary>
+        /// 确保日志目录存在
+        /// </summary>
+        private static void EnsureLogDirectory()
+        {
+            if (!Directory.Exists(LogDirectory))
+                Directory.CreateDirectory(LogDirectory);
+        }
+
         private static void WriteLogsLoop()
         {
             DateTime NextLogTime = Now.AddSeconds(10);
@@ -1818,11 +1886,25 @@ namespace Server.Envir
                     continue;
                 }
 
-                WriteLogs();
+                // 单次写文件失败不允许终止后台日志线程，否则聊天日志也会一并停止
+                try
+                {
+                    WriteLogs();
+                }
+                catch (Exception ex)
+                {
+                    LastLogError = ex.Message;
+                }
 
                 NextLogTime = Now.AddSeconds(10);
             }
         }
+
+        /// <summary>
+        /// 最近一次写日志失败的原因（供后台页面排查）
+        /// </summary>
+        public static string? LastLogError { get; private set; }
+
         private static void WriteLogs()
         {
             string error;
@@ -1837,7 +1919,11 @@ namespace Server.Envir
                 lines.Add(line);
             }
 
-            File.AppendAllLines("./datas/Logs.txt", lines);
+            if (lines.Count > 0)
+            {
+                EnsureLogDirectory();
+                File.AppendAllLines(GetSystemLogPath(Now), lines);
+            }
 
             lines.Clear();
 
@@ -1848,10 +1934,14 @@ namespace Server.Envir
                 lines.Add(line);
             }
 
-            File.AppendAllLines("./datas/Chat Logs.txt", lines);
+            if (lines.Count > 0)
+            {
+                EnsureLogDirectory();
+                File.AppendAllLines(GetChatLogPath(Now), lines);
+            }
 
             lines.Clear();
-            
+
             /*
             while (!GamePlayLogs.IsEmpty)
             {
@@ -1863,6 +1953,8 @@ namespace Server.Envir
             */
 
             lines.Clear();
+
+            LastLogError = null;
         }
         private static void ProcessGameGold()
         {
@@ -4636,8 +4728,96 @@ namespace Server.Envir
 
             return result;
         }
-        public static void SaveSystem() { Session.ForceSaveSystem(); }
-        public static void SaveUserDatas() { Session.Save(true); }
+        /// <summary>
+        /// 保存系统数据（无条件写出 System.db）。
+        /// </summary>
+        /// <returns>保存是否成功。</returns>
+        public static bool SaveSystem()
+        {
+            if (Session == null)
+            {
+                Log("[WebApi] 保存系统数据失败：数据库会话尚未初始化");
+                return false;
+            }
+
+            try
+            {
+                Session.ForceSaveSystem();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log($"[WebApi] 保存系统数据失败：{ex.Message}");
+                Log(ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 用户数据保存闸门，用于串行化 WebApi 触发的同步保存。
+        /// </summary>
+        private static readonly object SaveUserDatasLock = new object();
+
+        /// <summary>
+        /// 保存用户数据（Users.db，commit 模式）。
+        /// 
+        /// 相比直接调用 Session.Save(true)，这里补充了三重保护：
+        /// 1. Session 为空时直接返回，避免后台保存线程未创建时的 NullReferenceException；
+        /// 2. 与主循环的 Save() 后台保存互斥，避免两个线程同时改写 Users.db / .TMP 文件；
+        /// 3. 捕获 I/O 异常（磁盘满、文件被占用、权限不足等），
+        ///    使调用方得到失败反馈而不是让异常冒泡成无响应体的 HTTP 500。
+        /// </summary>
+        /// <returns>保存是否成功。</returns>
+        public static bool SaveUserDatas()
+        {
+            if (Session == null)
+            {
+                Log("[WebApi] 保存用户数据失败：数据库会话尚未初始化");
+                return false;
+            }
+
+            // 尝试占用 Saving 标志：成功则本轮独占保存；失败则等待主循环后台保存结束。
+            // 只在读写标志位时加锁，保存过程本身不持锁，避免阻塞主循环的 Save() 调用。
+            bool acquired = false;
+            for (int i = 0; i < 500 && !acquired; i++)
+            {
+                lock (SaveUserDatasLock)
+                {
+                    if (!Saving)
+                    {
+                        Saving = true;
+                        acquired = true;
+                    }
+                }
+
+                if (!acquired) Thread.Sleep(10);
+            }
+
+            if (!acquired)
+            {
+                Log("[WebApi] 保存用户数据失败：等待上一次数据库保存超时（约 5 秒）");
+                return false;
+            }
+
+            try
+            {
+                Session.Save(true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log($"[WebApi] 保存用户数据失败：{ex.Message}");
+                Log(ex);
+                return false;
+            }
+            finally
+            {
+                lock (SaveUserDatasLock)
+                {
+                    Saving = false;
+                }
+            }
+        }
 
         // 文件变更时刷新发给客户端的 System.db 缓存，
         // 否则运行中修改的装备/物品等数据要等服务器重启才会同步给客户端。
